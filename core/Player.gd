@@ -16,6 +16,10 @@ var _swipe_start_x: float = 0.0
 var _swiping: bool = false
 const SWIPE_THRESHOLD := 40.0          # pixels before a drag counts as a swipe
 
+# Breadcrumb of recent positions so the rescue Trail can snake behind us.
+var _history: Array[Vector3] = []
+const HISTORY_MAX := 240
+
 func _ready() -> void:
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
@@ -27,8 +31,26 @@ func _lane_to_x(lane: int) -> float:
 	return (lane - (lanes_count - 1) / 2.0) * lane_width
 
 func move_lane(dir: int) -> void:
+	var before := current_lane
 	current_lane = clampi(current_lane + dir, 0, lanes_count - 1)
 	_target_x = _lane_to_x(current_lane)
+	if current_lane != before:
+		_lean(dir)
+
+## A quick lean into the turn that settles back — makes movement feel alive.
+func _lean(dir: int) -> void:
+	var mesh := get_node_or_null("MeshInstance3D") as Node3D
+	if mesh == null:
+		return
+	var t := create_tween().set_trans(Tween.TRANS_SINE)
+	t.tween_property(mesh, "rotation:z", deg_to_rad(-14.0 * dir), 0.08)
+	t.tween_property(mesh, "rotation:z", 0.0, 0.16)
+
+## Position from `steps` frames ago (clamped). Used by Trail.gd.
+func history_point(steps: int) -> Vector3:
+	if _history.is_empty():
+		return global_position
+	return _history[mini(steps, _history.size() - 1)]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if GameCore.state != GameCore.State.PLAYING:
@@ -52,6 +74,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	position.x = move_toward(position.x, _target_x, move_speed * delta)
+	_history.push_front(global_position)
+	if _history.size() > HISTORY_MAX:
+		_history.resize(HISTORY_MAX)
 
 # --- Rescue Run color carrying (called by Collectible) ---
 func carry_color(c: String) -> void:

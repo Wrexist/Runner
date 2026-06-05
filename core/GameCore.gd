@@ -8,6 +8,7 @@ signal run_ended(score: int, is_high: bool)
 signal score_changed(score: int)
 signal critter_rescued(id: String, total_rescued: int)
 signal stumbled(lives_remaining: int)
+signal streak_changed(streak: int)
 
 enum State { MENU, PLAYING, GAME_OVER }
 
@@ -17,16 +18,21 @@ var rescued_this_run: Array = []
 var elapsed: float = 0.0
 var current_speed: float = 8.0
 var stumbles: int = 0
+## Consecutive rescues without a stumble. Drives *celebration* feedback only —
+## it never punishes and never gates content. Pure "you're doing great" juice.
+var streak: int = 0
 
 func start_run() -> void:
 	score = 0
 	elapsed = 0.0
 	stumbles = 0
+	streak = 0
 	rescued_this_run = []
 	current_speed = float(ThemeManager.get_val("scroll_speed_start", 8.0))
 	state = State.PLAYING
 	emit_signal("run_started")
 	emit_signal("score_changed", score)
+	emit_signal("streak_changed", streak)
 
 func _process(delta: float) -> void:
 	if state != State.PLAYING:
@@ -43,12 +49,15 @@ func add_score(amount: int) -> void:
 
 func rescue_critter(id: String) -> void:
 	rescued_this_run.append(id)
-	add_score(10)
+	streak += 1
+	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
+	add_score(10 + mini(streak, 5))
 	# Earn-by-score unlock check against theme config.
 	for c in ThemeManager.get_val("rescuable_critters", []):
 		if c.id == id and score >= int(c.unlock_score):
 			SaveManager.unlock_critter(id)
 	emit_signal("critter_rescued", id, rescued_this_run.size())
+	emit_signal("streak_changed", streak)
 
 ## Gentle "three strikes" loss: hitting an unprepared cage costs a life, not an
 ## instant game-over. Kids get to recover; the run only ends after max_stumbles.
@@ -56,8 +65,10 @@ func stumble() -> void:
 	if state != State.PLAYING:
 		return
 	stumbles += 1
+	streak = 0
 	var max_stumbles := int(ThemeManager.get_val("max_stumbles", 3))
 	emit_signal("stumbled", maxi(max_stumbles - stumbles, 0))
+	emit_signal("streak_changed", streak)
 	if stumbles >= max_stumbles:
 		end_run()
 

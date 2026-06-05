@@ -16,8 +16,24 @@ data-driven design — push the varying value into `theme.json` instead.
   Change `active_theme` (or call `load_theme()`) to reskin the whole game.
 - **SaveManager.gd** — local-only persistence in `user://`. 🚫 Never add a network
   call, analytics, or any data collection here. This file is a compliance surface.
+- **AudioManager.gd** — plays themed music + SFX from `ThemeManager.audio(...)`.
+  Fail-soft (missing file = silent warning, never a crash); honors the local
+  `SaveManager.settings` music/sfx toggles. Auto-reacts to GameCore signals.
+- **Effects.gd** — fire-and-forget visual juice: `burst(pos, color, amount)` and
+  `pop(node)`. Kept gentle (no harsh shake). Autoload Node3D children render in
+  the same root World3D as Main.
 - **UIManager.gd** — owns front-end screen flow and enforces the parental gate
   before the Shop.
+
+## Feel / juice helpers (subscribe to GameCore, change no core logic)
+
+- **Trail.gd** — on `critter_rescued`, adds a follower that snakes behind the
+  player using `Player.history_point()`. Visible length is capped (`MAX_VISIBLE`)
+  while GameCore keeps counting beyond it.
+- **CameraRig.gd** (on Main's Camera3D) — subtle smoothed follow of the player's
+  lane. **SkyRig.gd** (on Main's WorldEnvironment) — builds the themed background.
+- The `streak` celebration is positive-only feedback. Do not turn it into a
+  punishment, a timer, or a content gate.
 
 ## Gameplay scripts
 

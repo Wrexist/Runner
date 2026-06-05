@@ -51,10 +51,17 @@ PRIVACY.md             "Data Not Collected" policy for the App Store label
 3. **Desktop test (no phone needed):** use **←/→ arrow keys** to change lanes.
    On a device, **swipe** left/right.
 
-**What you should see:** gems and cages scroll toward the player box. Grab a gem
-to carry its color, then hit the same-color cage to rescue a critter (score +10,
-🐾 counter rises). Hit an *unprepared* cage and you stumble (lose a ❤). Three
-stumbles ends the run → Game Over → Shop (always behind the parental gate).
+**What you should see:** gems and cages scroll toward the player box over a
+themed sky. Grab a gem to carry its color (sparkle + pickup sound), then hit the
+same-color cage to rescue a critter — particle burst, a happy word floats up, the
+score pops, and the rescued critter joins a **conga line that snakes behind you**.
+A rescue streak makes the sounds and bursts grow. Hit an *unprepared* cage and you
+gently stumble (lose a ❤). Three stumbles ends the run → Game Over → Shop (always
+behind the parental gate).
+
+Note: art/audio are placeholder geometry until you import CC0 assets, so the
+"sounds" are silent until `theme.json` audio paths point at real `.ogg` files —
+the audio system is wired and fail-soft, it just has nothing to play yet.
 
 Switch the whole game to the other theme by setting
 `ThemeManager.active_theme = "space"` — no other code changes needed.

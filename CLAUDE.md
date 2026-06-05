@@ -38,13 +38,18 @@ them. If a request conflicts, refuse and explain.
 ```
 project.godot          Godot 4.3 config + autoloads (load order matters)
 core/                  Logic — NEVER reskinned. See core/CLAUDE.md
-  GameCore.gd          Autoload. Run state, score, difficulty ramp, lives, signals
+  GameCore.gd          Autoload. Run state, score, difficulty ramp, lives, streak, signals
   ThemeManager.gd      Autoload. Loads themes/<active>/theme.json. Source of all tuning
   SaveManager.gd       Autoload. Local-only save (COPPA-safe). No network. Ever.
+  AudioManager.gd      Autoload. Themed music + SFX, fail-soft, respects sound toggles
+  Effects.gd           Autoload. Gentle particle bursts + scale "pop" tweens (juice)
   UIManager.gd         Autoload. Front-end screen flow (start/gameover/gate/shop)
-  Player.gd            Lane movement (swipe + arrow keys, NO tilt) + carried color
+  Player.gd            Lane movement (swipe + arrow keys, NO tilt) + lean + carried color
   Spawner.gd           The Rescue Run hook: gem then matching cage, same lane
-  Collectible.gd       Gem & cage behavior, scroll, collision, rescue/stumble
+  Collectible.gd       Gem & cage behavior, scroll, collision, rescue/stumble + juice
+  Trail.gd             Rescued critters snake behind the player (capped conga line)
+  CameraRig.gd         Smoothed camera follow (subtle, no shake)
+  SkyRig.gd            Themed world background + ambient light (reskins for free)
 scenes/                Gameplay scenes (text .tscn — Claude can edit these)
   Main.tscn            Camera, light, ground, Player, Spawner, HUD
   Player.tscn  Gem.tscn  Cage.tscn
@@ -58,7 +63,18 @@ docs/                  Build plan + the Claude Code prompt sequence
 ```
 
 **Autoload order (in `project.godot`):** `SaveManager → ThemeManager → GameCore
-→ UIManager`. GameCore/UIManager depend on the first two being ready.
+→ AudioManager → Effects → UIManager`. Everything after the first two depends on
+them being ready (AudioManager/UIManager subscribe to GameCore signals).
+
+### Fun comes from "juice," not compulsion (important)
+
+We make this game feel great the **legitimate** way — responsive controls,
+particle bursts, a pickup/rescue sound that pitches up on a streak, rescued
+critters that visibly follow you, score pops and happy floating words, smooth
+camera. We do **NOT** build engagement-maximizing dark patterns aimed at kids
+(variable-ratio rewards, FOMO/daily-streak pressure, currency pulls, "one more"
+loops). The `streak` is celebration-only: it never punishes, never gates content.
+This is both an ethics line and what keeps the app App-Store-approvable.
 
 ## How to run & test
 

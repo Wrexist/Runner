@@ -15,6 +15,7 @@ func _ready() -> void:
 	_score_label.offset_right = 160
 	_score_label.offset_top = 24
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_score_label.pivot_offset = Vector2(160, 30)   # center for the scale "pop"
 	add_child(_score_label)
 
 	_rescue_label = _make_label(28, text_color)
@@ -48,9 +49,37 @@ func _make_label(size: int, color: Color) -> Label:
 
 func _on_score_changed(score: int) -> void:
 	_score_label.text = str(score)
+	# Quick scale "pop" so the score feels alive every time it ticks up.
+	_score_label.scale = Vector2(1.25, 1.25)
+	create_tween().tween_property(_score_label, "scale", Vector2.ONE, 0.18) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _on_critter_rescued(_id: String, total: int) -> void:
 	_rescue_label.text = "🐾 %d" % total
+	if total > 0:
+		_float_text(_streak_word(GameCore.streak))
+
+const STREAK_WORDS := ["Rescued!", "Nice!", "Great!", "Awesome!", "Amazing!", "Incredible!"]
+
+func _streak_word(streak: int) -> String:
+	if streak <= 1:
+		return STREAK_WORDS[0]
+	return STREAK_WORDS[mini(streak - 1, STREAK_WORDS.size() - 1)]
+
+## A happy word that floats up from the center and fades. Pure positive feedback.
+func _float_text(text: String) -> void:
+	var l := _make_label(44, ThemeManager.color("accent", Color(1.0, 0.55, 0.6)))
+	l.text = text
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var size := get_viewport().get_visible_rect().size
+	l.position = Vector2(size.x * 0.5 - 150, size.y * 0.45)
+	l.custom_minimum_size = Vector2(300, 0)
+	add_child(l)
+	var t := l.create_tween()
+	t.set_parallel(true)
+	t.tween_property(l, "position:y", l.position.y - 130, 0.9)
+	t.tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.2)
+	t.chain().tween_callback(l.queue_free)
 
 func _on_stumbled(_lives_remaining: int) -> void:
 	_refresh_lives()
