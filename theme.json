@@ -1,0 +1,36 @@
+{
+  "theme_id": "forest",
+  "display_name": "Forest Friends",
+  "palette": {
+    "background_top": "#a8e6cf",
+    "background_bottom": "#dcedc1",
+    "accent": "#ff8b94",
+    "ui_text": "#3d405b"
+  },
+  "lanes": 3,
+  "lane_width": 2.0,
+  "scroll_speed_start": 8.0,
+  "scroll_speed_max": 18.0,
+  "speed_ramp_per_second": 0.15,
+  "gem_colors": ["red", "blue", "yellow"],
+  "spawn_interval_start": 1.4,
+  "spawn_interval_min": 0.7,
+  "assets": {
+    "player_model": "res://themes/forest/models/fox.glb",
+    "ground_texture": "res://themes/forest/textures/grass.png",
+    "cage_model": "res://themes/forest/models/cage.glb",
+    "gem_model": "res://themes/forest/models/gem.glb"
+  },
+  "rescuable_critters": [
+    {"id": "bunny",   "model": "res://themes/forest/models/bunny.glb",   "unlock_score": 0},
+    {"id": "hedgehog","model": "res://themes/forest/models/hedgehog.glb","unlock_score": 50},
+    {"id": "owl",     "model": "res://themes/forest/models/owl.glb",     "unlock_score": 150},
+    {"id": "deer",    "model": "res://themes/forest/models/deer.glb",    "unlock_score": 300}
+  ],
+  "audio": {
+    "music": "res://themes/forest/audio/music.ogg",
+    "rescue": "res://themes/forest/audio/rescue.ogg",
+    "gem_pickup": "res://themes/forest/audio/gem.ogg",
+    "miss": "res://themes/forest/audio/miss.ogg"
+  }
+}
