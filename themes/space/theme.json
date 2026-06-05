@@ -1,0 +1,37 @@
+{
+  "theme_id": "space",
+  "display_name": "Star Rescue",
+  "palette": {
+    "background_top": "#1b1b3a",
+    "background_bottom": "#3a2e5c",
+    "accent": "#7ee8fa",
+    "ui_text": "#eaf6ff"
+  },
+  "lanes": 3,
+  "lane_width": 2.2,
+  "scroll_speed_start": 9.0,
+  "scroll_speed_max": 20.0,
+  "speed_ramp_per_second": 0.18,
+  "gem_colors": ["blue", "purple", "orange"],
+  "spawn_interval_start": 1.3,
+  "spawn_interval_min": 0.65,
+  "max_stumbles": 3,
+  "assets": {
+    "player_model": "res://themes/space/models/rocket.glb",
+    "ground_texture": "res://themes/space/textures/starfield.png",
+    "cage_model": "res://themes/space/models/pod.glb",
+    "gem_model": "res://themes/space/models/crystal.glb"
+  },
+  "rescuable_critters": [
+    {"id": "blob",    "model": "res://themes/space/models/blob.glb",    "unlock_score": 0},
+    {"id": "robo",    "model": "res://themes/space/models/robo.glb",    "unlock_score": 50},
+    {"id": "comet",   "model": "res://themes/space/models/comet.glb",   "unlock_score": 150},
+    {"id": "starpup", "model": "res://themes/space/models/starpup.glb", "unlock_score": 300}
+  ],
+  "audio": {
+    "music": "res://themes/space/audio/music.ogg",
+    "rescue": "res://themes/space/audio/rescue.ogg",
+    "gem_pickup": "res://themes/space/audio/gem.ogg",
+    "miss": "res://themes/space/audio/miss.ogg"
+  }
+}

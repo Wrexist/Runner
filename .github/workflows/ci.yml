@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  validate-data:
+    name: Validate theme data & structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate every theme.json parses
+        run: |
+          python3 - <<'PY'
+          import json, glob, sys
+          required = ["display_name", "palette", "lanes", "lane_width",
+                      "scroll_speed_start", "scroll_speed_max", "gem_colors",
+                      "spawn_interval_start", "spawn_interval_min",
+                      "rescuable_critters"]
+          ok = True
+          for path in glob.glob("themes/*/theme.json"):
+              with open(path) as f:
+                  data = json.load(f)               # raises on bad JSON
+              missing = [k for k in required if k not in data]
+              if missing:
+                  print(f"::error file={path}::missing keys {missing}")
+                  ok = False
+              else:
+                  print(f"ok: {path}")
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Check required project files exist
+        run: |
+          for f in project.godot scenes/Main.tscn core/GameCore.gd \
+                   core/ThemeManager.gd core/SaveManager.gd; do
+            test -f "$f" || { echo "::error::missing $f"; exit 1; }
+          done
+          echo "All required project files present."
+
+  godot-validate:
+    name: Godot headless load (no script errors)
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Headless import & validate
+        run: |
+          # Load the project headlessly; capture output and fail on script errors.
+          godot --headless --path . --quit-after 5 2>&1 | tee godot.log || true
+          if grep -qiE "SCRIPT ERROR|Parse Error|Failed to load script" godot.log; then
+            echo "::error::Godot reported script/parse errors"
+            exit 1
+          fi
+          echo "Godot loaded the project with no script/parse errors."

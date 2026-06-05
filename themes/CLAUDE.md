@@ -1,0 +1,37 @@
+# themes/ — pure data + art (no code)
+
+A theme is the *entire* difference between two shipped games. Adding a theme must
+require **zero** changes to `core/`, `scenes/`, or `ui/`. If you find yourself
+editing code to make a theme work, fix the engine to read that value from
+`theme.json` instead — that's the whole point of this architecture.
+
+## How to add a theme
+
+1. Create `themes/<id>/theme.json` (copy an existing one as a template).
+2. Drop CC0 art/audio into `themes/<id>/models|textures|audio/` and point the
+   `assets` / `audio` paths at them. Use Kenney.nl / Quaternius (CC0).
+3. Set `ThemeManager.active_theme = "<id>"` (or call `load_theme("<id>")`).
+4. Run. The palette, names, speeds, gem colors, critters, and audio all change
+   with no code edits. If anything needed a code edit, that's a bug — file it.
+
+## theme.json keys (all consumed by core via ThemeManager.get_val)
+
+| key | used by | notes |
+|---|---|---|
+| `display_name` | StartScreen | title text |
+| `palette.{background_top,background_bottom,accent,ui_text}` | UI/HUD | hex colors |
+| `lanes`, `lane_width` | Player, Spawner | track geometry |
+| `scroll_speed_start/max`, `speed_ramp_per_second` | GameCore | difficulty ramp |
+| `gem_colors` | Spawner | which gem/cage colors appear |
+| `spawn_interval_start/min` | Spawner | pacing (tightens as run speeds up) |
+| `max_stumbles` | GameCore | lives before a gentle run-end (default 3) |
+| `assets.*` | (art wiring) | model/texture paths |
+| `rescuable_critters[]` | GameCore | `{id, model, unlock_score}` earn-by-play |
+| `audio.*` | juice/audio | music + sfx paths; missing = silent, never crash |
+
+## Compliance note
+
+`unlock_score` gates are **earned by play**, never randomized and never sold.
+The only purchase is the single global "unlock all" IAP handled outside themes.
+
+Current themes: **forest** (default) and **space** (reskin proof).
