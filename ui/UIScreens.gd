@@ -43,8 +43,9 @@ class StartScreen extends Control:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label(ThemeManager.display_name(), 56))
-		var hi := UIScreens._label("Best: %d" % SaveManager.high_score, 28)
-		col.add_child(hi)
+		col.add_child(UIScreens._label("Best: %d" % SaveManager.high_score, 28))
+		if SaveManager.lifetime_rescued > 0:
+			col.add_child(UIScreens._label("Friends rescued: %d" % SaveManager.lifetime_rescued, 22))
 		var play := UIScreens._button("Play")
 		play.pressed.connect(func(): play_pressed.emit())
 		col.add_child(play)

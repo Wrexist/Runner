@@ -11,6 +11,8 @@ var unlocked_critters: Array = []          # critter ids earned by score
 var all_unlocked_iap: bool = false         # set true by the single unlock-all IAP
 var settings: Dictionary = {"music": true, "sfx": true}
 var seen_tutorial: bool = false            # first-run "how to play" shown once
+var lifetime_rescued: int = 0              # gentle progress stat (never a quota)
+var runs_played: int = 0
 
 func _ready() -> void:
 	load_game()
@@ -35,6 +37,8 @@ func save_game() -> void:
 		"all_unlocked_iap": all_unlocked_iap,
 		"settings": settings,
 		"seen_tutorial": seen_tutorial,
+		"lifetime_rescued": lifetime_rescued,
+		"runs_played": runs_played,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -58,3 +62,5 @@ func load_game() -> void:
 	all_unlocked_iap = bool(parsed.get("all_unlocked_iap", false))
 	settings = parsed.get("settings", settings)
 	seen_tutorial = bool(parsed.get("seen_tutorial", false))
+	lifetime_rescued = int(parsed.get("lifetime_rescued", 0))
+	runs_played = int(parsed.get("runs_played", 0))

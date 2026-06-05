@@ -97,6 +97,7 @@ func rescue_critter(id: String) -> void:
 		return
 	rescued_this_run.append(id)
 	streak += 1
+	SaveManager.lifetime_rescued += 1   # persisted on run end
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
 	add_score(10 + mini(streak, 5))
 	# Earn-by-score unlock check against theme config. Bracket/.get access is
@@ -127,5 +128,6 @@ func end_run() -> void:
 	var is_high := score > SaveManager.high_score
 	if is_high:
 		SaveManager.high_score = score
-		SaveManager.save_game()
+	SaveManager.runs_played += 1
+	SaveManager.save_game()   # persist high score + lifetime stats together
 	emit_signal("run_ended", score, is_high)

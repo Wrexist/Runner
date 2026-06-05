@@ -59,3 +59,14 @@ jobs:
             exit 1
           fi
           echo "Godot loaded the project with no script/parse errors."
+
+      - name: Run headless logic tests
+        run: |
+          # Tests.gd asserts the core loop rules and quits 0 (pass) / 1 (fail).
+          godot --headless --path . res://tests/Tests.tscn 2>&1 | tee tests.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ] || grep -qiE "SCRIPT ERROR|Parse Error|FAIL " tests.log; then
+            echo "::error::Headless logic tests failed"
+            exit 1
+          fi
+          grep -q "TESTS: ALL PASS" tests.log || { echo "::error::tests did not report pass"; exit 1; }
