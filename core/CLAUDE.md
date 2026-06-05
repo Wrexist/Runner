@@ -37,8 +37,12 @@ data-driven design — push the varying value into `theme.json` instead.
 
 ## Gameplay scripts
 
-- **Player.gd** — lane movement via swipe/drag + arrow-key fallback (NO tilt).
-  Holds `carried_color` for the rescue mechanic (`carry_color`/`clear_color`).
+- **Player.gd** — lane movement via swipe / tap-a-side / arrow keys (NO tilt).
+  Holds `carried_color` and SHOWS it (mesh tint + floating shape badge) so the
+  core decision is legible; `carry_color`/`clear_color` update the visual.
+- **Shapes.gd** (`class_name Shapes`) — builds a distinct primitive mesh per
+  color so play never depends on hue alone (color-blind accessibility). Used by
+  Collectible badges and the player's carried-color badge.
 - **Spawner.gd** — the Rescue Run hook: a gem then a same-color cage, same lane.
 - **Collectible.gd** — gem/cage behavior. Collision uses `area_entered` (both
   player and collectibles are `Area3D`). Layers: collectibles = layer 1 / mask 2,

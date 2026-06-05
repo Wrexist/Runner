@@ -44,18 +44,22 @@ core/                  Logic — NEVER reskinned. See core/CLAUDE.md
   AudioManager.gd      Autoload. Themed music + SFX, fail-soft, respects sound toggles
   Effects.gd           Autoload. Gentle particle bursts + scale "pop" tweens (juice)
   UIManager.gd         Autoload. Front-end screen flow (start/gameover/gate/shop)
-  Player.gd            Lane movement (swipe + arrow keys, NO tilt) + lean + carried color
+  Player.gd            Lane movement (swipe/tap/arrows, NO tilt) + lean + visible carried color
   Spawner.gd           The Rescue Run hook: gem then matching cage, same lane
-  Collectible.gd       Gem & cage behavior, scroll, collision, rescue/stumble + juice
+  Collectible.gd       Gem & cage behavior, scroll, collision, rescue/stumble + juice + shape badge
   Trail.gd             Rescued critters snake behind the player (capped conga line)
   CameraRig.gd         Smoothed camera follow (subtle, no shake)
   SkyRig.gd            Themed world background + ambient light (reskins for free)
+  Shapes.gd            Per-color primitive "symbol badges" (color-blind accessibility)
 scenes/                Gameplay scenes (text .tscn — Claude can edit these)
-  Main.tscn            Camera, light, ground, Player, Spawner, HUD
+  Main.tscn            Camera, light, ground, WorldEnvironment, Player, Trail, Spawner, HUD
   Player.tscn  Gem.tscn  Cage.tscn
 ui/
-  HUD.gd/.tscn         Signal-driven in-run HUD (score, rescues, lives)
-  UIScreens.gd         Factory for start/gameover/parental-gate/shop (theme-built)
+  HUD.gd/.tscn         Signal-driven in-run HUD (score, rescues, lives, pause button)
+  UIScreens.gd         Start / GameOver / Pause / Settings / Album / Tutorial /
+                       ParentalGate / Shop — all built from theme data
+tests/
+  Tests.gd/.tscn       Headless logic tests for the core loop (run in CI)
 themes/                Pure data + art. See themes/CLAUDE.md
   forest/theme.json    Default theme ("Forest Friends")
   space/theme.json     Proof the reskin works with zero code changes
@@ -85,6 +89,15 @@ This is both an ethics line and what keeps the app App-Store-approvable.
   run → Game Over → Shop (behind the parental gate).
 - **Headless sanity check (CI / no display):**
   `godot --headless --path . --quit-after 2` — loads the project and exits.
+- **Headless logic tests:** `godot --headless --path . res://tests/Tests.tscn`
+  (exits 0 if all pass, 1 on failure). These assert the core-loop rules without
+  a display and run in CI. Add a case here when you change run/score/pause logic.
+
+**Screen flow (UIManager):** Start → (Play; first ever → Tutorial) → run →
+GameOver → (Play Again | My Critters). Pause overlay on the pause button or auto
+on app backgrounding → Resume / Settings / Home. Settings + Album reachable from
+Start. The single unlock-all Shop lives behind the Album and is ALWAYS gated by
+the ParentalGate.
 
 ## Conventions
 
