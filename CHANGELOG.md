@@ -18,8 +18,11 @@ All notable changes to Critter Dash. This project follows
 - **Accessibility.** Carried color is shown on the player (tint + shape badge);
   every gem/cage carries a redundant primitive **shape** so play never depends on
   hue alone (color-blind support). Tap-a-side-to-move for tiny hands.
-- **Screens.** First-run tutorial, Settings (music/sfx toggles), Pause (+ auto
+- **Screens.** First-run **visual** tutorial (shapes/colors, not text — usable by
+  pre-readers), Settings (music/sfx + Easy/Normal difficulty), Pause (+ auto
   pause on app backgrounding), Critter Album, New-Best celebration.
+- **Easy/Normal difficulty presets** (theme data, default Easy for ages 3–6:
+  flat speed, slower start, wider reaction window), chosen in Settings.
 - **Compliance surfaces.** Parental gate (retries in place on a wrong answer) is
   the only path to the single unlock-all Shop, which lives behind the calm Album
   rather than the loss moment. `PRIVACY.md` ("Data Not Collected").

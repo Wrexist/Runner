@@ -50,8 +50,12 @@ func difficulty() -> String:
 ## (theme.json "difficulty": {"easy": {...}, "normal": {...}}). Falls back to the
 ## top-level theme value, then the supplied default — always fail-soft.
 func diff_val(key: String, default_value: Variant = null) -> Variant:
-	var presets: Dictionary = _data.get("difficulty", {})
-	var preset: Dictionary = presets.get(difficulty(), {})
+	# Fail-soft: tolerate a malformed "difficulty" block in a future theme
+	# instead of throwing on a typed assignment.
+	var presets_v: Variant = _data.get("difficulty", {})
+	var presets: Dictionary = presets_v if presets_v is Dictionary else {}
+	var preset_v: Variant = presets.get(difficulty(), {})
+	var preset: Dictionary = preset_v if preset_v is Dictionary else {}
 	if preset.has(key):
 		return preset[key]
 	return get_val(key, default_value)
