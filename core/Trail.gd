@@ -13,6 +13,7 @@ var _followers: Array[Node3D] = []
 
 func _ready() -> void:
 	GameCore.run_started.connect(_reset)
+	GameCore.returned_to_menu.connect(_reset)
 	GameCore.critter_rescued.connect(_on_rescued)
 	await get_tree().process_frame
 	_player = get_tree().get_first_node_in_group("player")

@@ -64,7 +64,7 @@ static func make_start_screen() -> StartScreen:
 # ---------------------------------------------------------------- Game over
 class GameOver extends Control:
 	signal play_again_pressed
-	signal shop_pressed
+	signal album_pressed
 	var _score: int = 0
 	var _is_high: bool = false
 	var _rescued: int = 0
@@ -76,12 +76,14 @@ class GameOver extends Control:
 			col.add_child(UIScreens._label("New Best!", 34))
 		col.add_child(UIScreens._label("Score: %d" % _score, 36))
 		col.add_child(UIScreens._label("Critters rescued: %d" % _rescued, 28))
+		# Lead with the positive next action. Monetization is NOT placed at the
+		# loss moment — the Shop lives behind the calm "My Critters" album.
 		var again := UIScreens._button("Play Again")
 		again.pressed.connect(func(): play_again_pressed.emit())
 		col.add_child(again)
-		var shop := UIScreens._button("Shop")
-		shop.pressed.connect(func(): shop_pressed.emit())
-		col.add_child(shop)
+		var album := UIScreens._button("My Critters")
+		album.pressed.connect(func(): album_pressed.emit())
+		col.add_child(album)
 		add_child(col)
 
 static func make_game_over(score: int, is_high: bool, rescued: int) -> GameOver:
@@ -94,21 +96,45 @@ static func make_game_over(score: int, is_high: bool, rescued: int) -> GameOver:
 
 # ---------------------------------------------------------------- Parental gate
 ## COMPLIANCE: must appear before the Shop / any purchase or external link.
-## A simple arithmetic question is the canonical Apple-approved gate.
+## Arithmetic gate. A wrong tap re-rolls the question in place (with a gentle
+## "Try again") rather than ejecting — only "Back" cancels. This is friendlier
+## for a parent who mis-taps and harder for a child to brute-force.
 class ParentalGate extends Control:
 	signal passed
 	signal cancelled
 	var _answer: int = 0
+	var _prompt: Label
+	var _feedback: Label
+	var _buttons: Array[Button] = []
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label("Ask a grown-up", 40))
-		# Two-digit-ish sum so it isn't trivially guessable; distractors are
-		# distinct, plausible, and never 0 (which would make elimination easy).
+		_prompt = UIScreens._label("", 36)
+		col.add_child(_prompt)
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 16)
+		for i in 3:
+			var btn := UIScreens._button("")
+			btn.custom_minimum_size = Vector2(110, 90)
+			btn.pressed.connect(_on_pick.bind(i))
+			_buttons.append(btn)
+			row.add_child(btn)
+		col.add_child(row)
+		_feedback = UIScreens._label("", 24)
+		col.add_child(_feedback)
+		var back := UIScreens._button("Back")
+		back.pressed.connect(func(): cancelled.emit())
+		col.add_child(back)
+		add_child(col)
+		_new_question()
+	func _new_question() -> void:
 		var a := randi_range(4, 9)
 		var b := randi_range(4, 9)
 		_answer = a + b
-		col.add_child(UIScreens._label("What is %d + %d ?" % [a, b], 36))
+		_prompt.text = "What is %d + %d ?" % [a, b]
+		# Distinct, positive, plausible distractors (never 0).
 		var options: Array[int] = [_answer]
 		while options.size() < 3:
 			var delta := randi_range(1, 4) * (1 if randf() < 0.5 else -1)
@@ -116,24 +142,15 @@ class ParentalGate extends Control:
 			if candidate > 0 and candidate not in options:
 				options.append(candidate)
 		options.shuffle()
-		var row := HBoxContainer.new()
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override("separation", 16)
-		for value in options:
-			var btn := UIScreens._button(str(value))
-			btn.custom_minimum_size = Vector2(110, 90)
-			btn.pressed.connect(_on_answer.bind(value))
-			row.add_child(btn)
-		col.add_child(row)
-		var back := UIScreens._button("Back")
-		back.pressed.connect(func(): cancelled.emit())
-		col.add_child(back)
-		add_child(col)
-	func _on_answer(value: int) -> void:
-		if value == _answer:
+		for i in _buttons.size():
+			_buttons[i].text = str(options[i])
+			_buttons[i].set_meta("value", options[i])
+	func _on_pick(i: int) -> void:
+		if int(_buttons[i].get_meta("value")) == _answer:
 			passed.emit()
 		else:
-			cancelled.emit()
+			_feedback.text = "Try again"
+			_new_question()
 
 static func make_parental_gate() -> ParentalGate:
 	var s := ParentalGate.new()
@@ -244,6 +261,7 @@ static func make_settings() -> Settings:
 ## is the compliant, healthy replay driver (collect them) — no compulsion loop.
 class Album extends Control:
 	signal closed
+	signal unlock_pressed
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
@@ -256,6 +274,11 @@ class Album extends Control:
 		for c in ThemeManager.get_val("rescuable_critters", []):
 			grid.add_child(_cell(c))
 		col.add_child(grid)
+		# Calm, contextual place to offer the single unlock-all purchase (gated).
+		if not SaveManager.all_unlocked_iap:
+			var unlock := UIScreens._button("Unlock All Critters")
+			unlock.pressed.connect(func(): unlock_pressed.emit())
+			col.add_child(unlock)
 		var back := UIScreens._button("Back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)

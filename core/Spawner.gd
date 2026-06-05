@@ -26,6 +26,7 @@ func _ready() -> void:
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
 	gem_cage_gap = float(ThemeManager.get_val("gem_cage_gap", 6.0))
 	GameCore.run_started.connect(_clear_field)
+	GameCore.returned_to_menu.connect(_clear_field)
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.

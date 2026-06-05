@@ -83,6 +83,8 @@ func _process(delta: float) -> void:
 	current_speed = min(current_speed + ramp * delta, smax)
 
 func add_score(amount: int) -> void:
+	if state != State.PLAYING:
+		return
 	score += amount
 	emit_signal("score_changed", score)
 	# Celebrate the moment you pass your previous best (only if you had one).
@@ -91,6 +93,8 @@ func add_score(amount: int) -> void:
 		emit_signal("new_best")
 
 func rescue_critter(id: String) -> void:
+	if state != State.PLAYING:
+		return
 	rescued_this_run.append(id)
 	streak += 1
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.

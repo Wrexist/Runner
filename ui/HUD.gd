@@ -2,12 +2,20 @@ extends CanvasLayer
 ## HUD.gd — in-run heads-up display. Driven ENTIRELY by GameCore signals
 ## (no polling in _process). Large, high-contrast text for young eyes.
 
+var _root: Control
 var _score_label: Label
 var _rescue_label: Label
 var _lives_label: Label
 
 func _ready() -> void:
 	var text_color := ThemeManager.color("ui_text", Color.BLACK)
+
+	# Everything lives under one root Control so the whole HUD can be hidden on
+	# menus / game-over (a CanvasLayer itself has no `visible`).
+	_root = Control.new()
+	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_root)
 
 	_score_label = _make_label(48, text_color)
 	_score_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -16,13 +24,13 @@ func _ready() -> void:
 	_score_label.offset_top = 24
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_score_label.pivot_offset = Vector2(160, 30)   # center for the scale "pop"
-	add_child(_score_label)
+	_root.add_child(_score_label)
 
 	_rescue_label = _make_label(28, text_color)
 	_rescue_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	_rescue_label.offset_left = 108   # clear of the pause button at top-left
 	_rescue_label.offset_top = 34
-	add_child(_rescue_label)
+	_root.add_child(_rescue_label)
 
 	_lives_label = _make_label(28, text_color)
 	_lives_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -30,7 +38,7 @@ func _ready() -> void:
 	_lives_label.offset_right = -24
 	_lives_label.offset_top = 28
 	_lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	add_child(_lives_label)
+	_root.add_child(_lives_label)
 
 	# Big, easy pause target (auto-pause on backgrounding is handled in GameCore).
 	var pause_btn := Button.new()
@@ -41,16 +49,19 @@ func _ready() -> void:
 	pause_btn.offset_top = 20
 	pause_btn.custom_minimum_size = Vector2(72, 72)
 	pause_btn.pressed.connect(GameCore.pause)
-	add_child(pause_btn)
+	_root.add_child(pause_btn)
 
 	GameCore.score_changed.connect(_on_score_changed)
 	GameCore.critter_rescued.connect(_on_critter_rescued)
 	GameCore.stumbled.connect(_on_stumbled)
 	GameCore.run_started.connect(_on_run_started)
+	GameCore.run_ended.connect(func(_s, _h): _root.visible = false)
+	GameCore.returned_to_menu.connect(func(): _root.visible = false)
 	GameCore.new_best.connect(func(): _float_text("New Best!"))
 
+	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
-	_on_critter_rescued("", GameCore.rescued_this_run.size())
+	_refresh_rescues(0)
 	_refresh_lives()
 
 func _make_label(size: int, color: Color) -> Label:
@@ -67,9 +78,12 @@ func _on_score_changed(score: int) -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _on_critter_rescued(_id: String, total: int) -> void:
-	_rescue_label.text = "🐾 %d" % total
+	_refresh_rescues(total)
 	if total > 0:
 		_float_text(_streak_word(GameCore.streak))
+
+func _refresh_rescues(total: int) -> void:
+	_rescue_label.text = "🐾 %d" % total
 
 const STREAK_WORDS := ["Rescued!", "Nice!", "Great!", "Awesome!", "Amazing!", "Incredible!"]
 
@@ -86,7 +100,7 @@ func _float_text(text: String) -> void:
 	var size := get_viewport().get_visible_rect().size
 	l.position = Vector2(size.x * 0.5 - 150, size.y * 0.45)
 	l.custom_minimum_size = Vector2(300, 0)
-	add_child(l)
+	_root.add_child(l)
 	var t := l.create_tween()
 	t.set_parallel(true)
 	t.tween_property(l, "position:y", l.position.y - 130, 0.9)
@@ -97,6 +111,8 @@ func _on_stumbled(_lives_remaining: int) -> void:
 	_refresh_lives()
 
 func _on_run_started() -> void:
+	_root.visible = true
+	_refresh_rescues(0)
 	_refresh_lives()
 
 func _refresh_lives() -> void:

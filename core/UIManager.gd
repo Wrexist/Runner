@@ -60,7 +60,7 @@ func _on_run_started() -> void:
 func _on_run_ended(score: int, is_high: bool) -> void:
 	var s := UILayer.make_game_over(score, is_high, GameCore.rescued_this_run.size())
 	s.play_again_pressed.connect(_on_play_pressed)
-	s.shop_pressed.connect(_open_shop_gated)
+	s.album_pressed.connect(_show_album)
 	_show(s)
 
 # ---------------------------------------------------------------- Pause
@@ -89,16 +89,19 @@ func _show_settings(on_close: Callable) -> void:
 func _show_album() -> void:
 	var a := UILayer.make_album()
 	a.closed.connect(_show_start)
+	a.unlock_pressed.connect(func(): _open_shop_gated(_show_album))
 	_show(a)
 
 # ---------------------------------------------------------------- Shop (gated)
-func _open_shop_gated() -> void:
+## The parental gate ALWAYS precedes the Shop. `on_close` is where Back/cancel
+## returns (e.g. the album), so we never rebuild a stale screen from live state.
+func _open_shop_gated(on_close: Callable) -> void:
 	var gate := UILayer.make_parental_gate()
-	gate.passed.connect(_open_shop)
-	gate.cancelled.connect(_on_run_ended.bind(GameCore.score, false))
+	gate.passed.connect(func(): _open_shop(on_close))
+	gate.cancelled.connect(on_close)
 	_show(gate)
 
-func _open_shop() -> void:
+func _open_shop(on_close: Callable) -> void:
 	var shop := UILayer.make_shop()
-	shop.closed.connect(_on_run_ended.bind(GameCore.score, false))
+	shop.closed.connect(on_close)
 	_show(shop)

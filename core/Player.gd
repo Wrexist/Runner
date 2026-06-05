@@ -28,10 +28,13 @@ func _ready() -> void:
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
 	GameCore.run_started.connect(_on_run_started)
+	GameCore.returned_to_menu.connect(_on_run_started)
 
 func _on_run_started() -> void:
 	current_lane = lanes_count / 2
 	_target_x = _lane_to_x(current_lane)
+	position.x = _target_x
+	_history.clear()
 	clear_color()
 
 func _lane_to_x(lane: int) -> float:

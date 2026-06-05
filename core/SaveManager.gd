@@ -57,3 +57,4 @@ func load_game() -> void:
 	unlocked_critters = parsed.get("unlocked_critters", [])
 	all_unlocked_iap = bool(parsed.get("all_unlocked_iap", false))
 	settings = parsed.get("settings", settings)
+	seen_tutorial = bool(parsed.get("seen_tutorial", false))
