@@ -95,11 +95,18 @@ class ParentalGate extends Control:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label("Ask a grown-up", 40))
-		var a := randi_range(2, 7)
-		var b := randi_range(2, 7)
+		# Two-digit-ish sum so it isn't trivially guessable; distractors are
+		# distinct, plausible, and never 0 (which would make elimination easy).
+		var a := randi_range(4, 9)
+		var b := randi_range(4, 9)
 		_answer = a + b
 		col.add_child(UIScreens._label("What is %d + %d ?" % [a, b], 36))
-		var options := [_answer, _answer + randi_range(1, 3), maxi(_answer - randi_range(1, 3), 0)]
+		var options: Array[int] = [_answer]
+		while options.size() < 3:
+			var delta := randi_range(1, 4) * (1 if randf() < 0.5 else -1)
+			var candidate := _answer + delta
+			if candidate > 0 and candidate not in options:
+				options.append(candidate)
 		options.shuffle()
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_CENTER

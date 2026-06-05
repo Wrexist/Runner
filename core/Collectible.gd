@@ -75,4 +75,4 @@ func _pick_critter_id() -> String:
 	var critters: Array = ThemeManager.get_val("rescuable_critters", [])
 	if critters.is_empty():
 		return "critter"
-	return str(critters[randi() % critters.size()].id)
+	return str(critters[randi() % critters.size()].get("id", "critter"))
