@@ -41,7 +41,7 @@ func start_run() -> void:
 	paused = false
 	_announced_best = false
 	rescued_this_run = []
-	current_speed = float(ThemeManager.get_val("scroll_speed_start", 8.0))
+	current_speed = float(ThemeManager.diff_val("scroll_speed_start", 8.0))
 	state = State.PLAYING
 	emit_signal("run_started")
 	emit_signal("score_changed", score)
@@ -77,9 +77,10 @@ func _process(delta: float) -> void:
 	if not is_running():
 		return
 	elapsed += delta
-	# Gentle, predictable speed ramp — never punishing spikes.
-	var ramp := float(ThemeManager.get_val("speed_ramp_per_second", 0.15))
-	var smax := float(ThemeManager.get_val("scroll_speed_max", 18.0))
+	# Gentle, predictable speed ramp — never punishing spikes. On "easy" the
+	# ramp is 0, so speed stays flat for the youngest players.
+	var ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 0.15))
+	var smax := float(ThemeManager.diff_val("scroll_speed_max", 18.0))
 	current_speed = min(current_speed + ramp * delta, smax)
 
 func add_score(amount: int) -> void:

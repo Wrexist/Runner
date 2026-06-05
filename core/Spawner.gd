@@ -19,14 +19,19 @@ var _last_lane: int = -1
 const SPAWN_Z := -40.0          # spawn ahead, scroll toward player at z=0
 
 func _ready() -> void:
-	interval = float(ThemeManager.get_val("spawn_interval_start", 1.4))
-	interval_min = float(ThemeManager.get_val("spawn_interval_min", 0.7))
+	_apply_tuning()
+	# Re-read tuning each run so a difficulty change in Settings takes effect.
+	GameCore.run_started.connect(_apply_tuning)
+	GameCore.run_started.connect(_clear_field)
+	GameCore.returned_to_menu.connect(_clear_field)
+
+func _apply_tuning() -> void:
+	interval = float(ThemeManager.diff_val("spawn_interval_start", 1.4))
+	interval_min = float(ThemeManager.diff_val("spawn_interval_min", 0.7))
+	gem_cage_gap = float(ThemeManager.diff_val("gem_cage_gap", 6.0))
 	colors = ThemeManager.get_val("gem_colors", ["red", "blue", "yellow"])
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
-	gem_cage_gap = float(ThemeManager.get_val("gem_cage_gap", 6.0))
-	GameCore.run_started.connect(_clear_field)
-	GameCore.returned_to_menu.connect(_clear_field)
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.

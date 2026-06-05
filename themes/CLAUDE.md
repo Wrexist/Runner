@@ -23,11 +23,18 @@ editing code to make a theme work, fix the engine to read that value from
 | `lanes`, `lane_width` | Player, Spawner | track geometry |
 | `scroll_speed_start/max`, `speed_ramp_per_second` | GameCore | difficulty ramp |
 | `gem_colors` | Spawner | which gem/cage colors appear |
+| `gem_palette` | ThemeManager.gem_color | optional name→hex map (else built-in defaults) |
+| `gem_symbols` | ThemeManager.gem_symbol | optional name→shape map for color-blind play |
 | `spawn_interval_start/min` | Spawner | pacing (tightens as run speeds up) |
+| `gem_cage_gap` | Spawner | gem→cage spacing = reaction window (difficulty lever) |
 | `max_stumbles` | GameCore | lives before a gentle run-end (default 3) |
+| `difficulty.{easy,normal}` | ThemeManager.diff_val | per-preset overrides of speed/ramp/spawn/gap; chosen in Settings (default easy) |
 | `assets.*` | (art wiring) | model/texture paths |
 | `rescuable_critters[]` | GameCore | `{id, model, unlock_score}` earn-by-play |
 | `audio.*` | juice/audio | music + sfx paths; missing = silent, never crash |
+
+Tuning that has a `difficulty` override is read via `ThemeManager.diff_val(key)`
+(preset → top-level → default). Everything else uses `get_val`.
 
 ## Compliance note
 

@@ -6,7 +6,7 @@
 size = Vector3(0.8, 0.8, 0.8)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_player"]
-size = Vector3(0.8, 0.8, 0.8)
+size = Vector3(0.8, 0.8, 1.8)
 
 [node name="Player" type="Node3D" groups=["player"]]
 script = ExtResource("1_player")

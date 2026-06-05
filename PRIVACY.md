@@ -19,9 +19,11 @@ information. There are:
 
 ## Data stored on your device
 
-The game saves a small file **locally on the device only** (high score,
-unlocked critters, and sound on/off settings). This never leaves the device
-and is removed when you delete the app.
+The game saves a small file **locally on the device only**: high score,
+unlocked critters, sound and difficulty settings, a first-run tutorial flag, and
+lifetime play stats (total critters rescued and number of runs played). None of
+this is personal information, it never leaves the device, and it is removed when
+you delete the app.
 
 ## Purchases
 

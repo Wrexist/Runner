@@ -229,10 +229,23 @@ class Settings extends Control:
 		col.add_child(UIScreens._label("Settings", 48))
 		col.add_child(_toggle("Music", "music"))
 		col.add_child(_toggle("Sounds", "sfx"))
+		col.add_child(_difficulty_button())
 		var back := UIScreens._button("Back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
+	func _difficulty_button() -> Button:
+		var b := UIScreens._button("")
+		_refresh_difficulty(b)
+		b.pressed.connect(func():
+			var now := str(SaveManager.settings.get("difficulty", "easy"))
+			SaveManager.settings["difficulty"] = "normal" if now == "easy" else "easy"
+			SaveManager.save_game()
+			_refresh_difficulty(b))
+		return b
+	func _refresh_difficulty(b: Button) -> void:
+		var d := str(SaveManager.settings.get("difficulty", "easy"))
+		b.text = "Difficulty:  %s" % ("Easy" if d == "easy" else "Normal")
 	func _toggle(label: String, key: String) -> Button:
 		var b := UIScreens._button("")
 		_refresh(b, label, key)
@@ -307,18 +320,58 @@ static func make_album() -> Album:
 	return s
 
 # ---------------------------------------------------------------- Tutorial
+## A small 2D shape drawn from a color+symbol, so the tutorial reads for a
+## pre-reader (and reinforces the color-blind shape language). `filled` = a gem;
+## hollow = an empty cage of the same color/shape.
+class Glyph2D extends Control:
+	var symbol: String = "sphere"
+	var col: Color = Color.WHITE
+	var filled: bool = true
+	func _init(p_symbol: String = "sphere", p_col: Color = Color.WHITE, p_filled: bool = true) -> void:
+		symbol = p_symbol
+		col = p_col
+		filled = p_filled
+		custom_minimum_size = Vector2(96, 96)
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.42
+		_shape(c, r, col)
+		if not filled:
+			# Punch a hole so it reads as an empty cage, not a gem.
+			_shape(c, r * 0.5, ThemeManager.color("background_bottom", Color.BLACK))
+	func _shape(c: Vector2, r: float, color: Color) -> void:
+		match symbol:
+			"box", "cylinder", "capsule":
+				draw_rect(Rect2(c - Vector2(r, r), Vector2(r * 2.0, r * 2.0)), color)
+			"prism":
+				draw_colored_polygon(PackedVector2Array([
+					c + Vector2(0, -r), c + Vector2(r, r), c + Vector2(-r, r)]), color)
+			_:
+				draw_circle(c, r, color)
+
 ## One-time, first-run "how to play" card. The core mechanic is conditional
-## (a gem changes what a cage means), which is the hardest thing to convey — so
-## we show it with big colored shapes, not paragraphs of text.
+## (a gem changes what a cage means), the hardest thing to convey — so we SHOW
+## it: gem -> same-color cage = a rescued friend, using the theme's real colors.
 class Tutorial extends Control:
 	signal start_pressed
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label("How to play", 48))
-		col.add_child(UIScreens._label("1.  Grab a gem to carry its color", 28))
-		col.add_child(UIScreens._label("2.  Reach the SAME-color cage to rescue a friend!", 28))
-		col.add_child(UIScreens._label("Swipe or tap a side to move.", 24))
+		var colors: Array = ThemeManager.get_val("gem_colors", ["red"])
+		var c0 := str(colors[0]) if colors.size() > 0 else "red"
+		var gc := ThemeManager.gem_color(c0)
+		var sym := ThemeManager.gem_symbol(c0)
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 14)
+		row.add_child(UIScreens.Glyph2D.new(sym, gc, true))             # gem
+		row.add_child(UIScreens._label("→", 40))
+		row.add_child(UIScreens.Glyph2D.new(sym, gc, false))            # matching cage
+		row.add_child(UIScreens._label("=", 40))
+		row.add_child(UIScreens.Glyph2D.new("sphere", ThemeManager.color("accent", Color(1, 0.55, 0.6)), true))
+		col.add_child(row)
+		col.add_child(UIScreens._label("Grab the gem, reach the matching cage!", 26))
 		var go := UIScreens._button("Let's go!")
 		go.pressed.connect(func(): start_pressed.emit())
 		col.add_child(go)

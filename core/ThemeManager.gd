@@ -42,6 +42,20 @@ func load_theme(theme_id: String) -> bool:
 func get_val(key: String, default_value: Variant = null) -> Variant:
 	return _data.get(key, default_value)
 
+## The active difficulty preset id (from local settings; default gentle).
+func difficulty() -> String:
+	return str(SaveManager.settings.get("difficulty", "easy"))
+
+## A tuning value that may be overridden by the active difficulty preset
+## (theme.json "difficulty": {"easy": {...}, "normal": {...}}). Falls back to the
+## top-level theme value, then the supplied default — always fail-soft.
+func diff_val(key: String, default_value: Variant = null) -> Variant:
+	var presets: Dictionary = _data.get("difficulty", {})
+	var preset: Dictionary = presets.get(difficulty(), {})
+	if preset.has(key):
+		return preset[key]
+	return get_val(key, default_value)
+
 ## Convenience accessors with safe fallbacks so a missing key never crashes.
 func color(name: String, fallback: Color = Color.WHITE) -> Color:
 	var pal: Dictionary = _data.get("palette", {})

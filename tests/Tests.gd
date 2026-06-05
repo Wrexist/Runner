@@ -30,6 +30,7 @@ func _run_all() -> void:
 	_test_new_best()
 	_test_menu_abandon()
 	_test_save_unlocks()
+	_test_difficulty()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -92,3 +93,13 @@ func _test_save_unlocks() -> void:
 	SaveManager.all_unlocked_iap = true
 	_check("IAP unlocks everything", SaveManager.is_unlocked("anything"))
 	SaveManager.all_unlocked_iap = false
+
+func _test_difficulty() -> void:
+	SaveManager.settings["difficulty"] = "easy"
+	var easy_start := float(ThemeManager.diff_val("scroll_speed_start", 99.0))
+	var easy_ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 99.0))
+	SaveManager.settings["difficulty"] = "normal"
+	var normal_start := float(ThemeManager.diff_val("scroll_speed_start", 99.0))
+	_check("easy start slower than normal", easy_start < normal_start)
+	_check("easy ramp is flat (0)", easy_ramp == 0.0)
+	SaveManager.settings["difficulty"] = "easy"   # restore gentle default
