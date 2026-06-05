@@ -14,6 +14,7 @@ var carried_color: String = ""
 var _target_x: float = 0.0
 var _swipe_start_x: float = 0.0
 var _swiping: bool = false
+var _swiped_this_touch: bool = false
 const SWIPE_THRESHOLD := 40.0          # pixels before a drag counts as a swipe
 
 # Breadcrumb of recent positions so the rescue Trail can snake behind us.
@@ -26,6 +27,12 @@ func _ready() -> void:
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
+	GameCore.run_started.connect(_on_run_started)
+
+func _on_run_started() -> void:
+	current_lane = lanes_count / 2
+	_target_x = _lane_to_x(current_lane)
+	clear_color()
 
 func _lane_to_x(lane: int) -> float:
 	return (lane - (lanes_count - 1) / 2.0) * lane_width
@@ -53,7 +60,7 @@ func history_point(steps: int) -> Vector3:
 	return _history[mini(steps, _history.size() - 1)]
 
 func _unhandled_input(event: InputEvent) -> void:
-	if GameCore.state != GameCore.State.PLAYING:
+	if not GameCore.is_running():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_LEFT:
@@ -64,15 +71,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed:
 			_swipe_start_x = event.position.x
 			_swiping = true
+			_swiped_this_touch = false
 		else:
+			# A tap (no swipe) moves toward the side of the screen tapped — the
+			# most forgiving control for tiny, imprecise hands.
+			if not _swiped_this_touch:
+				var half := get_viewport().get_visible_rect().size.x * 0.5
+				move_lane(1 if event.position.x >= half else -1)
 			_swiping = false
-	elif event is InputEventScreenDrag and _swiping:
+	elif event is InputEventScreenDrag and _swiping and not _swiped_this_touch:
 		var dx := event.position.x - _swipe_start_x
 		if absf(dx) >= SWIPE_THRESHOLD:
 			move_lane(1 if dx > 0.0 else -1)
-			_swiping = false        # one lane per swipe; release to swipe again
+			_swiped_this_touch = true   # one lane per swipe; release to move again
 
 func _process(delta: float) -> void:
+	if not GameCore.is_running():
+		return
 	position.x = move_toward(position.x, _target_x, move_speed * delta)
 	_history.push_front(global_position)
 	if _history.size() > HISTORY_MAX:
@@ -81,6 +96,42 @@ func _process(delta: float) -> void:
 # --- Rescue Run color carrying (called by Collectible) ---
 func carry_color(c: String) -> void:
 	carried_color = c
+	_update_carry_visual()
 
 func clear_color() -> void:
 	carried_color = ""
+	_update_carry_visual()
+
+## Show what color/shape the player is carrying — without this the core decision
+## ("do I have the right color for the cage ahead?") is invisible and unmakeable.
+func _update_carry_visual() -> void:
+	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
+	if mesh:
+		if carried_color == "":
+			mesh.material_override = null
+		else:
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = ThemeManager.gem_color(carried_color)
+			mesh.material_override = mat
+	_update_carry_badge()
+
+func _update_carry_badge() -> void:
+	var badge := get_node_or_null("CarryBadge") as MeshInstance3D
+	if carried_color == "":
+		if badge:
+			badge.visible = false
+		return
+	if badge == null:
+		badge = MeshInstance3D.new()
+		badge.name = "CarryBadge"
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color.WHITE
+		m.emission_enabled = true
+		m.emission = Color.WHITE
+		m.emission_energy_multiplier = 0.6
+		badge.material_override = m
+		badge.position = Vector3(0, 1.0, 0)
+		add_child(badge)
+	badge.mesh = Shapes.badge(ThemeManager.gem_symbol(carried_color))
+	badge.visible = true
+	Effects.pop(badge, 1.4)

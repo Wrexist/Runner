@@ -14,6 +14,8 @@ var interval_min: float = 0.7
 var colors: Array = ["red", "blue", "yellow"]
 var lanes_count: int = 3
 var lane_width: float = 2.0
+var gem_cage_gap: float = 6.0   # reaction-time window (theme/difficulty lever)
+var _last_lane: int = -1
 const SPAWN_Z := -40.0          # spawn ahead, scroll toward player at z=0
 
 func _ready() -> void:
@@ -22,9 +24,10 @@ func _ready() -> void:
 	colors = ThemeManager.get_val("gem_colors", ["red", "blue", "yellow"])
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
+	gem_cage_gap = float(ThemeManager.get_val("gem_cage_gap", 6.0))
 
 func _process(delta: float) -> void:
-	if GameCore.state != GameCore.State.PLAYING:
+	if not GameCore.is_running():
 		return
 	spawn_timer -= delta
 	if spawn_timer <= 0.0:
@@ -34,12 +37,17 @@ func _process(delta: float) -> void:
 		spawn_timer = lerp(interval, interval_min, t)
 
 func _spawn_pair() -> void:
+	# Avoid repeating the same lane twice in a row so there's always an easy,
+	# obvious safe lane — keeps it fair and gentle for the youngest players.
 	var lane := randi() % lanes_count
+	if lane == _last_lane and lanes_count > 1:
+		lane = (lane + 1 + (randi() % (lanes_count - 1))) % lanes_count
+	_last_lane = lane
 	var color: String = colors[randi() % colors.size()]
 	var x := (lane - (lanes_count - 1) / 2.0) * lane_width
 	# Gem first (closer), cage behind it (further), same lane + color.
 	_spawn_one(gem_scene, x, SPAWN_Z, color, lane)
-	_spawn_one(cage_scene, x, SPAWN_Z - 6.0, color, lane)
+	_spawn_one(cage_scene, x, SPAWN_Z - gem_cage_gap, color, lane)
 
 func _spawn_one(scene: PackedScene, x: float, z: float, color: String, lane: int) -> void:
 	if scene == null:

@@ -13,9 +13,20 @@
   "scroll_speed_max": 18.0,
   "speed_ramp_per_second": 0.15,
   "gem_colors": ["red", "blue", "yellow"],
+  "gem_palette": {
+    "red": "#eb5a52",
+    "blue": "#5286eb",
+    "yellow": "#f2d44e"
+  },
+  "gem_symbols": {
+    "red": "box",
+    "blue": "sphere",
+    "yellow": "cylinder"
+  },
   "spawn_interval_start": 1.4,
   "spawn_interval_min": 0.7,
   "max_stumbles": 3,
+  "gem_cage_gap": 6.0,
   "assets": {
     "player_model": "res://themes/forest/models/fox.glb",
     "ground_texture": "res://themes/forest/textures/grass.png",

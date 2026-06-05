@@ -36,6 +36,7 @@ func _ready() -> void:
 	GameCore.critter_rescued.connect(_on_critter_rescued)
 	GameCore.stumbled.connect(_on_stumbled)
 	GameCore.run_started.connect(_on_run_started)
+	GameCore.new_best.connect(func(): _float_text("New Best!"))
 
 	_on_score_changed(GameCore.score)
 	_on_critter_rescued("", GameCore.rescued_this_run.size())

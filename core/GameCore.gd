@@ -9,6 +9,9 @@ signal score_changed(score: int)
 signal critter_rescued(id: String, total_rescued: int)
 signal stumbled(lives_remaining: int)
 signal streak_changed(streak: int)
+signal new_best                              # first time this run beats the old best
+signal paused_changed(is_paused: bool)
+signal returned_to_menu
 
 enum State { MENU, PLAYING, GAME_OVER }
 
@@ -21,12 +24,22 @@ var stumbles: int = 0
 ## Consecutive rescues without a stumble. Drives *celebration* feedback only —
 ## it never punishes and never gates content. Pure "you're doing great" juice.
 var streak: int = 0
+var paused: bool = false
+var _announced_best: bool = false
+
+## True only when a run is actively playing (not menu, game-over, or paused).
+## Every gameplay _process loop gates on this so pause freezes the world while
+## the HUD/tweens keep animating.
+func is_running() -> bool:
+	return state == State.PLAYING and not paused
 
 func start_run() -> void:
 	score = 0
 	elapsed = 0.0
 	stumbles = 0
 	streak = 0
+	paused = false
+	_announced_best = false
 	rescued_this_run = []
 	current_speed = float(ThemeManager.get_val("scroll_speed_start", 8.0))
 	state = State.PLAYING
@@ -34,8 +47,34 @@ func start_run() -> void:
 	emit_signal("score_changed", score)
 	emit_signal("streak_changed", streak)
 
+# --- Pause (manual + automatic on app backgrounding) ---
+func pause() -> void:
+	if state != State.PLAYING or paused:
+		return
+	paused = true
+	emit_signal("paused_changed", true)
+
+func resume() -> void:
+	if not paused:
+		return
+	paused = false
+	emit_signal("paused_changed", false)
+
+## Abandon the current run and go back to the menu (no score recorded).
+func go_to_menu() -> void:
+	paused = false
+	state = State.MENU
+	emit_signal("paused_changed", false)
+	emit_signal("returned_to_menu")
+
+func _notification(what: int) -> void:
+	# Auto-pause if the app loses focus / is backgrounded — never punish a kid
+	# because a call came in or a parent took the phone.
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		pause()
+
 func _process(delta: float) -> void:
-	if state != State.PLAYING:
+	if not is_running():
 		return
 	elapsed += delta
 	# Gentle, predictable speed ramp — never punishing spikes.
@@ -46,6 +85,10 @@ func _process(delta: float) -> void:
 func add_score(amount: int) -> void:
 	score += amount
 	emit_signal("score_changed", score)
+	# Celebrate the moment you pass your previous best (only if you had one).
+	if not _announced_best and SaveManager.high_score > 0 and score > SaveManager.high_score:
+		_announced_best = true
+		emit_signal("new_best")
 
 func rescue_critter(id: String) -> void:
 	rescued_this_run.append(id)

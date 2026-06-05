@@ -10,6 +10,7 @@ var high_score: int = 0
 var unlocked_critters: Array = []          # critter ids earned by score
 var all_unlocked_iap: bool = false         # set true by the single unlock-all IAP
 var settings: Dictionary = {"music": true, "sfx": true}
+var seen_tutorial: bool = false            # first-run "how to play" shown once
 
 func _ready() -> void:
 	load_game()
@@ -33,6 +34,7 @@ func save_game() -> void:
 		"unlocked_critters": unlocked_critters,
 		"all_unlocked_iap": all_unlocked_iap,
 		"settings": settings,
+		"seen_tutorial": seen_tutorial,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:

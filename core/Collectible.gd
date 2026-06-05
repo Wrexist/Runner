@@ -32,19 +32,30 @@ func _apply_color() -> void:
 	if kind == "cage":
 		mat.albedo_color = mat.albedo_color.darkened(0.15)
 	mesh.material_override = mat
+	_add_symbol_badge()
+
+## A white shape floating above the item so the color is also readable as a
+## SHAPE (color-blind accessibility — see Shapes.gd).
+func _add_symbol_badge() -> void:
+	if has_node("SymbolBadge"):
+		return
+	var badge := MeshInstance3D.new()
+	badge.name = "SymbolBadge"
+	badge.mesh = Shapes.badge(ThemeManager.gem_symbol(color_name))
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color.WHITE
+	m.emission_enabled = true
+	m.emission = Color.WHITE
+	m.emission_energy_multiplier = 0.6
+	badge.material_override = m
+	badge.position = Vector3(0, 0.95, 0)
+	add_child(badge)
 
 func _color_from_name(n: String) -> Color:
-	match n:
-		"red": return Color(0.92, 0.32, 0.32)
-		"blue": return Color(0.32, 0.52, 0.92)
-		"yellow": return Color(0.95, 0.85, 0.32)
-		"green": return Color(0.40, 0.80, 0.45)
-		"purple": return Color(0.70, 0.42, 0.86)
-		"orange": return Color(0.96, 0.60, 0.26)
-		_: return Color.WHITE
+	return ThemeManager.gem_color(n)
 
 func _process(delta: float) -> void:
-	if GameCore.state != GameCore.State.PLAYING:
+	if not GameCore.is_running():
 		return
 	position.z += GameCore.current_speed * delta
 	if position.z > 4.0:        # passed the player; recycle

@@ -59,3 +59,36 @@ func audio(name: String, fallback: String = "") -> String:
 
 func display_name() -> String:
 	return str(_data.get("display_name", "Critter Dash"))
+
+## Gem/cage color by name. Themes may override via a "gem_palette" map in
+## theme.json; otherwise a friendly built-in default is used (fail-soft).
+func gem_color(name: String) -> Color:
+	var pal: Dictionary = _data.get("gem_palette", {})
+	if pal.has(name):
+		return Color(pal[name])
+	return _default_gem_color(name)
+
+func _default_gem_color(name: String) -> Color:
+	match name:
+		"red": return Color(0.92, 0.32, 0.32)
+		"blue": return Color(0.32, 0.52, 0.92)
+		"yellow": return Color(0.95, 0.85, 0.32)
+		"green": return Color(0.40, 0.80, 0.45)
+		"purple": return Color(0.70, 0.42, 0.86)
+		"orange": return Color(0.96, 0.60, 0.26)
+		_: return Color.WHITE
+
+## A redundant SHAPE id per color for color-blind play. Themes may override via
+## a "gem_symbols" map; otherwise each color maps to a distinct primitive.
+func gem_symbol(name: String) -> String:
+	var syms: Dictionary = _data.get("gem_symbols", {})
+	if syms.has(name):
+		return str(syms[name])
+	match name:
+		"red": return "box"
+		"blue": return "sphere"
+		"yellow": return "cylinder"
+		"green": return "prism"
+		"purple": return "torus"
+		"orange": return "capsule"
+		_: return "sphere"
