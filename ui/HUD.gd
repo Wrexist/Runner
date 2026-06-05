@@ -20,8 +20,8 @@ func _ready() -> void:
 
 	_rescue_label = _make_label(28, text_color)
 	_rescue_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	_rescue_label.offset_left = 24
-	_rescue_label.offset_top = 28
+	_rescue_label.offset_left = 108   # clear of the pause button at top-left
+	_rescue_label.offset_top = 34
 	add_child(_rescue_label)
 
 	_lives_label = _make_label(28, text_color)
@@ -31,6 +31,17 @@ func _ready() -> void:
 	_lives_label.offset_top = 28
 	_lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_lives_label)
+
+	# Big, easy pause target (auto-pause on backgrounding is handled in GameCore).
+	var pause_btn := Button.new()
+	pause_btn.text = "II"
+	pause_btn.add_theme_font_size_override("font_size", 28)
+	pause_btn.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	pause_btn.offset_left = 20
+	pause_btn.offset_top = 20
+	pause_btn.custom_minimum_size = Vector2(72, 72)
+	pause_btn.pressed.connect(GameCore.pause)
+	add_child(pause_btn)
 
 	GameCore.score_changed.connect(_on_score_changed)
 	GameCore.critter_rescued.connect(_on_critter_rescued)

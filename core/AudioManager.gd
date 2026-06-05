@@ -22,6 +22,10 @@ func _ready() -> void:
 	GameCore.run_started.connect(play_music)
 	GameCore.critter_rescued.connect(_on_rescued)
 	GameCore.stumbled.connect(func(_lives): play_sfx("miss"))
+	GameCore.paused_changed.connect(set_paused)
+
+func set_paused(is_paused: bool) -> void:
+	_music.stream_paused = is_paused
 
 func _on_rescued(_id: String, _total: int) -> void:
 	# Pitch climbs with the streak so a hot run literally sounds more exciting.

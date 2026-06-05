@@ -37,6 +37,8 @@ static func _column() -> VBoxContainer:
 # ---------------------------------------------------------------- Start screen
 class StartScreen extends Control:
 	signal play_pressed
+	signal settings_pressed
+	signal album_pressed
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
@@ -46,6 +48,12 @@ class StartScreen extends Control:
 		var play := UIScreens._button("Play")
 		play.pressed.connect(func(): play_pressed.emit())
 		col.add_child(play)
+		var album := UIScreens._button("My Critters")
+		album.pressed.connect(func(): album_pressed.emit())
+		col.add_child(album)
+		var settings := UIScreens._button("Settings")
+		settings.pressed.connect(func(): settings_pressed.emit())
+		col.add_child(settings)
 		add_child(col)
 
 static func make_start_screen() -> StartScreen:
@@ -164,5 +172,135 @@ class Shop extends Control:
 
 static func make_shop() -> Shop:
 	var s := Shop.new()
+	s._build()
+	return s
+
+# ---------------------------------------------------------------- Pause
+class Pause extends Control:
+	signal resume_pressed
+	signal settings_pressed
+	signal home_pressed
+	func _build() -> void:
+		add_child(UIScreens._bg())
+		var col := UIScreens._column()
+		col.add_child(UIScreens._label("Paused", 52))
+		var resume := UIScreens._button("Resume")
+		resume.pressed.connect(func(): resume_pressed.emit())
+		col.add_child(resume)
+		var settings := UIScreens._button("Settings")
+		settings.pressed.connect(func(): settings_pressed.emit())
+		col.add_child(settings)
+		var home := UIScreens._button("Home")
+		home.pressed.connect(func(): home_pressed.emit())
+		col.add_child(home)
+		add_child(col)
+
+static func make_pause() -> Pause:
+	var s := Pause.new()
+	s._build()
+	return s
+
+# ---------------------------------------------------------------- Settings
+## Toggles for music + sound effects. The plumbing (SaveManager.settings +
+## AudioManager honoring it) already existed; this is the missing screen.
+class Settings extends Control:
+	signal closed
+	func _build() -> void:
+		add_child(UIScreens._bg())
+		var col := UIScreens._column()
+		col.add_child(UIScreens._label("Settings", 48))
+		col.add_child(_toggle("Music", "music"))
+		col.add_child(_toggle("Sounds", "sfx"))
+		var back := UIScreens._button("Back")
+		back.pressed.connect(func(): closed.emit())
+		col.add_child(back)
+		add_child(col)
+	func _toggle(label: String, key: String) -> Button:
+		var b := UIScreens._button("")
+		_refresh(b, label, key)
+		b.pressed.connect(_on_toggle.bind(b, label, key))
+		return b
+	func _on_toggle(b: Button, label: String, key: String) -> void:
+		SaveManager.settings[key] = not bool(SaveManager.settings.get(key, true))
+		SaveManager.save_game()
+		_refresh(b, label, key)
+		if key == "music":
+			if bool(SaveManager.settings["music"]):
+				AudioManager.play_music()
+			else:
+				AudioManager.stop_music()
+	func _refresh(b: Button, label: String, key: String) -> void:
+		var on := bool(SaveManager.settings.get(key, true))
+		b.text = "%s:  %s" % [label, "On" if on else "Off"]
+
+static func make_settings() -> Settings:
+	var s := Settings.new()
+	s._build()
+	return s
+
+# ---------------------------------------------------------------- Critter album
+## The payoff for unlocks (earned-by-score or the IAP): a grid of friends you've
+## rescued, with locked ones shown as "?" and the score that reveals them. This
+## is the compliant, healthy replay driver (collect them) — no compulsion loop.
+class Album extends Control:
+	signal closed
+	func _build() -> void:
+		add_child(UIScreens._bg())
+		var col := UIScreens._column()
+		col.add_child(UIScreens._label("My Critters", 48))
+		var grid := GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", 28)
+		grid.add_theme_constant_override("v_separation", 16)
+		grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		for c in ThemeManager.get_val("rescuable_critters", []):
+			grid.add_child(_cell(c))
+		col.add_child(grid)
+		var back := UIScreens._button("Back")
+		back.pressed.connect(func(): closed.emit())
+		col.add_child(back)
+		add_child(col)
+	func _cell(c: Dictionary) -> Control:
+		var id := str(c.get("id", "?"))
+		var unlocked := SaveManager.is_unlocked(id)
+		var box := VBoxContainer.new()
+		box.custom_minimum_size = Vector2(220, 120)
+		box.alignment = BoxContainer.ALIGNMENT_CENTER
+		var swatch := ColorRect.new()
+		swatch.custom_minimum_size = Vector2(80, 80)
+		swatch.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		swatch.color = ThemeManager.color("accent", Color(1, 0.55, 0.6)) if unlocked else Color(0.4, 0.4, 0.45)
+		box.add_child(swatch)
+		var name_label := UIScreens._label(id.capitalize() if unlocked else "?", 26)
+		box.add_child(name_label)
+		var hint := UIScreens._label("Rescued!" if unlocked else "Reach %d" % int(c.get("unlock_score", 0)), 18)
+		box.add_child(hint)
+		return box
+
+static func make_album() -> Album:
+	var s := Album.new()
+	s._build()
+	return s
+
+# ---------------------------------------------------------------- Tutorial
+## One-time, first-run "how to play" card. The core mechanic is conditional
+## (a gem changes what a cage means), which is the hardest thing to convey — so
+## we show it with big colored shapes, not paragraphs of text.
+class Tutorial extends Control:
+	signal start_pressed
+	func _build() -> void:
+		add_child(UIScreens._bg())
+		var col := UIScreens._column()
+		col.add_child(UIScreens._label("How to play", 48))
+		col.add_child(UIScreens._label("1.  Grab a gem to carry its color", 28))
+		col.add_child(UIScreens._label("2.  Reach the SAME-color cage to rescue a friend!", 28))
+		col.add_child(UIScreens._label("Swipe or tap a side to move.", 24))
+		var go := UIScreens._button("Let's go!")
+		go.pressed.connect(func(): start_pressed.emit())
+		col.add_child(go)
+		add_child(col)
+
+static func make_tutorial() -> Tutorial:
+	var s := Tutorial.new()
 	s._build()
 	return s
