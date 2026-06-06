@@ -71,8 +71,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_RIGHT:
 			move_lane(1)
 	elif event is InputEventScreenTouch:
-		if event.pressed:
-			_swipe_start_x = event.position.x
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_swipe_start_x = touch.position.x
 			_swiping = true
 			_swiped_this_touch = false
 		else:
@@ -80,10 +81,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			# most forgiving control for tiny, imprecise hands.
 			if not _swiped_this_touch:
 				var half := get_viewport().get_visible_rect().size.x * 0.5
-				move_lane(1 if event.position.x >= half else -1)
+				move_lane(1 if touch.position.x >= half else -1)
 			_swiping = false
 	elif event is InputEventScreenDrag and _swiping and not _swiped_this_touch:
-		var dx := event.position.x - _swipe_start_x
+		var drag := event as InputEventScreenDrag
+		var dx := drag.position.x - _swipe_start_x
 		if absf(dx) >= SWIPE_THRESHOLD:
 			move_lane(1 if dx > 0.0 else -1)
 			_swiped_this_touch = true   # one lane per swipe; release to move again

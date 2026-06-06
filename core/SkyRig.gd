@@ -14,6 +14,8 @@ func _apply() -> void:
 	env.ambient_light_color = Color.WHITE
 	env.ambient_light_energy = 0.7
 	# A touch of soft glow makes the bright gems pop without harshness.
-	env.glow_enabled = true
-	env.glow_intensity = 0.4
+	# (Skip under the headless dummy renderer used in CI — it has no post FX.)
+	if DisplayServer.get_name() != "headless":
+		env.glow_enabled = true
+		env.glow_intensity = 0.4
 	environment = env
