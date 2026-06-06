@@ -78,6 +78,11 @@ Switch the whole game to the other theme by setting
    the IAP plugin (the Shop's purchase is a marked `TODO(iap)` stub today), then
    TestFlight.
 
+> 🚀 **Going to the App Store?** Follow [`docs/LAUNCH_PLAN.md`](docs/LAUNCH_PLAN.md)
+> — a complete phased roadmap (accounts → art → playtest → QA → IAP → export →
+> App Store Connect → TestFlight → review → launch), with store copy in
+> [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md).
+
 ---
 
 ## Extending it

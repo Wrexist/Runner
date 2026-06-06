@@ -28,6 +28,10 @@ All notable changes to Critter Dash. This project follows
   rather than the loss moment. `PRIVACY.md` ("Data Not Collected").
 - **Reskinnability.** Gem colors/symbols and the gem→cage gap are theme data now;
   second `space` theme proves zero-code reskin. Lifetime progress stats.
+- **Launch-readiness.** `core/IAP.gd` abstraction (single seam for the real
+  StoreKit plugin), Reduce-Motion + parent-gated Reset-Progress settings,
+  `ios/PrivacyInfo.xcprivacy` (Apple privacy manifest), and a full
+  `docs/LAUNCH_PLAN.md` (phased App Store roadmap) + `docs/STORE_LISTING.md`.
 - **Tooling.** Root + nested `CLAUDE.md`, `.claude/` (SessionStart hook, slash
   commands, compliance subagent), `.gitignore`, MIT `LICENSE`, GitHub Actions CI
   (theme-JSON validation, headless project load, **headless logic tests**).
