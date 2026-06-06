@@ -6,6 +6,8 @@ extends Node
 
 ## A soft confetti/sparkle burst at a world position.
 func burst(global_pos: Vector3, color: Color, amount: int = 16) -> void:
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.emitting = false

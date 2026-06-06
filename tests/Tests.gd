@@ -31,6 +31,7 @@ func _run_all() -> void:
 	_test_menu_abandon()
 	_test_save_unlocks()
 	_test_difficulty()
+	_test_iap_and_reset()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -103,3 +104,21 @@ func _test_difficulty() -> void:
 	_check("easy start slower than normal", easy_start < normal_start)
 	_check("easy ramp is flat (0)", easy_ramp == 0.0)
 	SaveManager.settings["difficulty"] = "easy"   # restore gentle default
+
+func _test_iap_and_reset() -> void:
+	SaveManager.all_unlocked_iap = false
+	var got := {"ok": false}
+	var cb := func(): got["ok"] = true
+	IAP.purchase_succeeded.connect(cb)
+	IAP.purchase_unlock_all()
+	_check("IAP purchase grants unlock", SaveManager.all_unlocked_iap)
+	_check("IAP emits purchase_succeeded", got["ok"])
+	IAP.purchase_succeeded.disconnect(cb)
+	# Reset keeps purchases (must stay restorable) but wipes progress.
+	SaveManager.high_score = 123
+	SaveManager.lifetime_rescued = 9
+	SaveManager.reset_progress()
+	_check("reset clears high score", SaveManager.high_score == 0)
+	_check("reset clears lifetime stat", SaveManager.lifetime_rescued == 0)
+	_check("reset keeps IAP entitlement", SaveManager.all_unlocked_iap)
+	SaveManager.all_unlocked_iap = false

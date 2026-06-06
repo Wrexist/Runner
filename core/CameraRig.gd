@@ -16,5 +16,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _player == null:
 		return
-	var target_x := _base.x + _player.position.x * follow_amount
+	# Reduce-motion: keep the camera still rather than following the lane.
+	var amount := 0.0 if bool(SaveManager.settings.get("reduce_motion", false)) else follow_amount
+	var target_x := _base.x + _player.position.x * amount
 	position.x = lerpf(position.x, target_x, clampf(delta * smooth_speed, 0.0, 1.0))

@@ -49,6 +49,8 @@ func move_lane(dir: int) -> void:
 
 ## A quick lean into the turn that settles back — makes movement feel alive.
 func _lean(dir: int) -> void:
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
 	var mesh := get_node_or_null("MeshInstance3D") as Node3D
 	if mesh == null:
 		return

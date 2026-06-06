@@ -163,28 +163,32 @@ static func make_parental_gate() -> ParentalGate:
 ## TODO(iap): replace the stubbed unlock with the Godot iOS IAP plugin call.
 class Shop extends Control:
 	signal closed
+	var _status: Label
+	var _unlock: Button
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label("Critter Shop", 48))
-		var status := UIScreens._label(_status_text(), 28)
-		col.add_child(status)
-		var unlock := UIScreens._button("Unlock All Critters  $2.99")
-		unlock.disabled = SaveManager.all_unlocked_iap
-		unlock.pressed.connect(func():
-			SaveManager.set_all_unlocked(true)   # TODO(iap): real purchase
-			status.text = _status_text()
-			unlock.disabled = true)
-		col.add_child(unlock)
+		_status = UIScreens._label(_status_text(), 28)
+		col.add_child(_status)
+		_unlock = UIScreens._button("Unlock All Critters  %s" % IAP.price_text())
+		_unlock.disabled = SaveManager.all_unlocked_iap
+		_unlock.pressed.connect(func(): IAP.purchase_unlock_all())
+		col.add_child(_unlock)
 		var restore := UIScreens._button("Restore Purchases")
-		restore.pressed.connect(func():
-			# TODO(iap): query StoreKit for prior non-consumable purchase.
-			status.text = _status_text())
+		restore.pressed.connect(func(): IAP.restore())
 		col.add_child(restore)
 		var back := UIScreens._button("Back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
+		# React to the purchase/restore results (real plugin or stub alike).
+		IAP.purchase_succeeded.connect(_refresh)
+		IAP.restore_completed.connect(func(_u): _refresh())
+		IAP.purchase_failed.connect(func(reason): _status.text = "Purchase failed: %s" % reason)
+	func _refresh() -> void:
+		_status.text = _status_text()
+		_unlock.disabled = SaveManager.all_unlocked_iap
 	func _status_text() -> String:
 		return "All critters unlocked!" if SaveManager.all_unlocked_iap else "Unlock every critter forever."
 
@@ -223,13 +227,18 @@ static func make_pause() -> Pause:
 ## AudioManager honoring it) already existed; this is the missing screen.
 class Settings extends Control:
 	signal closed
+	signal reset_requested
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label("Settings", 48))
 		col.add_child(_toggle("Music", "music"))
 		col.add_child(_toggle("Sounds", "sfx"))
+		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
+		var reset := UIScreens._button("Reset Progress")
+		reset.pressed.connect(func(): reset_requested.emit())
+		col.add_child(reset)
 		var back := UIScreens._button("Back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)

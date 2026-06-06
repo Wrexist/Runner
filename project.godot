@@ -21,6 +21,7 @@ ThemeManager="*res://core/ThemeManager.gd"
 GameCore="*res://core/GameCore.gd"
 AudioManager="*res://core/AudioManager.gd"
 Effects="*res://core/Effects.gd"
+IAP="*res://core/IAP.gd"
 UIManager="*res://core/UIManager.gd"
 
 [display]

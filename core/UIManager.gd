@@ -84,7 +84,14 @@ func _show_pause() -> void:
 func _show_settings(on_close: Callable) -> void:
 	var s := UILayer.make_settings()
 	s.closed.connect(on_close)
+	# Reset Progress is a destructive action -> always behind the parental gate.
+	s.reset_requested.connect(func(): _run_gated(
+		_do_reset.bind(on_close), _show_settings.bind(on_close)))
 	_show(s)
+
+func _do_reset(on_close: Callable) -> void:
+	SaveManager.reset_progress()
+	_show_settings(on_close)
 
 func _show_album() -> void:
 	var a := UILayer.make_album()
@@ -92,14 +99,17 @@ func _show_album() -> void:
 	a.unlock_pressed.connect(func(): _open_shop_gated(_show_album))
 	_show(a)
 
-# ---------------------------------------------------------------- Shop (gated)
-## The parental gate ALWAYS precedes the Shop. `on_close` is where Back/cancel
-## returns (e.g. the album), so we never rebuild a stale screen from live state.
-func _open_shop_gated(on_close: Callable) -> void:
+# ---------------------------------------------------------------- Parental gate
+## The gate ALWAYS precedes a purchase or a destructive/parent action.
+## `on_pass` runs only on a correct answer; `return_to` runs on Back/cancel.
+func _run_gated(on_pass: Callable, return_to: Callable) -> void:
 	var gate := UILayer.make_parental_gate()
-	gate.passed.connect(func(): _open_shop(on_close))
-	gate.cancelled.connect(on_close)
+	gate.passed.connect(on_pass)
+	gate.cancelled.connect(return_to)
 	_show(gate)
+
+func _open_shop_gated(on_close: Callable) -> void:
+	_run_gated(_open_shop.bind(on_close), on_close)
 
 func _open_shop(on_close: Callable) -> void:
 	var shop := UILayer.make_shop()
