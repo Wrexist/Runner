@@ -37,8 +37,8 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 - [ ] 🍎 Enrol in the **Apple Developer Program** ($99/yr).
 - [ ] 🖥️ A **Mac** with the latest **Xcode** installed (required to export/sign iOS).
 - [ ] 🖥️ Install **Godot 4.3 Standard** and its **iOS export templates** (Editor → Manage Export Templates).
-- [ ] 🍎 In App Store Connect, reserve the **app name** and create the App ID / bundle identifier (e.g. `com.yourstudio.critterdash`).
-- [ ] 🤖 Set that bundle id in `core/IAP.gd` `PRODUCT_ID` and the export preset.
+- [ ] 🍎 In App Store Connect, reserve the **app name** and create the App ID / bundle identifier (`com.critterdash.app`).
+- [x] 🤖 Bundle id locked in: `core/IAP.gd` `PRODUCT_ID = com.critterdash.app.unlockall` (set the export preset to `com.critterdash.app`).
 
 **Done when:** you can open the project in Godot and see an iOS export option.
 

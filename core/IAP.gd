@@ -12,8 +12,8 @@ signal purchase_succeeded
 signal purchase_failed(reason: String)
 signal restore_completed(unlocked: bool)
 
-## Set this to your real App Store Connect product identifier before shipping.
-const PRODUCT_ID := "com.yourstudio.critterdash.unlockall"
+## The real App Store Connect product identifier for the single unlock-all IAP.
+const PRODUCT_ID := "com.critterdash.app.unlockall"
 
 ## True once a real store backend is connected (the stub leaves this false).
 var available: bool = false

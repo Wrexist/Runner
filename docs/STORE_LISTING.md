@@ -65,7 +65,8 @@ guidelines. Happy rescuing!
 - Reference name: `Unlock All Critters`
 - Display name: `Unlock All Critters`
 - Description: `Unlock every critter friend forever. One-time purchase.`
-- Price tier: ~$2.99 (your choice). Product id must equal `core/IAP.gd` `PRODUCT_ID`.
+- Product id: `com.critterdash.app.unlockall` (equals `core/IAP.gd` `PRODUCT_ID`).
+- Price tier: ~$2.99 (your choice).
 
 ## App Review notes (paste in submission)
 ```
