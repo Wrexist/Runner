@@ -57,6 +57,7 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 
 ## Phase 2 — Art & audio (🖥️, the biggest external lift)
 **Goal:** replace placeholder boxes/spheres with charming, kid-friendly assets — per theme, zero code changes.
+**→ Exact shopping list (every file path + spec + CC0 source): [`docs/ASSET_MANIFEST.md`](ASSET_MANIFEST.md).**
 - [ ] 🖥️ Source **CC0** low-poly models from kenney.nl / quaternius.com / poly.pizza:
       player, gem, cage, and 4 rescuable critters per theme.
 - [ ] 🖥️ Source **CC0** audio (kenney.nl / freesound CC0): looping music, gem pickup, rescue, miss.
