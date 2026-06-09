@@ -1,8 +1,9 @@
 extends Node
 ## Effects (autoload) — fire-and-forget visual juice. Kept GENTLE on purpose:
 ## soft particle bursts and quick scale "pops", never harsh screen shake.
-## Autoload Node3D children render in the root viewport's World3D, i.e. the same
-## 3D world as Main, so bursts appear right where the action happened.
+## This is a plain Node, but the CPUParticles3D it spawns attach to the nearest
+## viewport's World3D (the same 3D world as Main), so bursts appear right where
+## the action happened.
 
 ## A soft confetti/sparkle burst at a world position.
 func burst(global_pos: Vector3, color: Color, amount: int = 16) -> void:

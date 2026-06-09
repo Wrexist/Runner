@@ -26,6 +26,7 @@ editing code to make a theme work, fix the engine to read that value from
 | `display_name` | StartScreen | title text |
 | `palette.{background_top,background_bottom,accent,ui_text}` | UI/HUD | hex colors |
 | `lanes`, `lane_width` | Player, Spawner | track geometry |
+| `move_speed` | Player | how fast the player slides between lanes (feel; default 12) |
 | `scroll_speed_start/max`, `speed_ramp_per_second` | GameCore | difficulty ramp |
 | `gem_colors` | Spawner | which gem/cage colors appear |
 | `gem_palette` | ThemeManager.gem_color | optional name→hex map (else built-in defaults) |

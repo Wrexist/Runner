@@ -9,6 +9,7 @@
   },
   "lanes": 3,
   "lane_width": 2.2,
+  "move_speed": 13.0,
   "scroll_speed_start": 9.0,
   "scroll_speed_max": 20.0,
   "speed_ramp_per_second": 0.18,

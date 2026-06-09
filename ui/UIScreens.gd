@@ -113,6 +113,7 @@ static func make_game_over(score: int, is_high: bool, rescued: int) -> GameOver:
 class ParentalGate extends Control:
 	signal passed
 	signal cancelled
+	const WRONG_COOLDOWN := 1.5   # seconds the answers stay disabled after a miss
 	var _answer: int = 0
 	var _prompt: Label
 	var _feedback: Label
@@ -160,8 +161,17 @@ class ParentalGate extends Control:
 		if int(_buttons[i].get_meta("value")) == _answer:
 			passed.emit()
 		else:
+			# Briefly lock the answers so the gate can't be brute-forced by a
+			# child rapidly tapping every option.
 			_feedback.text = tr("Try again")
-			_new_question()
+			_set_answers_enabled(false)
+			get_tree().create_timer(WRONG_COOLDOWN).timeout.connect(_after_cooldown)
+	func _after_cooldown() -> void:
+		_set_answers_enabled(true)
+		_new_question()
+	func _set_answers_enabled(on: bool) -> void:
+		for b in _buttons:
+			b.disabled = not on
 
 static func make_parental_gate() -> ParentalGate:
 	var s := ParentalGate.new()
@@ -420,6 +430,8 @@ class About extends Control:
 		# is local-only and there are no SDKs/network calls.
 		col.add_child(UIScreens._label(tr("No ads. No tracking."), 24))
 		col.add_child(UIScreens._label(tr("We never collect your data."), 24))
+		# A plain-language privacy summary, surfaced in-app (no outbound link).
+		col.add_child(UIScreens._label(tr("No accounts, no internet — nothing leaves this device."), 18))
 		col.add_child(UIScreens._label(tr("Made with Godot Engine (MIT)"), 20))
 		var credits: Array = ThemeManager.get_val("credits", [])
 		if not credits.is_empty():

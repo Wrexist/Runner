@@ -24,6 +24,7 @@ const HISTORY_MAX := 240
 func _ready() -> void:
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
+	move_speed = float(ThemeManager.get_val("move_speed", 12.0))   # lane-slide feel
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x

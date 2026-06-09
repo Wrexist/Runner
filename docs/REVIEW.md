@@ -44,7 +44,10 @@ tracking / no data collection, consistent with the code.
 
 ## Findings
 
-### 🟠 Should-fix
+> **Update:** Findings #1–#5 were fixed in the follow-up commit (each Should-fix
+> has a test). Only the submission-time IAP blocker (#6) remains, by design.
+
+### 🟠 Should-fix — ✅ FIXED
 
 1. **Score-based critter unlocks are gated behind RNG — Album promise isn't
    literally true.** `core/Collectible.gd:77` rescues a *random* critter
@@ -63,7 +66,7 @@ tracking / no data collection, consistent with the code.
    gates usually add a short (1–2 s) cooldown on a wrong answer. **Fix:** briefly
    disable the answer buttons after a wrong tap.
 
-### 🟡 Nice-to-have
+### 🟡 Nice-to-have — ✅ FIXED
 
 3. **Surface the privacy line / policy in About.** The About screen states "no
    tracking / no data," but the `PRIVACY.md` policy isn't referenced in-app.

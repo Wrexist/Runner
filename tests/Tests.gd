@@ -36,6 +36,8 @@ func _run_all() -> void:
 	_test_localization()
 	_test_loc_coverage()
 	_test_theme_schema()
+	_test_deterministic_unlocks()
+	_test_parental_gate_cooldown()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -254,3 +256,46 @@ func _test_theme_schema() -> void:
 		_check("theme %s has a free starter critter (unlock_score 0)" % id, has_starter)
 	# Leave the default theme active for any later tests / a clean exit.
 	ThemeManager.load_theme("forest")
+
+## Fix #1: reaching a score threshold unlocks EVERY critter at/under it,
+## regardless of which critter the rescue randomly surfaced.
+func _test_deterministic_unlocks() -> void:
+	ThemeManager.load_theme("forest")  # bunny:0, hedgehog:50, owl:150, deer:300
+	SaveManager.unlocked_critters = []
+	SaveManager.all_unlocked_iap = false
+	GameCore.start_run()
+	GameCore.add_score(300)
+	# Rescue surfaces "bunny", but score 300 should unlock the high-threshold ones.
+	GameCore.rescue_critter("bunny")
+	_check("unlock: rescued critter unlocked", SaveManager.is_unlocked("bunny"))
+	_check("unlock: deer (300) unlocked despite rescuing bunny", SaveManager.is_unlocked("deer"))
+	_check("unlock: owl (150) unlocked too", SaveManager.is_unlocked("owl"))
+	# A critter above the current score stays locked.
+	SaveManager.unlocked_critters = []
+	GameCore.start_run()
+	GameCore.add_score(50)
+	GameCore.rescue_critter("bunny")
+	_check("unlock: deer stays locked below threshold", not SaveManager.is_unlocked("deer"))
+	SaveManager.unlocked_critters = []
+	GameCore.go_to_menu()
+
+## Fix #2: a wrong parental-gate answer locks the buttons (anti brute-force) and
+## does not pass; a correct answer passes.
+func _test_parental_gate_cooldown() -> void:
+	var gate := UIScreens.make_parental_gate()
+	add_child(gate)  # in-tree so the cooldown timer can be created
+	var got := {"passed": false}
+	gate.passed.connect(func(): got["passed"] = true)
+	var wrong := -1
+	var right := -1
+	for i in gate._buttons.size():
+		if int(gate._buttons[i].get_meta("value")) == gate._answer:
+			right = i
+		else:
+			wrong = i
+	gate._on_pick(wrong)
+	_check("gate: wrong answer does not pass", not got["passed"])
+	_check("gate: wrong answer disables the buttons", gate._buttons[0].disabled)
+	gate._on_pick(right)
+	_check("gate: correct answer passes", got["passed"])
+	gate.free()

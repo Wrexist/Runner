@@ -101,11 +101,13 @@ func rescue_critter(id: String) -> void:
 	SaveManager.lifetime_rescued += 1   # persisted on run end
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
 	add_score(10 + mini(streak, 5))
-	# Earn-by-score unlock check against theme config. Bracket/.get access is
-	# unambiguous on JSON-parsed Dictionaries and stays safe if a key is missing.
+	# Earn-by-score unlock: unlock EVERY critter whose threshold is now met, not
+	# just the one this rescue happened to surface. This makes the Album's
+	# "Reach N" promise deterministic instead of waiting on the random rescue pick.
 	for c in ThemeManager.get_val("rescuable_critters", []):
-		if c.get("id", "") == id and score >= int(c.get("unlock_score", 0)):
-			SaveManager.unlock_critter(id)
+		var cid := str(c.get("id", ""))
+		if cid != "" and score >= int(c.get("unlock_score", 0)):
+			SaveManager.unlock_critter(cid)
 	emit_signal("critter_rescued", id, rescued_this_run.size())
 	emit_signal("streak_changed", streak)
 
