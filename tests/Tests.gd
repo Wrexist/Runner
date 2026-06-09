@@ -38,6 +38,7 @@ func _run_all() -> void:
 	_test_theme_schema()
 	_test_deterministic_unlocks()
 	_test_parental_gate_cooldown()
+	_test_language_picker()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -299,3 +300,13 @@ func _test_parental_gate_cooldown() -> void:
 	gate._on_pick(right)
 	_check("gate: correct answer passes", got["passed"])
 	gate.free()
+
+## The Settings language picker is self-hiding: with only the English source
+## loaded (CI has no imported .translation), there's no second locale to pick, so
+## the button is absent — no dead UI in the shipped English-only build.
+func _test_language_picker() -> void:
+	var s := UIScreens.make_settings()
+	add_child(s)
+	_check("lang: 'en' source always available", "en" in s._available_locales())
+	_check("lang: english-only build hides the picker", s._available_locales().size() == 1)
+	s.free()

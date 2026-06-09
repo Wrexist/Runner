@@ -12,6 +12,7 @@ var _layer: CanvasLayer
 var _current: Control
 
 func _ready() -> void:
+	_apply_saved_locale()
 	_layer = CanvasLayer.new()
 	_layer.layer = 10
 	add_child(_layer)
@@ -21,6 +22,13 @@ func _ready() -> void:
 	GameCore.returned_to_menu.connect(_show_start)
 	# Wait one frame so other autoloads (ThemeManager) are ready, then mount UI.
 	call_deferred("_show_start")
+
+## Honor a language chosen in Settings on a previous launch — only if that locale
+## actually has translations loaded (else tr() stays on the English source).
+func _apply_saved_locale() -> void:
+	var loc := str(SaveManager.settings.get("locale", ""))
+	if loc != "" and loc in TranslationServer.get_loaded_locales():
+		TranslationServer.set_locale(loc)
 
 func _show(screen: Control) -> void:
 	if _current and is_instance_valid(_current):

@@ -54,9 +54,11 @@ critter models, fill each theme's `credits[]`, and (optional) import the
 localization CSV + add an in-game language picker.
 
 ### 4. Phases 6–11 — IAP, export, TestFlight, submit  → `docs/LAUNCH_PLAN.md`
-The **one remaining code blocker** is the real StoreKit IAP: `core/IAP.gd` has
-three `TODO(iap)` seams where the stub grants the unlock locally. Wire a Godot 4
-iOS IAP plugin there before submission (needs Mac + account).
+The real StoreKit **IAP integration is now written** in `core/IAP.gd` (against
+the iOS `InAppStore` singleton, feature-detected with a stub fallback). To go
+live you only need the device-side steps: install the `InAppStore` Godot 4 iOS
+plugin, create the non-consumable product in App Store Connect, and test a
+purchase + Restore in the StoreKit **sandbox** (needs Mac + account).
 
 ---
 
@@ -70,4 +72,5 @@ godot --headless --path . --quit-after 120         # boots Main (audio-missing w
 ## The three things only you can do
 1. Import binary art/audio and wire it into themes (editor).
 2. iOS export, signing, TestFlight (Mac + Xcode + Apple account).
-3. The real IAP plugin (native; the seam is ready in `core/IAP.gd`).
+3. Install the native `InAppStore` plugin + create the product in App Store
+   Connect + sandbox-test (the integration code is already written in `core/IAP.gd`).

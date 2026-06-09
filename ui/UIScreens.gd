@@ -256,6 +256,11 @@ class Settings extends Control:
 		col.add_child(_toggle("Sounds", "sfx"))
 		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
+		# Language picker only appears once a second locale has been imported
+		# (see docs/LOCALIZATION.md) — no dead UI in the English-only build.
+		var langs := _available_locales()
+		if langs.size() > 1:
+			col.add_child(_language_button(langs))
 		var reset := UIScreens._button(tr("Reset Progress"))
 		reset.pressed.connect(func(): reset_requested.emit())
 		col.add_child(reset)
@@ -275,6 +280,40 @@ class Settings extends Control:
 	func _refresh_difficulty(b: Button) -> void:
 		var d := str(SaveManager.settings.get("difficulty", "easy"))
 		b.text = tr("Difficulty:  %s") % (tr("Easy") if d == "easy" else tr("Normal"))
+	## English source ("en") plus any imported locales the engine has loaded.
+	func _available_locales() -> Array:
+		var out: Array = ["en"]
+		for l in TranslationServer.get_loaded_locales():
+			var code := str(l)
+			if code != "" and code not in out:
+				out.append(code)
+		return out
+	func _language_button(langs: Array) -> Button:
+		var b := UIScreens._button("")
+		_refresh_language(b)
+		b.pressed.connect(func():
+			var cur := str(TranslationServer.get_locale())
+			var idx := langs.find(cur)
+			if idx == -1:                                  # tolerate "es_ES" vs "es"
+				for i in langs.size():
+					if cur.begins_with(str(langs[i])):
+						idx = i
+						break
+			var next: String = str(langs[(idx + 1) % langs.size()])
+			TranslationServer.set_locale(next)
+			SaveManager.settings["locale"] = next
+			SaveManager.save_game()
+			_relayout())                                   # re-translate every label
+		return b
+	func _refresh_language(b: Button) -> void:
+		var code := str(TranslationServer.get_locale())
+		var lname := TranslationServer.get_locale_name(code)
+		b.text = tr("Language:  %s") % (lname if lname != "" else code.to_upper())
+	func _relayout() -> void:
+		for c in get_children():
+			remove_child(c)
+			c.free()
+		_build()
 	func _toggle(label: String, key: String) -> Button:
 		var b := UIScreens._button("")
 		_refresh(b, label, key)

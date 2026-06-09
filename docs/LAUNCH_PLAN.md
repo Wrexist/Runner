@@ -112,13 +112,14 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 
 ## Phase 6 — Monetization: the real IAP (🖥️ + 🍎)
 **Goal:** turn the `core/IAP.gd` stub into a real StoreKit purchase. Implement the 3 `TODO(iap)` spots.
+- [x] 🤖 **Integration code written** in `core/IAP.gd` against the `InAppStore` iOS
+      singleton, **feature-detected**: `_ready()` inits + fetches product info,
+      `price_text()` returns the store's localized price, `purchase_unlock_all()`
+      / `restore()` drive the real plugin and an event-queue poller grants +
+      finishes transactions. With no plugin present (desktop/CI) it falls back to
+      the testable stub, so the build stays green. Still needs the 3 device steps below.
 - [ ] 🍎 In App Store Connect, create ONE **Non-Consumable** IAP, id = `IAP.PRODUCT_ID`, set price tier, add a localized name/description, and a review screenshot.
-- [ ] 🖥️ Install a maintained **Godot 4 iOS IAP plugin** (StoreKit). Add it to the iOS export.
-- [ ] 🤖/🖥️ In `core/IAP.gd`:
-      `_ready()` → detect/init plugin, fetch product, set `available`;
-      `price_text()` → return the store's localized price;
-      `purchase_unlock_all()` → real purchase → on success `_grant()` + `purchase_succeeded`;
-      `restore()` → real restore → `_grant()` if found + `restore_completed(true)`.
+- [ ] 🖥️ Install the **`InAppStore` Godot 4 iOS plugin** (godotengine/godot-ios-plugins) and add it to the iOS export. (Verify the event field names match `IAP.gd`'s defensive reads.)
 - [ ] 🖥️ Test purchase **and** Restore with a **Sandbox** Apple ID (Restore is required by review).
 - [ ] 🍎 Fill **Paid Apps / banking & tax** agreements (purchases won't work until active).
 

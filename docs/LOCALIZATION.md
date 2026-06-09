@@ -69,8 +69,15 @@ on open, never committed).
 3. `tests/Tests.gd` `_test_localization` guards structure (header, no blank
    translations, a few known keys). Run the suite after editing the catalog.
 
-## Future: in-game language picker (optional)
+## In-game language picker (implemented)
 
-A Settings "Language" control could call `TranslationServer.set_locale(code)` and
-persist `SaveManager.settings["locale"]`, applied on boot. Left out for now to
-keep the verified build stable; the catalog + `tr()` wiring make it a small add.
+Settings shows a **Language** button that cycles the available locales, calls
+`TranslationServer.set_locale(code)`, persists `SaveManager.settings["locale"]`,
+and re-lays-out the screen so every label re-translates. `UIManager` re-applies
+the saved locale on boot.
+
+It is **self-hiding**: the button only appears when more than one locale is
+loaded (`TranslationServer.get_loaded_locales()`), so in the English-only build —
+before you do the editor import step above — there's no dead UI. Import the
+Spanish `.translation` and the picker appears automatically. By default the game
+also follows the **device language** with no picker interaction needed.

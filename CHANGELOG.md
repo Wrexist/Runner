@@ -6,6 +6,30 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **Real IAP integration (Phase 6).** `core/IAP.gd` now drives the iOS
+  `InAppStore` StoreKit singleton (product info, purchase, restore, event-queue
+  polling, transaction finishing), **feature-detected** with a fallback to the
+  local stub on desktop/CI so the build stays testable. Needs only the native
+  plugin + an App Store Connect product + a sandbox test to go live.
+- **In-game language picker (Phase 5).** Settings → Language cycles loaded
+  locales, persists the choice, re-translates the screen, and is re-applied on
+  boot. Self-hiding until a second locale is imported (no dead UI). New string
+  `Language: %s` (en/es).
+- **About / Credits screen** with a plain-language privacy promise + data-driven
+  `credits[]` attribution per theme.
+- **Localization scaffolding** — every UI string via `tr()`; `localization/
+  ui_strings.csv` (English source + full Spanish); guide in `docs/LOCALIZATION.md`.
+- **CI guards** — i18n catalog coverage + per-theme schema validation.
+- **Third theme `ocean`** ("Reef Rescue"), data-only.
+
+### Fixed
+- **Deterministic critter unlocks** — reaching a score threshold now unlocks every
+  eligible critter (was gated behind the random rescue pick; Album promise is now true).
+- **Parental gate hardening** — answers lock ~1.5 s after a wrong tap so it can't
+  be serial-tapped.
+- `move_speed` moved into `theme.json`; `Effects.gd` comment corrected.
+
+### Earlier
 - **Complete, runnable engine.** Missing autoloads (`ThemeManager`, `SaveManager`,
   `UIManager`, `AudioManager`, `Effects`), gameplay scripts (`Player`,
   `Collectible`), `project.godot`, and all scenes (`Main`, `Player`, `Gem`,
