@@ -24,26 +24,26 @@ func _reset() -> void:
 			f.queue_free()
 	_followers.clear()
 
-func _on_rescued(_id: String, _total: int) -> void:
+func _on_rescued(id: String, _total: int) -> void:
 	if _followers.size() >= MAX_VISIBLE:
 		return
-	var f := _make_follower()
+	var f := _make_follower(id)
 	add_child(f)
 	if _player:
 		f.global_position = _player.global_position
 	_followers.append(f)
 	Effects.pop(f, 1.6)
 
-func _make_follower() -> Node3D:
-	var n := MeshInstance3D.new()
-	var m := SphereMesh.new()
-	m.radius = 0.28
-	m.height = 0.56
-	n.mesh = m
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = ThemeManager.color("accent", Color(1.0, 0.55, 0.6))
-	n.material_override = mat
-	return n
+## The follower is the actual rescued critter: its theme model if present, else a
+## cute placeholder colored distinctly per critter id (so the line is varied).
+func _make_follower(id: String) -> Node3D:
+	return ThemeModels.critter_visual(_critter_by_id(id))
+
+func _critter_by_id(id: String) -> Dictionary:
+	for c in ThemeManager.get_val("rescuable_critters", []):
+		if str(c.get("id", "")) == id:
+			return c
+	return {"id": id}
 
 func _process(delta: float) -> void:
 	if _player == null or not _player.has_method("history_point"):

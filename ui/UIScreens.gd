@@ -374,7 +374,9 @@ class Album extends Control:
 		var swatch := ColorRect.new()
 		swatch.custom_minimum_size = Vector2(80, 80)
 		swatch.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		swatch.color = ThemeManager.color("accent", Color(1, 0.55, 0.6)) if unlocked else Color(0.4, 0.4, 0.45)
+		# Each rescued critter shows in its own distinct color (matches the in-run
+		# conga line); locked ones stay a neutral grey.
+		swatch.color = ThemeModels.critter_color(id) if unlocked else Color(0.4, 0.4, 0.45)
 		box.add_child(swatch)
 		var name_label := UIScreens._label(id.capitalize() if unlocked else "?", 26)
 		box.add_child(name_label)

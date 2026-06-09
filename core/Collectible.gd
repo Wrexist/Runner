@@ -23,16 +23,29 @@ func setup(c: String, l: int) -> void:
 	_apply_color()
 
 func _apply_color() -> void:
-	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
-	if mesh == null:
-		return
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = _color_from_name(color_name)
+	var col := _color_from_name(color_name)
 	# Cages read as hollow/hazard; gems read as bright/inviting.
 	if kind == "cage":
-		mat.albedo_color = mat.albedo_color.darkened(0.15)
-	mesh.material_override = mat
+		col = col.darkened(0.15)
+	# Prefer the theme's gem/cage model (tinted to the color so the match mechanic
+	# stays legible); fall back to the placeholder primitive. Fail-soft.
+	var model := ThemeModels.instance(ThemeManager.asset("%s_model" % kind))
+	if model:
+		add_child(model)
+		ThemeModels.tint(model, col)
+		var placeholder := get_node_or_null("MeshInstance3D") as MeshInstance3D
+		if placeholder:
+			placeholder.visible = false
+	else:
+		var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
+		if mesh:
+			mesh.material_override = _solid(col)
 	_add_symbol_badge()
+
+func _solid(c: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = c
+	return mat
 
 ## A white shape floating above the item so the color is also readable as a
 ## SHAPE (color-blind accessibility — see Shapes.gd).

@@ -44,14 +44,15 @@ and press Play.
 
 ### 2. Phase 2 — art & audio (biggest lever)  → `docs/ASSET_MANIFEST.md`
 Source **CC0** models/audio (Kenney, Quaternius, Poly Pizza). Exact file list,
-paths, and specs are in the manifest. Log each asset in `docs/CREDITS.md` as you go.
+paths, and specs are in the manifest. **Just drop files at the named paths and
+import them** — `core/ThemeModels.gd` loads player/gems/cages/ground/critters at
+runtime, no scene edits. Log each asset in `docs/CREDITS.md` as you go.
 - **Minimum to ship: the Forest 12 files.** Space + Ocean are free "new world" updates.
 
 ### 3. Then come back to me 🤖
-With assets in the repo I can: swap the placeholder meshes in
-`scenes/Player.tscn` / `Gem.tscn` / `Cage.tscn`, point trail/album at real
-critter models, fill each theme's `credits[]`, and (optional) import the
-localization CSV + add an in-game language picker.
+With assets in the repo I can: fill each theme's `credits[]`, import the
+localization CSV, fine-tune scale/placement if any model sits oddly, and help
+debug the on-device IAP. (The art itself now wires up automatically.)
 
 ### 4. Phases 6–11 — IAP, export, TestFlight, submit  → `docs/LAUNCH_PLAN.md`
 The real StoreKit **IAP integration is now written** in `core/IAP.gd` (against
@@ -70,7 +71,8 @@ godot --headless --path . --quit-after 120         # boots Main (audio-missing w
 ```
 
 ## The three things only you can do
-1. Import binary art/audio and wire it into themes (editor).
+1. Provide + import binary art/audio (drop CC0 files at the theme paths; the
+   engine auto-loads them — no wiring needed).
 2. iOS export, signing, TestFlight (Mac + Xcode + Apple account).
 3. Install the native `InAppStore` plugin + create the product in App Store
    Connect + sandbox-test (the integration code is already written in `core/IAP.gd`).

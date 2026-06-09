@@ -17,6 +17,10 @@ var _swiping: bool = false
 var _swiped_this_touch: bool = false
 const SWIPE_THRESHOLD := 40.0          # pixels before a drag counts as a swipe
 
+## The theme's player model, if one is present (else we keep the placeholder box
+## and tint it by the carried color). Loaded fail-soft via ThemeModels.
+var _model: Node3D = null
+
 # Breadcrumb of recent positions so the rescue Trail can snake behind us.
 var _history: Array[Vector3] = []
 const HISTORY_MAX := 240
@@ -28,8 +32,24 @@ func _ready() -> void:
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
+	_load_theme_model()
+	_update_carry_visual()   # show the friendly base color immediately on the menu
 	GameCore.run_started.connect(_on_run_started)
 	GameCore.returned_to_menu.connect(_on_run_started)
+
+## Swap in the theme's player model if it exists; otherwise the placeholder box
+## stays (and gets tinted by the carried color). Fail-soft.
+func _load_theme_model() -> void:
+	_model = ThemeModels.instance(ThemeManager.asset("player_model"))
+	if _model:
+		add_child(_model)
+		var placeholder := get_node_or_null("MeshInstance3D") as MeshInstance3D
+		if placeholder:
+			placeholder.visible = false
+
+## The node to lean on a turn: the real model if present, else the placeholder.
+func _body() -> Node3D:
+	return _model if _model else get_node_or_null("MeshInstance3D") as Node3D
 
 func _on_run_started() -> void:
 	current_lane = lanes_count / 2
@@ -52,7 +72,7 @@ func move_lane(dir: int) -> void:
 func _lean(dir: int) -> void:
 	if bool(SaveManager.settings.get("reduce_motion", false)):
 		return
-	var mesh := get_node_or_null("MeshInstance3D") as Node3D
+	var mesh := _body()
 	if mesh == null:
 		return
 	var t := create_tween().set_trans(Tween.TRANS_SINE)
@@ -113,13 +133,17 @@ func clear_color() -> void:
 ## Show what color/shape the player is carrying — without this the core decision
 ## ("do I have the right color for the cage ahead?") is invisible and unmakeable.
 func _update_carry_visual() -> void:
-	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
-	if mesh:
-		if carried_color == "":
-			mesh.material_override = null
-		else:
+	# With a real model we leave its own materials alone and show the carried
+	# color via the floating badge only (tinting a whole fox green looks wrong).
+	# With the placeholder box, tint the body itself so the carry reads clearly.
+	if _model == null:
+		var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
+		if mesh:
 			var mat := StandardMaterial3D.new()
-			mat.albedo_color = ThemeManager.gem_color(carried_color)
+			# Carried color while prepared; a friendly themed base color otherwise
+			# (so the placeholder reads as a character, not a blank white box).
+			mat.albedo_color = ThemeManager.gem_color(carried_color) if carried_color != "" \
+				else ThemeManager.color("accent", Color(0.95, 0.6, 0.62))
 			mesh.material_override = mat
 	_update_carry_badge()
 

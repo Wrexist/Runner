@@ -19,3 +19,20 @@ func _apply() -> void:
 		env.glow_enabled = true
 		env.glow_intensity = 0.4
 	environment = env
+	_apply_ground()
+
+## Texture the scrolling ground from the theme. With no texture, fall back to a
+## soft themed color so the floor never looks like a stark white slab. Fail-soft.
+func _apply_ground() -> void:
+	var ground := get_parent().get_node_or_null("Ground") as MeshInstance3D
+	if ground == null:
+		return
+	var mat := StandardMaterial3D.new()
+	var tex_path := ThemeManager.asset("ground_texture")
+	var tex: Resource = ResourceLoader.load(tex_path) if ResourceLoader.exists(tex_path) else null
+	if tex is Texture2D:
+		mat.albedo_texture = tex
+		mat.uv1_scale = Vector3(6, 60, 1)   # tile across the long ground plane
+	else:
+		mat.albedo_color = ThemeManager.color("background_bottom", Color(0.4, 0.6, 0.4)).darkened(0.12)
+	ground.material_override = mat

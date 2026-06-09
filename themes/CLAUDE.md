@@ -35,7 +35,7 @@ editing code to make a theme work, fix the engine to read that value from
 | `gem_cage_gap` | Spawner | gem→cage spacing = reaction window (difficulty lever) |
 | `max_stumbles` | GameCore | lives before a gentle run-end (default 3) |
 | `difficulty.{easy,normal}` | ThemeManager.diff_val | per-preset overrides of speed/ramp/spawn/gap; chosen in Settings (default easy) |
-| `assets.*` | (art wiring) | model/texture paths |
+| `assets.*` | `ThemeModels` (auto-loaded) | model/texture paths — dropped-in `.glb`/`.png` load at runtime, no scene edits; procedural placeholders until then |
 | `rescuable_critters[]` | GameCore | `{id, model, unlock_score}` earn-by-play |
 | `audio.*` | juice/audio | music + sfx paths; missing = silent, never crash |
 | `credits[]` | About screen | optional attribution; each entry a string or `{asset, author, license}`. Any **CC-BY** asset MUST be listed here. Mirror `docs/CREDITS.md`. |

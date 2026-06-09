@@ -61,10 +61,8 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 - [ ] 🖥️ Source **CC0** low-poly models from kenney.nl / quaternius.com / poly.pizza:
       player, gem, cage, and 4 rescuable critters per theme.
 - [ ] 🖥️ Source **CC0** audio (kenney.nl / freesound CC0): looping music, gem pickup, rescue, miss.
-- [ ] 🖥️ Drop files into `themes/<id>/models|textures|audio/` and point the theme's `assets`/`audio` paths at them.
-- [ ] 🖥️ Swap the placeholder meshes in `scenes/Player.tscn`, `Gem.tscn`, `Cage.tscn` for the imported models
-      (keep the Area3D + CollisionShape3D and the `"player"`/`"collectible"` groups intact).
-- [ ] 🖥️ Make rescued-critter trail followers and Album cells use the real critter models/icons.
+- [ ] 🖥️ Drop files into `themes/<id>/models|textures|audio/` at the paths the theme's `assets`/`audio` already name. **That's it** — `core/ThemeModels.gd` loads them at runtime (player, gems, cages, ground texture, and the rescue/Album critters), with procedural placeholders until then. No scene edits, no mesh-swapping.
+- [x] 🤖 Models/textures auto-load fail-soft from theme paths (was a manual mesh-swap); rescue trail + Album already use the real critter models when present.
 - [ ] 🤖 Keep `gem_palette`/`gem_symbols` honest: each gem color stays visually distinct AND shape-distinct.
 - [ ] 🖥️ Design the **app icon** (1024×1024, no transparency, no rounded corners) and a launch screen.
 

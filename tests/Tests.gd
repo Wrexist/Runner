@@ -40,6 +40,7 @@ func _run_all() -> void:
 	_test_parental_gate_cooldown()
 	_test_language_picker()
 	_test_iap_event_handlers()
+	_test_theme_models()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -351,3 +352,20 @@ func _test_iap_event_handlers() -> void:
 	# Tidy up so later tests / a clean exit aren't affected.
 	IAP._localized_price = ""
 	SaveManager.all_unlocked_iap = false
+
+## The fail-soft theme model loader: missing paths degrade to procedural visuals
+## (so the game looks good with zero art), and critters get distinct stable colors.
+func _test_theme_models() -> void:
+	_check("models: empty path → null", ThemeModels.instance("") == null)
+	_check("models: absent path → null (fail-soft)",
+		ThemeModels.instance("res://themes/forest/models/__nope__.glb") == null)
+	# Distinct, deterministic per-critter colors.
+	_check("models: critter_color is a Color", ThemeModels.critter_color("bunny") is Color)
+	_check("models: critter_color is deterministic",
+		ThemeModels.critter_color("owl") == ThemeModels.critter_color("owl"))
+	_check("models: different critters → different colors",
+		ThemeModels.critter_color("bunny") != ThemeModels.critter_color("deer"))
+	# With no model file, a procedural placeholder critter is built (not null).
+	var v := ThemeModels.critter_visual({"id": "bunny"})
+	_check("models: critter_visual falls back to a Node3D", v is Node3D and v.get_child_count() > 0)
+	v.free()

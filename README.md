@@ -97,8 +97,10 @@ coverage, and per-theme schema validation. CI runs all of it on every push.
 
 1. **Import art/audio.** Drop CC0 `.glb` / `.png` / `.ogg` from
    [kenney.nl](https://kenney.nl) / [quaternius.com](https://quaternius.com) into
-   `themes/<id>/models|textures|audio/` and point the theme's `assets`/`audio`
-   paths at them. Get the loop feeling right with gray boxes first.
+   `themes/<id>/models|textures|audio/` at the paths the theme already names, then
+   let Godot import them (open the editor once, or run `--import`). They load at
+   runtime automatically — **no mesh-swapping or scene edits** (`core/ThemeModels.gd`).
+   Until then the game runs on charming procedural placeholders.
 2. **iOS export + IAP plugin.** Project → Export → add iOS, set bundle id / team,
    add the native `InAppStore` plugin (the StoreKit code in `core/IAP.gd` is
    written and waits for it), create the product in App Store Connect, then

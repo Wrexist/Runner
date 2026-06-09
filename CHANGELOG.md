@@ -6,6 +6,14 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **Runtime theme-art loading (`core/ThemeModels.gd`).** Player, gems, cages, the
+  ground texture, and the rescue/Album critters now load their `theme.json`
+  `.glb`/`.png` automatically at runtime — drop CC0 files at the named paths and
+  they appear, **no scene edits or mesh-swapping**. Fail-soft: missing art falls
+  back to **charming procedural placeholders**, so the game is fun to play with
+  zero downloads. Each critter gets a stable, distinct color, so the rescue conga
+  line and the Album are a varied rainbow of friends (not identical blobs), and
+  the ground takes a soft themed color instead of stark white.
 - **Real IAP integration (Phase 6).** `core/IAP.gd` now drives the iOS
   `InAppStore` StoreKit singleton (product info, purchase, restore, event-queue
   polling, transaction finishing), **feature-detected** with a fallback to the

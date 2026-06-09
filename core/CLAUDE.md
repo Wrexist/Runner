@@ -43,6 +43,11 @@ data-driven design — push the varying value into `theme.json` instead.
 - **Shapes.gd** (`class_name Shapes`) — builds a distinct primitive mesh per
   color so play never depends on hue alone (color-blind accessibility). Used by
   Collectible badges and the player's carried-color badge.
+- **ThemeModels.gd** (`class_name ThemeModels`) — fail-soft loader for per-theme
+  3D art (`assets.*`). Returns the imported `.glb` if present, else a charming
+  procedural placeholder, so dropped-in art "just works" with no scene edits and
+  the game is fun before any art exists. Gives each critter a stable distinct
+  color (used by the trail + Album). Used by Player, Collectible, Trail, SkyRig.
 - **Spawner.gd** — the Rescue Run hook: a gem then a same-color cage, same lane.
 - **Collectible.gd** — gem/cage behavior. Collision uses `area_entered` (both
   player and collectibles are `Area3D`). Layers: collectibles = layer 1 / mask 2,
