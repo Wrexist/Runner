@@ -13,11 +13,16 @@ a **hazard**. One object, two meanings, decided by your preparation.
 
 ---
 
-## Status: playable scaffold ✅
+## Status: code-complete, content-pending ✅
 
-The full engine is wired and runs with **placeholder box/sphere meshes** — press
-Play and the loop works. What remains is **art/audio import** and **iOS export**,
-which can only be done in the Godot editor (see below).
+The full engine, every front-end screen, accessibility, localization, and the
+StoreKit IAP integration are wired and **covered by a headless test suite that
+runs in CI** (`TESTS: ALL PASS`). It plays now with **placeholder box/sphere
+meshes**. What remains can only be done in the Godot editor / on a Mac:
+**art-audio import**, **iOS export & signing**, and the **on-device IAP**
+(install the native plugin + create the App Store Connect product; the
+integration code is already written and feature-detected). See
+[`docs/HANDOFF.md`](docs/HANDOFF.md) for the exact next steps.
 
 ```
 project.godot          Godot 4.3 config + autoloads (load order matters)
@@ -32,13 +37,19 @@ core/                  Engine logic — never reskinned (see core/CLAUDE.md)
   Collectible.gd       Gem & cage behavior, scroll, area collision, rescue/stumble
 scenes/                Gameplay scenes as text .tscn
   Main.tscn  Player.tscn  Gem.tscn  Cage.tscn
+  IAP.gd               One non-consumable "unlock all" — real StoreKit, stub fallback
 ui/
   HUD.gd / HUD.tscn    Signal-driven HUD: score, rescues, lives
-  UIScreens.gd         Start / Game-Over / Parental-Gate / Shop (built from theme)
+  UIScreens.gd         Start / Game-Over / Pause / Settings / Album / Tutorial /
+                       Parental-Gate / Shop / About (all built from theme data)
 themes/                Pure data + art (see themes/CLAUDE.md)
   forest/theme.json    Default theme — "Forest Friends"
   space/theme.json     Reskin proof — "Star Rescue"
-docs/                  Build plan + the Claude Code prompt sequence
+  ocean/theme.json     Third theme — "Reef Rescue" (data-only)
+localization/          ui_strings.csv — en source + es (see docs/LOCALIZATION.md)
+tests/                 Headless logic tests (run in CI) — Tests.gd / Tests.tscn
+.github/workflows/     CI: theme-data validation + Godot headless tests
+docs/                  Launch plan, asset manifest, handoff, review, prompts
 PRIVACY.md             "Data Not Collected" policy for the App Store label
 ```
 
@@ -63,8 +74,22 @@ Note: art/audio are placeholder geometry until you import CC0 assets, so the
 "sounds" are silent until `theme.json` audio paths point at real `.ogg` files —
 the audio system is wired and fail-soft, it just has nothing to play yet.
 
-Switch the whole game to the other theme by setting
-`ThemeManager.active_theme = "space"` — no other code changes needed.
+Switch the whole game to another theme by setting
+`ThemeManager.active_theme = "space"` (or `"ocean"`) — no other code changes needed.
+
+---
+
+## Verify (headless, no display)
+
+```bash
+godot --headless --path . --import                 # compile/import: no SCRIPT/Parse errors
+godot --headless --path . res://tests/Tests.tscn   # logic tests: "TESTS: ALL PASS"
+godot --headless --path . --quit-after 120         # boots Main (audio-missing warnings expected)
+```
+
+The test suite covers the run loop, scoring, pause, game-over, save/unlocks,
+difficulty, IAP (stub + StoreKit event handlers), screen builds, i18n catalog
+coverage, and per-theme schema validation. CI runs all of it on every push.
 
 ---
 
@@ -74,9 +99,10 @@ Switch the whole game to the other theme by setting
    [kenney.nl](https://kenney.nl) / [quaternius.com](https://quaternius.com) into
    `themes/<id>/models|textures|audio/` and point the theme's `assets`/`audio`
    paths at them. Get the loop feeling right with gray boxes first.
-2. **iOS export preset.** Project → Export → add iOS, set bundle id / team, wire
-   the IAP plugin (the Shop's purchase is a marked `TODO(iap)` stub today), then
-   TestFlight.
+2. **iOS export + IAP plugin.** Project → Export → add iOS, set bundle id / team,
+   add the native `InAppStore` plugin (the StoreKit code in `core/IAP.gd` is
+   written and waits for it), create the product in App Store Connect, then
+   TestFlight. Bundle id is `com.critterdash.app`.
 
 > 🚀 **Going to the App Store?** Follow [`docs/LAUNCH_PLAN.md`](docs/LAUNCH_PLAN.md)
 > — a complete phased roadmap (accounts → art → playtest → QA → IAP → export →

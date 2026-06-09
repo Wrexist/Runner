@@ -39,6 +39,7 @@ func _run_all() -> void:
 	_test_deterministic_unlocks()
 	_test_parental_gate_cooldown()
 	_test_language_picker()
+	_test_iap_event_handlers()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -310,3 +311,43 @@ func _test_language_picker() -> void:
 	_check("lang: 'en' source always available", "en" in s._available_locales())
 	_check("lang: english-only build hides the picker", s._available_locales().size() == 1)
 	s.free()
+
+## The real StoreKit path can't run in CI (no native plugin), so drive IAP's
+## event handlers directly with synthetic events to cover purchase/restore/price.
+func _test_iap_event_handlers() -> void:
+	# product_info → localized price surfaces on the Shop button.
+	IAP._localized_price = ""
+	IAP._on_product_info({"type": "product_info", "result": "ok",
+		"ids": [IAP.PRODUCT_ID], "localized_prices": ["£1.99"]})
+	_check("IAP: product_info sets localized price", IAP.price_text() == "£1.99")
+	# Successful purchase → grant + purchase_succeeded.
+	SaveManager.all_unlocked_iap = false
+	var ok := {"v": false}
+	var ok_cb := func(): ok["v"] = true
+	IAP.purchase_succeeded.connect(ok_cb)
+	IAP._on_purchase({"type": "purchase", "result": "ok", "product_id": IAP.PRODUCT_ID})
+	_check("IAP: purchase event grants unlock", SaveManager.all_unlocked_iap)
+	_check("IAP: purchase event emits succeeded", ok["v"])
+	IAP.purchase_succeeded.disconnect(ok_cb)
+	# Failed purchase → reason reported, no grant.
+	SaveManager.all_unlocked_iap = false
+	var failed := {"reason": ""}
+	var fail_cb := func(r): failed["reason"] = r
+	IAP.purchase_failed.connect(fail_cb)
+	IAP._on_purchase({"type": "purchase", "result": "error",
+		"product_id": IAP.PRODUCT_ID, "error": "declined"})
+	_check("IAP: failed purchase does not grant", not SaveManager.all_unlocked_iap)
+	_check("IAP: failed purchase reports the reason", failed["reason"] == "declined")
+	IAP.purchase_failed.disconnect(fail_cb)
+	# Restore finding our product → grant + restore_completed(true).
+	SaveManager.all_unlocked_iap = false
+	var restored := {"v": false}
+	var rcb := func(u): restored["v"] = u
+	IAP.restore_completed.connect(rcb)
+	IAP._on_restore({"type": "restore", "product_id": IAP.PRODUCT_ID})
+	_check("IAP: restore event grants unlock", SaveManager.all_unlocked_iap)
+	_check("IAP: restore emits completed(true)", restored["v"] == true)
+	IAP.restore_completed.disconnect(rcb)
+	# Tidy up so later tests / a clean exit aren't affected.
+	IAP._localized_price = ""
+	SaveManager.all_unlocked_iap = false
