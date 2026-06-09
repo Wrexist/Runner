@@ -1,8 +1,26 @@
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Critter Dash — fox face (forest theme player). Simple shapes so it stays
+       readable at 60px. Source for the 1024px App Store icon (export as PNG,
+       no transparency — the background rect already fills the canvas). -->
   <rect width="128" height="128" rx="24" fill="#a8e6cf"/>
-  <circle cx="44" cy="58" r="20" fill="#ff8b94"/>
-  <circle cx="84" cy="58" r="20" fill="#3d405b"/>
-  <circle cx="44" cy="58" r="7" fill="#ffffff"/>
-  <circle cx="84" cy="58" r="7" fill="#ffffff"/>
-  <path d="M40 88 q24 22 48 0" stroke="#3d405b" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- ears (behind head) -->
+  <polygon points="36,48 28,14 62,36" fill="#e88a4f"/>
+  <polygon points="92,48 100,14 66,36" fill="#e88a4f"/>
+  <polygon points="38,42 34,22 54,36" fill="#fff3e6"/>
+  <polygon points="90,42 94,22 74,36" fill="#fff3e6"/>
+  <!-- head -->
+  <circle cx="64" cy="70" r="34" fill="#f09a5e"/>
+  <!-- muzzle -->
+  <ellipse cx="64" cy="88" rx="18" ry="13" fill="#fff3e6"/>
+  <!-- cheeks -->
+  <circle cx="38" cy="78" r="6" fill="#ff8b94" opacity="0.55"/>
+  <circle cx="90" cy="78" r="6" fill="#ff8b94" opacity="0.55"/>
+  <!-- eyes -->
+  <circle cx="50" cy="62" r="5" fill="#3d405b"/>
+  <circle cx="78" cy="62" r="5" fill="#3d405b"/>
+  <circle cx="52" cy="60" r="1.8" fill="#ffffff"/>
+  <circle cx="80" cy="60" r="1.8" fill="#ffffff"/>
+  <!-- nose + smile -->
+  <circle cx="64" cy="81" r="4" fill="#3d405b"/>
+  <path d="M56 90 q8 7 16 0" stroke="#3d405b" stroke-width="3.5" fill="none" stroke-linecap="round"/>
 </svg>
