@@ -1,51 +1,51 @@
-keys,es
-Play,Jugar
-My Critters,Mis Criaturas
-Settings,Ajustes
-About,Acerca de
-Best: %d,Mejor: %d
-Friends rescued: %d,Amigos rescatados: %d
-Run Over,Fin del juego
-New Best!,¡Nuevo récord!
-Score: %d,Puntos: %d
-Critters rescued: %d,Criaturas rescatadas: %d
-Play Again,Jugar otra vez
-Ask a grown-up,Pregunta a un adulto
-What is %d + %d ?,¿Cuánto es %d + %d?
-Try again,Inténtalo de nuevo
-Back,Atrás
-Critter Shop,Tienda de Criaturas
-Unlock All Critters  %s,Desbloquear todas  %s
-Restore Purchases,Restaurar compras
-All critters unlocked!,¡Todas desbloqueadas!
-Unlock every critter forever.,Desbloquea todas para siempre.
-Purchase failed: %s,Compra fallida: %s
-Paused,En pausa
-Resume,Continuar
-Home,Inicio
-Reset Progress,Borrar progreso
-Difficulty:  %s,Dificultad:  %s
-Language:  %s,Idioma:  %s
-Easy,Fácil
-Normal,Normal
-Music,Música
-Sounds,Sonidos
-Reduce motion,Reducir movimiento
-On,Sí
-Off,No
-Unlock All Critters,Desbloquear todas
-Reach %d,Llega a %d
-Rescued!,¡Rescatado!
-How to play,Cómo jugar
-"Grab the gem, reach the matching cage!","¡Agarra la gema y llega a la jaula del mismo color!"
-Let's go!,¡Vamos!
-No ads. No tracking.,Sin anuncios. Sin rastreo.
-We never collect your data.,Nunca recopilamos tus datos.
-"No accounts, no internet — nothing leaves this device.","Sin cuentas, sin internet: nada sale de este dispositivo."
-Made with Godot Engine (MIT),Hecho con Godot Engine (MIT)
-Art & sound,Arte y sonido
-Nice!,¡Bien!
-Great!,¡Genial!
-Awesome!,¡Estupendo!
-Amazing!,¡Asombroso!
-Incredible!,¡Increíble!
+keys,es,sv
+Play,Jugar,Spela
+My Critters,Mis Criaturas,Mina djur
+Settings,Ajustes,Inställningar
+About,Acerca de,Om spelet
+Best: %d,Mejor: %d,Rekord: %d
+Friends rescued: %d,Amigos rescatados: %d,Räddade vänner: %d
+Run Over,Fin del juego,Rundan är slut
+New Best!,¡Nuevo récord!,Nytt rekord!
+Score: %d,Puntos: %d,Poäng: %d
+Critters rescued: %d,Criaturas rescatadas: %d,Räddade djur: %d
+Play Again,Jugar otra vez,Spela igen
+Ask a grown-up,Pregunta a un adulto,Fråga en vuxen
+What is %d + %d ?,¿Cuánto es %d + %d?,Vad är %d + %d?
+Try again,Inténtalo de nuevo,Försök igen
+Back,Atrás,Tillbaka
+Critter Shop,Tienda de Criaturas,Djurbutiken
+Unlock All Critters  %s,Desbloquear todas  %s,Lås upp alla djur  %s
+Restore Purchases,Restaurar compras,Återställ köp
+All critters unlocked!,¡Todas desbloqueadas!,Alla djur upplåsta!
+Unlock every critter forever.,Desbloquea todas para siempre.,Lås upp alla djur för alltid.
+Purchase failed: %s,Compra fallida: %s,Köpet misslyckades: %s
+Paused,En pausa,Paus
+Resume,Continuar,Fortsätt
+Home,Inicio,Hem
+Reset Progress,Borrar progreso,Nollställ framsteg
+Difficulty:  %s,Dificultad:  %s,Svårighetsgrad:  %s
+Language:  %s,Idioma:  %s,Språk:  %s
+Easy,Fácil,Lätt
+Normal,Normal,Normal
+Music,Música,Musik
+Sounds,Sonidos,Ljud
+Reduce motion,Reducir movimiento,Minska rörelser
+On,Sí,På
+Off,No,Av
+Unlock All Critters,Desbloquear todas,Lås upp alla djur
+Reach %d,Llega a %d,Nå %d
+Rescued!,¡Rescatado!,Räddad!
+How to play,Cómo jugar,Så här spelar du
+"Grab the gem, reach the matching cage!","¡Agarra la gema y llega a la jaula del mismo color!",Fånga ädelstenen och nå buren med samma färg!
+Let's go!,¡Vamos!,Nu kör vi!
+No ads. No tracking.,Sin anuncios. Sin rastreo.,Inga annonser. Ingen spårning.
+We never collect your data.,Nunca recopilamos tus datos.,Vi samlar aldrig in dina uppgifter.
+"No accounts, no internet — nothing leaves this device.","Sin cuentas, sin internet: nada sale de este dispositivo.","Inga konton, inget internet – inget lämnar enheten."
+Made with Godot Engine (MIT),Hecho con Godot Engine (MIT),Byggt med Godot Engine (MIT)
+Art & sound,Arte y sonido,Grafik och ljud
+Nice!,¡Bien!,Snyggt!
+Great!,¡Genial!,Toppen!
+Awesome!,¡Estupendo!,Grymt!
+Amazing!,¡Asombroso!,Fantastiskt!
+Incredible!,¡Increíble!,Otroligt!

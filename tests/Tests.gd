@@ -155,12 +155,20 @@ func _test_localization() -> void:
 	_check("loc csv exists", FileAccess.file_exists(path))
 	var map := _loc_catalog()
 	_check("loc has the full string set", map.size() >= 40)
-	# A blank cell would import as an empty string and render nothing in-game.
+	# A blank cell would import as an empty string and render nothing in-game —
+	# check EVERY locale column, not just the first.
 	var blanks := 0
-	for k in map:
-		if str(map[k]).strip_edges() == "":
-			blanks += 1
-	_check("loc every row is translated (no blanks)", blanks == 0)
+	var f2 := FileAccess.open(path, FileAccess.READ)
+	var header := f2.get_csv_line(",")
+	while not f2.eof_reached():
+		var row := f2.get_csv_line(",")
+		if row.size() < 2 or row[0] == "":
+			continue
+		for col in range(1, header.size()):
+			if col >= row.size() or row[col].strip_edges() == "":
+				blanks += 1
+	f2.close()
+	_check("loc every row translated in every locale (no blanks)", blanks == 0)
 	_check("loc maps a known string (Play->Jugar)", map.get("Play", "") == "Jugar")
 	_check("loc includes the gated 'Back'", map.has("Back"))
 	# Until a .translation is imported + registered, tr() returns the source.
