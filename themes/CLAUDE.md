@@ -48,4 +48,5 @@ Tuning that has a `difficulty` override is read via `ThemeManager.diff_val(key)`
 `unlock_score` gates are **earned by play**, never randomized and never sold.
 The only purchase is the single global "unlock all" IAP handled outside themes.
 
-Current themes: **forest** (default) and **space** (reskin proof).
+Current themes: **forest** (default), **space** (reskin proof), and **ocean**
+("Reef Rescue" — data-only, art pending).

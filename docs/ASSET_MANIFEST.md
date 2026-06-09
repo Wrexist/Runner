@@ -70,6 +70,24 @@ Kit** (CC0) covers most of this in one download.
 
 ---
 
+## OCEAN theme ("Reef Rescue" — data-only, art pending)
+
+Drop into `themes/ocean/{models,textures,audio}/`. A gentle underwater reskin;
+gems are tinted coral/aqua/gold (one neutral model, tinted in code).
+
+| Slot | File path | What it is | Exact source suggestion (CC0) |
+|---|---|---|---|
+| `assets.player_model` | `models/sub.glb` | Player (little sub or fish) | **Kenney — Pirate Kit / Fish Pack**, or a low-poly submarine. |
+| `assets.gem_model` | `models/pearl.glb` | Neutral pearl/bubble (tinted) | A simple sphere/pearl; model it white/grey. |
+| `assets.cage_model` | `models/net.glb` | Neutral net/kelp pod (tinted) | **Kenney — Pirate Kit** (net/cage) or a simple barred box. White/grey. |
+| `assets.ground_texture` | `textures/sand.png` | Seamless sea floor | Any CC0 seamless sand (512²/1024²). |
+| `rescuable_critters` | `models/clownfish.glb`, `seahorse.glb`, `turtle.glb`, `dolphin.glb` | 4 sea critters (unlock 0/50/150/300) | **Quaternius / Poly Pizza — sea life** (CC0). |
+| `audio.*` | `audio/music.ogg`, `rescue.ogg`, `gem.ogg`, `miss.ogg` | Gentle, watery versions | **Kenney — Music Loops + Interface/Casual Audio** (CC0). |
+
+**Ocean count: 7 models + 1 texture + 4 audio = 12 files.**
+
+---
+
 ## Where to get them (all CC0 unless noted)
 
 - **Kenney** — https://kenney.nl/assets — *Animal Pack Redux, Space Kit, Survival
@@ -88,6 +106,6 @@ intentional. Space can land as a free "new world" update — and it's also your
 proof that a third theme costs *art only, zero code*.
 
 ## Grand total
-**Forest + Space = 24 files** (14 models, 2 textures, 8 audio). Realistically a
-weekend of downloading + light scaling/cleanup in Blender (export `.glb`,
-Y-up, scaled to ~1–2 units).
+**Forest (ship) = 12 files.** Each extra world (Space, Ocean) is another 12 —
+all *art only, zero code*. Realistically a weekend per world of downloading +
+light scaling/cleanup in Blender (export `.glb`, Y-up, scaled to ~1–2 units).
