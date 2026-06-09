@@ -14,6 +14,11 @@ editing code to make a theme work, fix the engine to read that value from
 4. Run. The palette, names, speeds, gem colors, critters, and audio all change
    with no code edits. If anything needed a code edit, that's a bug — file it.
 
+> **CI validates every theme.** `tests/Tests.gd` `_test_theme_schema` auto-discovers
+> each `themes/<id>/` and asserts the required keys, `res://` asset/audio paths,
+> distinct color-blind gem symbols, and a free starter critter (`unlock_score: 0`).
+> Run `godot --headless --path . res://tests/Tests.tscn` after adding a theme.
+
 ## theme.json keys (all consumed by core via ThemeManager.get_val)
 
 | key | used by | notes |

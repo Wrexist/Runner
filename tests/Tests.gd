@@ -34,6 +34,8 @@ func _run_all() -> void:
 	_test_iap_and_reset()
 	_test_about_screen()
 	_test_localization()
+	_test_loc_coverage()
+	_test_theme_schema()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -146,25 +148,109 @@ func _test_about_screen() -> void:
 func _test_localization() -> void:
 	var path := "res://localization/ui_strings.csv"
 	_check("loc csv exists", FileAccess.file_exists(path))
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		_check("loc csv opens", false)
-		return
-	var header := f.get_csv_line(",")
-	_check("loc header starts with 'keys' + a locale", header.size() >= 2 and header[0] == "keys")
-	var map := {}
-	var blanks := 0
-	while not f.eof_reached():
-		var row := f.get_csv_line(",")
-		if row.size() < 2 or row[0] == "":
-			continue
-		map[row[0]] = row[1]
-		if row[1].strip_edges() == "":
-			blanks += 1
-	f.close()
+	var map := _loc_catalog()
 	_check("loc has the full string set", map.size() >= 40)
+	# A blank cell would import as an empty string and render nothing in-game.
+	var blanks := 0
+	for k in map:
+		if str(map[k]).strip_edges() == "":
+			blanks += 1
 	_check("loc every row is translated (no blanks)", blanks == 0)
 	_check("loc maps a known string (Play->Jugar)", map.get("Play", "") == "Jugar")
 	_check("loc includes the gated 'Back'", map.has("Back"))
 	# Until a .translation is imported + registered, tr() returns the source.
 	_check("tr() is identity in English", tr("Play") == "Play" and tr("Back") == "Back")
+
+## Parse the CSV catalog into {english_source: first_locale_translation}.
+func _loc_catalog() -> Dictionary:
+	var map := {}
+	var f := FileAccess.open("res://localization/ui_strings.csv", FileAccess.READ)
+	if f == null:
+		return map
+	var header := f.get_csv_line(",")  # keys,es,...
+	if header.size() < 2 or header[0] != "keys":
+		return map
+	while not f.eof_reached():
+		var row := f.get_csv_line(",")
+		if row.size() < 2 or row[0] == "":
+			continue
+		map[row[0]] = row[1]
+	f.close()
+	return map
+
+## Coverage guard: every literal tr("...") in the UI must have a catalog row, so
+## the catalog can't silently drift behind the code (a string that would render
+## fine in English but vanish/stay untranslated in every other locale).
+func _test_loc_coverage() -> void:
+	var keys := _loc_catalog()
+	var re := RegEx.new()
+	re.compile("tr\\(\"([^\"]*)\"\\)")
+	var missing: Array[String] = []
+	for src in ["res://ui/UIScreens.gd", "res://ui/HUD.gd"]:
+		var f := FileAccess.open(src, FileAccess.READ)
+		if f == null:
+			continue
+		var text := f.get_as_text()
+		f.close()
+		for m in re.search_all(text):
+			var lit := m.get_string(1)
+			if not keys.has(lit) and lit not in missing:
+				missing.append(lit)
+	_check("every tr(\"...\") literal is in the catalog (%s)" % str(missing), missing.is_empty())
+
+## Schema guard for the reskinnable engine: every theme.json must carry the keys
+## core/ reads, so a malformed reskin fails in CI instead of on a child's device.
+func _test_theme_schema() -> void:
+	var ids := DirAccess.get_directories_at("res://themes")
+	_check("themes discovered", ids.size() >= 1)
+	for id in ids:
+		var path := "res://themes/%s/theme.json" % id
+		var f := FileAccess.open(path, FileAccess.READ)
+		if f == null:
+			_check("theme %s opens" % id, false)
+			continue
+		var parsed: Variant = JSON.parse_string(f.get_as_text())
+		f.close()
+		_check("theme %s is valid JSON object" % id, parsed is Dictionary)
+		if not (parsed is Dictionary):
+			continue
+		var d: Dictionary = parsed
+		for key in ["display_name", "lanes", "gem_colors", "max_stumbles",
+				"assets", "rescuable_critters", "audio", "palette"]:
+			_check("theme %s has '%s'" % [id, key], d.has(key))
+		_check("theme %s lanes >= 1" % id, int(d.get("lanes", 0)) >= 1)
+		# Palette keys the UI/HUD read.
+		var pal: Dictionary = d.get("palette", {})
+		for pk in ["background_top", "background_bottom", "accent", "ui_text"]:
+			_check("theme %s palette.%s" % [id, pk], pal.has(pk))
+		# Asset + audio slots the engine wires up.
+		var assets: Dictionary = d.get("assets", {})
+		for ak in ["player_model", "gem_model", "cage_model", "ground_texture"]:
+			_check("theme %s assets.%s" % [id, ak], str(assets.get(ak, "")).begins_with("res://"))
+		var aud: Dictionary = d.get("audio", {})
+		for au in ["music", "rescue", "gem_pickup", "miss"]:
+			_check("theme %s audio.%s" % [id, au], str(aud.get(au, "")).begins_with("res://"))
+		# Gem colors non-empty AND each maps to a DISTINCT color-blind symbol.
+		var colors: Array = d.get("gem_colors", [])
+		_check("theme %s has gem colors" % id, colors.size() >= 1)
+		ThemeManager.load_theme(id)
+		var symbols := {}
+		for c in colors:
+			symbols[ThemeManager.gem_symbol(str(c))] = true
+		_check("theme %s gem symbols are distinct (color-blind safe)" % id,
+			symbols.size() == colors.size())
+		# Critters: well-formed, with at least one always-available starter.
+		var critters: Array = d.get("rescuable_critters", [])
+		_check("theme %s has critters" % id, critters.size() >= 1)
+		var has_starter := false
+		var critters_ok := true
+		for c in critters:
+			if not (c is Dictionary) or str(c.get("id", "")) == "" \
+					or not str(c.get("model", "")).begins_with("res://"):
+				critters_ok = false
+			if int((c as Dictionary).get("unlock_score", -1)) == 0:
+				has_starter = true
+		_check("theme %s critters well-formed {id, model}" % id, critters_ok)
+		_check("theme %s has a free starter critter (unlock_score 0)" % id, has_starter)
+	# Leave the default theme active for any later tests / a clean exit.
+	ThemeManager.load_theme("forest")
