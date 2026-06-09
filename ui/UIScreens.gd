@@ -3,6 +3,12 @@ class_name UIScreens
 ## UIScreens.gd — factory for every front-end screen, built in code from the
 ## active theme so screens reskin for free. Used by UIManager. Each screen is a
 ## small inner Control class that emits intent signals; UIManager wires them.
+##
+## Localization: user-facing strings are wrapped in tr() so they translate via
+## the catalog in res://localization/ (see docs/LOCALIZATION.md). Until a
+## translation is loaded, tr() returns the English source unchanged — so the
+## game reads identically in English with zero behavior change. Inner screen
+## classes extend Control (a Node), so tr() resolves on the screen instance.
 
 # ---------------------------------------------------------------- shared helpers
 static func _bg() -> ColorRect:
@@ -44,19 +50,19 @@ class StartScreen extends Control:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label(ThemeManager.display_name(), 56))
-		col.add_child(UIScreens._label("Best: %d" % SaveManager.high_score, 28))
+		col.add_child(UIScreens._label(tr("Best: %d") % SaveManager.high_score, 28))
 		if SaveManager.lifetime_rescued > 0:
-			col.add_child(UIScreens._label("Friends rescued: %d" % SaveManager.lifetime_rescued, 22))
-		var play := UIScreens._button("Play")
+			col.add_child(UIScreens._label(tr("Friends rescued: %d") % SaveManager.lifetime_rescued, 22))
+		var play := UIScreens._button(tr("Play"))
 		play.pressed.connect(func(): play_pressed.emit())
 		col.add_child(play)
-		var album := UIScreens._button("My Critters")
+		var album := UIScreens._button(tr("My Critters"))
 		album.pressed.connect(func(): album_pressed.emit())
 		col.add_child(album)
-		var settings := UIScreens._button("Settings")
+		var settings := UIScreens._button(tr("Settings"))
 		settings.pressed.connect(func(): settings_pressed.emit())
 		col.add_child(settings)
-		var about := UIScreens._button("About")
+		var about := UIScreens._button(tr("About"))
 		about.pressed.connect(func(): about_pressed.emit())
 		col.add_child(about)
 		add_child(col)
@@ -76,17 +82,17 @@ class GameOver extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("Run Over", 52))
+		col.add_child(UIScreens._label(tr("Run Over"), 52))
 		if _is_high:
-			col.add_child(UIScreens._label("New Best!", 34))
-		col.add_child(UIScreens._label("Score: %d" % _score, 36))
-		col.add_child(UIScreens._label("Critters rescued: %d" % _rescued, 28))
+			col.add_child(UIScreens._label(tr("New Best!"), 34))
+		col.add_child(UIScreens._label(tr("Score: %d") % _score, 36))
+		col.add_child(UIScreens._label(tr("Critters rescued: %d") % _rescued, 28))
 		# Lead with the positive next action. Monetization is NOT placed at the
 		# loss moment — the Shop lives behind the calm "My Critters" album.
-		var again := UIScreens._button("Play Again")
+		var again := UIScreens._button(tr("Play Again"))
 		again.pressed.connect(func(): play_again_pressed.emit())
 		col.add_child(again)
-		var album := UIScreens._button("My Critters")
+		var album := UIScreens._button(tr("My Critters"))
 		album.pressed.connect(func(): album_pressed.emit())
 		col.add_child(album)
 		add_child(col)
@@ -114,7 +120,7 @@ class ParentalGate extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("Ask a grown-up", 40))
+		col.add_child(UIScreens._label(tr("Ask a grown-up"), 40))
 		_prompt = UIScreens._label("", 36)
 		col.add_child(_prompt)
 		var row := HBoxContainer.new()
@@ -129,7 +135,7 @@ class ParentalGate extends Control:
 		col.add_child(row)
 		_feedback = UIScreens._label("", 24)
 		col.add_child(_feedback)
-		var back := UIScreens._button("Back")
+		var back := UIScreens._button(tr("Back"))
 		back.pressed.connect(func(): cancelled.emit())
 		col.add_child(back)
 		add_child(col)
@@ -138,7 +144,7 @@ class ParentalGate extends Control:
 		var a := randi_range(4, 9)
 		var b := randi_range(4, 9)
 		_answer = a + b
-		_prompt.text = "What is %d + %d ?" % [a, b]
+		_prompt.text = tr("What is %d + %d ?") % [a, b]
 		# Distinct, positive, plausible distractors (never 0).
 		var options: Array[int] = [_answer]
 		while options.size() < 3:
@@ -154,7 +160,7 @@ class ParentalGate extends Control:
 		if int(_buttons[i].get_meta("value")) == _answer:
 			passed.emit()
 		else:
-			_feedback.text = "Try again"
+			_feedback.text = tr("Try again")
 			_new_question()
 
 static func make_parental_gate() -> ParentalGate:
@@ -172,29 +178,29 @@ class Shop extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("Critter Shop", 48))
+		col.add_child(UIScreens._label(tr("Critter Shop"), 48))
 		_status = UIScreens._label(_status_text(), 28)
 		col.add_child(_status)
-		_unlock = UIScreens._button("Unlock All Critters  %s" % IAP.price_text())
+		_unlock = UIScreens._button(tr("Unlock All Critters  %s") % IAP.price_text())
 		_unlock.disabled = SaveManager.all_unlocked_iap
 		_unlock.pressed.connect(func(): IAP.purchase_unlock_all())
 		col.add_child(_unlock)
-		var restore := UIScreens._button("Restore Purchases")
+		var restore := UIScreens._button(tr("Restore Purchases"))
 		restore.pressed.connect(func(): IAP.restore())
 		col.add_child(restore)
-		var back := UIScreens._button("Back")
+		var back := UIScreens._button(tr("Back"))
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
 		# React to the purchase/restore results (real plugin or stub alike).
 		IAP.purchase_succeeded.connect(_refresh)
 		IAP.restore_completed.connect(func(_u): _refresh())
-		IAP.purchase_failed.connect(func(reason): _status.text = "Purchase failed: %s" % reason)
+		IAP.purchase_failed.connect(func(reason): _status.text = tr("Purchase failed: %s") % reason)
 	func _refresh() -> void:
 		_status.text = _status_text()
 		_unlock.disabled = SaveManager.all_unlocked_iap
 	func _status_text() -> String:
-		return "All critters unlocked!" if SaveManager.all_unlocked_iap else "Unlock every critter forever."
+		return tr("All critters unlocked!") if SaveManager.all_unlocked_iap else tr("Unlock every critter forever.")
 
 static func make_shop() -> Shop:
 	var s := Shop.new()
@@ -209,14 +215,14 @@ class Pause extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("Paused", 52))
-		var resume := UIScreens._button("Resume")
+		col.add_child(UIScreens._label(tr("Paused"), 52))
+		var resume := UIScreens._button(tr("Resume"))
 		resume.pressed.connect(func(): resume_pressed.emit())
 		col.add_child(resume)
-		var settings := UIScreens._button("Settings")
+		var settings := UIScreens._button(tr("Settings"))
 		settings.pressed.connect(func(): settings_pressed.emit())
 		col.add_child(settings)
-		var home := UIScreens._button("Home")
+		var home := UIScreens._button(tr("Home"))
 		home.pressed.connect(func(): home_pressed.emit())
 		col.add_child(home)
 		add_child(col)
@@ -235,15 +241,15 @@ class Settings extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("Settings", 48))
+		col.add_child(UIScreens._label(tr("Settings"), 48))
 		col.add_child(_toggle("Music", "music"))
 		col.add_child(_toggle("Sounds", "sfx"))
 		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
-		var reset := UIScreens._button("Reset Progress")
+		var reset := UIScreens._button(tr("Reset Progress"))
 		reset.pressed.connect(func(): reset_requested.emit())
 		col.add_child(reset)
-		var back := UIScreens._button("Back")
+		var back := UIScreens._button(tr("Back"))
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -258,7 +264,7 @@ class Settings extends Control:
 		return b
 	func _refresh_difficulty(b: Button) -> void:
 		var d := str(SaveManager.settings.get("difficulty", "easy"))
-		b.text = "Difficulty:  %s" % ("Easy" if d == "easy" else "Normal")
+		b.text = tr("Difficulty:  %s") % (tr("Easy") if d == "easy" else tr("Normal"))
 	func _toggle(label: String, key: String) -> Button:
 		var b := UIScreens._button("")
 		_refresh(b, label, key)
@@ -275,7 +281,7 @@ class Settings extends Control:
 				AudioManager.stop_music()
 	func _refresh(b: Button, label: String, key: String) -> void:
 		var on := bool(SaveManager.settings.get(key, true))
-		b.text = "%s:  %s" % [label, "On" if on else "Off"]
+		b.text = "%s:  %s" % [tr(label), tr("On") if on else tr("Off")]
 
 static func make_settings() -> Settings:
 	var s := Settings.new()
@@ -292,7 +298,7 @@ class Album extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("My Critters", 48))
+		col.add_child(UIScreens._label(tr("My Critters"), 48))
 		var grid := GridContainer.new()
 		grid.columns = 2
 		grid.add_theme_constant_override("h_separation", 28)
@@ -303,10 +309,10 @@ class Album extends Control:
 		col.add_child(grid)
 		# Calm, contextual place to offer the single unlock-all purchase (gated).
 		if not SaveManager.all_unlocked_iap:
-			var unlock := UIScreens._button("Unlock All Critters")
+			var unlock := UIScreens._button(tr("Unlock All Critters"))
 			unlock.pressed.connect(func(): unlock_pressed.emit())
 			col.add_child(unlock)
-		var back := UIScreens._button("Back")
+		var back := UIScreens._button(tr("Back"))
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -323,7 +329,7 @@ class Album extends Control:
 		box.add_child(swatch)
 		var name_label := UIScreens._label(id.capitalize() if unlocked else "?", 26)
 		box.add_child(name_label)
-		var hint := UIScreens._label("Rescued!" if unlocked else "Reach %d" % int(c.get("unlock_score", 0)), 18)
+		var hint := UIScreens._label((tr("Rescued!") if unlocked else tr("Reach %d") % int(c.get("unlock_score", 0))), 18)
 		box.add_child(hint)
 		return box
 
@@ -370,7 +376,7 @@ class Tutorial extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("How to play", 48))
+		col.add_child(UIScreens._label(tr("How to play"), 48))
 		var colors: Array = ThemeManager.get_val("gem_colors", ["red"])
 		var c0 := str(colors[0]) if colors.size() > 0 else "red"
 		var gc := ThemeManager.gem_color(c0)
@@ -384,8 +390,8 @@ class Tutorial extends Control:
 		row.add_child(UIScreens._label("=", 40))
 		row.add_child(UIScreens.Glyph2D.new("sphere", ThemeManager.color("accent", Color(1, 0.55, 0.6)), true))
 		col.add_child(row)
-		col.add_child(UIScreens._label("Grab the gem, reach the matching cage!", 26))
-		var go := UIScreens._button("Let's go!")
+		col.add_child(UIScreens._label(tr("Grab the gem, reach the matching cage!"), 26))
+		var go := UIScreens._button(tr("Let's go!"))
 		go.pressed.connect(func(): start_pressed.emit())
 		col.add_child(go)
 		add_child(col)
@@ -406,17 +412,18 @@ class About extends Control:
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
-		col.add_child(UIScreens._label("About", 48))
+		col.add_child(UIScreens._label(tr("About"), 48))
 		col.add_child(UIScreens._label("%s  v%s" % [
 			ThemeManager.display_name(),
 			str(ProjectSettings.get_setting("application/config/version", "1.0"))], 26))
 		# Privacy promise, in plain words. Mirrors the real behavior: SaveManager
 		# is local-only and there are no SDKs/network calls.
-		col.add_child(UIScreens._label("No ads. No tracking.\nWe never collect your data.", 24))
-		col.add_child(UIScreens._label("Made with Godot Engine (MIT)", 20))
+		col.add_child(UIScreens._label(tr("No ads. No tracking."), 24))
+		col.add_child(UIScreens._label(tr("We never collect your data."), 24))
+		col.add_child(UIScreens._label(tr("Made with Godot Engine (MIT)"), 20))
 		var credits: Array = ThemeManager.get_val("credits", [])
 		if not credits.is_empty():
-			col.add_child(UIScreens._label("Art & sound", 26))
+			col.add_child(UIScreens._label(tr("Art & sound"), 26))
 			# Scroll so a long credits list stays usable on a small phone screen.
 			var scroll := ScrollContainer.new()
 			scroll.custom_minimum_size = Vector2(360, 220)
@@ -428,7 +435,7 @@ class About extends Control:
 				list.add_child(UIScreens._label(UIScreens._credit_line(entry), 18))
 			scroll.add_child(list)
 			col.add_child(scroll)
-		var back := UIScreens._button("Back")
+		var back := UIScreens._button(tr("Back"))
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)

@@ -47,7 +47,7 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 ## Phase 1 — Finish the code/data layer (🤖, small)
 **Goal:** nothing code-shaped left before content.
 - [x] 🤖 Engine, screens, accessibility, IAP abstraction, tests (done this stream).
-- [ ] 🤖 **Localization scaffolding** (deferred to keep the verified build stable — see Phase 5).
+- [x] 🤖 **Localization scaffolding** — all UI strings wrapped in `tr()`, catalog at `localization/ui_strings.csv` (en source + es), guide in `docs/LOCALIZATION.md`. Activating a locale is a 🖥️ editor import step.
 - [x] 🤖 Set real `PRODUCT_ID` (`com.critterdash.app.unlockall`); `IAP.price_text()` will read the store price once the plugin is in.
 - [x] 🤖 Add a short **Credits/About** screen (reachable from Start): version, "no ads / no tracking / no data" promise, Godot credit, and data-driven `credits[]` attribution per theme.
 

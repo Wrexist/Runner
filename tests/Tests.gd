@@ -33,6 +33,7 @@ func _run_all() -> void:
 	_test_difficulty()
 	_test_iap_and_reset()
 	_test_about_screen()
+	_test_localization()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -137,3 +138,33 @@ func _test_about_screen() -> void:
 			== "fox.glb — Quaternius  (CC0)")
 	_check("credit_line tolerates a partial dict",
 		UIScreens._credit_line({"author": "Kenney"}) == "Kenney")
+
+## The translation catalog stays structurally sound: a `keys` header, at least
+## one locale column, every row actually translated (no blanks that would import
+## as empty strings), and known keys present. Also confirms tr() is identity in
+## English so the un-translated build is unchanged.
+func _test_localization() -> void:
+	var path := "res://localization/ui_strings.csv"
+	_check("loc csv exists", FileAccess.file_exists(path))
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		_check("loc csv opens", false)
+		return
+	var header := f.get_csv_line(",")
+	_check("loc header starts with 'keys' + a locale", header.size() >= 2 and header[0] == "keys")
+	var map := {}
+	var blanks := 0
+	while not f.eof_reached():
+		var row := f.get_csv_line(",")
+		if row.size() < 2 or row[0] == "":
+			continue
+		map[row[0]] = row[1]
+		if row[1].strip_edges() == "":
+			blanks += 1
+	f.close()
+	_check("loc has the full string set", map.size() >= 40)
+	_check("loc every row is translated (no blanks)", blanks == 0)
+	_check("loc maps a known string (Play->Jugar)", map.get("Play", "") == "Jugar")
+	_check("loc includes the gated 'Back'", map.has("Back"))
+	# Until a .translation is imported + registered, tr() returns the source.
+	_check("tr() is identity in English", tr("Play") == "Play" and tr("Back") == "Back")

@@ -57,7 +57,7 @@ func _ready() -> void:
 	GameCore.run_started.connect(_on_run_started)
 	GameCore.run_ended.connect(func(_s, _h): _root.visible = false)
 	GameCore.returned_to_menu.connect(func(): _root.visible = false)
-	GameCore.new_best.connect(func(): _float_text("New Best!"))
+	GameCore.new_best.connect(func(): _float_text(tr("New Best!")))
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -89,8 +89,8 @@ const STREAK_WORDS := ["Rescued!", "Nice!", "Great!", "Awesome!", "Amazing!", "I
 
 func _streak_word(streak: int) -> String:
 	if streak <= 1:
-		return STREAK_WORDS[0]
-	return STREAK_WORDS[mini(streak - 1, STREAK_WORDS.size() - 1)]
+		return tr(STREAK_WORDS[0])
+	return tr(STREAK_WORDS[mini(streak - 1, STREAK_WORDS.size() - 1)])
 
 ## A happy word that floats up from the center and fades. Pure positive feedback.
 func _float_text(text: String) -> void:
