@@ -52,7 +52,9 @@ jobs:
 
       - name: Headless import & validate
         run: |
-          # Load the project headlessly; capture output and fail on script errors.
+          # Import binary assets first (e.g. placeholder .wav) so resource loads
+          # are deterministic, then load the project and fail on script errors.
+          godot --headless --path . --import 2>&1 | tail -5 || true
           godot --headless --path . --quit-after 5 2>&1 | tee godot.log || true
           if grep -qiE "SCRIPT ERROR|Parse Error|Failed to load script" godot.log; then
             echo "::error::Godot reported script/parse errors"
