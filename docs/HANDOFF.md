@@ -70,9 +70,11 @@ godot --headless --path . res://tests/Tests.tscn   # "TESTS: ALL PASS"
 godot --headless --path . --quit-after 120         # boots Main (audio-missing warnings are expected)
 ```
 
-## The three things only you can do
+## The things only you can do
 1. Provide + import binary art/audio (drop CC0 files at the theme paths; the
    engine auto-loads them — no wiring needed).
-2. iOS export, signing, TestFlight (Mac + Xcode + Apple account).
+2. iOS signing + TestFlight — **no Mac needed**: the `iOS build` GitHub Actions
+   workflow builds/signs/uploads on a rented macOS runner. Browser + openssl
+   setup steps: `docs/NO_MAC_SHIPPING.md`.
 3. Install the native `InAppStore` plugin + create the product in App Store
    Connect + sandbox-test (the integration code is already written in `core/IAP.gd`).
