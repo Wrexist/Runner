@@ -24,6 +24,7 @@ var _model: Node3D = null
 # Breadcrumb of recent positions so the rescue Trail can snake behind us.
 var _history: Array[Vector3] = []
 const HISTORY_MAX := 240
+var _bob_t: float = 0.0
 
 func _ready() -> void:
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
@@ -117,6 +118,13 @@ func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
 	position.x = move_toward(position.x, _target_x, move_speed * delta)
+	# A soft idle bob makes the runner feel alive (body only — doesn't disturb the
+	# trail breadcrumb, which reads the root position). Motion-safe.
+	if not bool(SaveManager.settings.get("reduce_motion", false)):
+		_bob_t += delta
+		var b := _body()
+		if b:
+			b.position.y = sin(_bob_t * 2.5) * 0.06
 	_history.push_front(global_position)
 	if _history.size() > HISTORY_MAX:
 		_history.resize(HISTORY_MAX)

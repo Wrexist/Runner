@@ -10,6 +10,7 @@ const FOLLOW_SMOOTH := 12.0
 
 var _player: Node3D
 var _followers: Array[Node3D] = []
+var _t: float = 0.0
 
 func _ready() -> void:
 	GameCore.run_started.connect(_reset)
@@ -49,8 +50,15 @@ func _process(delta: float) -> void:
 	if _player == null or not _player.has_method("history_point"):
 		return
 	var t := clampf(delta * FOLLOW_SMOOTH, 0.0, 1.0)
+	var reduce := bool(SaveManager.settings.get("reduce_motion", false))
+	if not reduce:
+		_t += delta
 	for i in _followers.size():
 		var delayed: Vector3 = _player.history_point((i + 1) * HISTORY_STEPS)
+		# Out-of-phase bob makes the line undulate happily behind the player.
+		var y := _player.global_position.y
+		if not reduce:
+			y += sin(_t * 4.0 + i * 0.9) * 0.06
 		# Lane (x) trails the player's past; z fans out behind toward the camera.
-		var target := Vector3(delayed.x, _player.global_position.y, (i + 1) * Z_SPACING)
+		var target := Vector3(delayed.x, y, (i + 1) * Z_SPACING)
 		_followers[i].global_position = _followers[i].global_position.lerp(target, t)

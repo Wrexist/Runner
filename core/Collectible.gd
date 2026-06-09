@@ -16,11 +16,21 @@ extends Area3D
 var color_name: String = "red"
 var lane: int = 0
 
+var _visual: Node3D = null      # the body we spin/bob (model or placeholder mesh)
+var _t: float = 0.0
+var _bob_phase: float = 0.0
+var _reduce: bool = false
+
 ## Called by the Spawner right after instancing.
 func setup(c: String, l: int) -> void:
 	color_name = c
 	lane = l
+	_reduce = bool(SaveManager.settings.get("reduce_motion", false))
+	_bob_phase = randf() * TAU
 	_apply_color()
+	# Gentle "pop" as it appears so the track feels lively (motion-safe).
+	if not _reduce:
+		Effects.pop(self, 1.5)
 
 func _apply_color() -> void:
 	var col := _color_from_name(color_name)
@@ -33,6 +43,7 @@ func _apply_color() -> void:
 	if model:
 		add_child(model)
 		ThemeModels.tint(model, col)
+		_visual = model
 		var placeholder := get_node_or_null("MeshInstance3D") as MeshInstance3D
 		if placeholder:
 			placeholder.visible = false
@@ -40,6 +51,7 @@ func _apply_color() -> void:
 		var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
 		if mesh:
 			mesh.material_override = _solid(col)
+			_visual = mesh
 	_add_symbol_badge()
 
 func _solid(c: Color) -> StandardMaterial3D:
@@ -71,6 +83,12 @@ func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
 	position.z += GameCore.current_speed * delta
+	# Inviting idle motion on the body only (collision stays put). Gems spin
+	# faster than cages; both bob softly. Skipped entirely under Reduce Motion.
+	if not _reduce and _visual:
+		_t += delta
+		_visual.rotation.y += delta * (2.2 if kind == "gem" else 0.7)
+		_visual.position.y = sin(_t * 3.0 + _bob_phase) * 0.08
 	if position.z > 4.0:        # passed the player; recycle
 		queue_free()
 

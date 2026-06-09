@@ -6,6 +6,10 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **More alive-feeling juice (motion-safe).** Gems gently spin + bob and pop in as
+  they spawn; cages bob softly; the player has a subtle idle bob; the rescue conga
+  line undulates out-of-phase behind you. All of it is skipped under the
+  Reduce-Motion accessibility toggle, and none of it touches collision/scoring.
 - **Runtime theme-art loading (`core/ThemeModels.gd`).** Player, gems, cages, the
   ground texture, and the rescue/Album critters now load their `theme.json`
   `.glb`/`.png` automatically at runtime — drop CC0 files at the named paths and
