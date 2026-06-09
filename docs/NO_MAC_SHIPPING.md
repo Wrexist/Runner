@@ -60,11 +60,11 @@ Repo → Settings → Secrets and variables → Actions → **New repository sec
 Then delete the local `.p12`/`.p8`/key files or store them somewhere safe
 offline — never commit them (the repo's `.gitignore` already blocks `*.p12`/`*.pem`).
 
-## 5. The 1024px icon (one-time)
-The export preset references `ios/icons/icon_1024.png`. Create it from
-`icon.svg` (any converter works — e.g. open icon.svg in a browser, screenshot,
-or use an online SVG→PNG tool at 1024×1024). **No transparency** — the icon's
-background rect already fills the canvas. Commit the PNG.
+## 5. The 1024px icon (already done)
+`ios/icons/icon_1024.png` is committed (1024×1024, opaque, no transparency —
+Apple-compliant). It's generated from `icon.svg` by `tools/render_icon.py`; to
+change the icon, edit the SVG (or the script) and rerun
+`python3 tools/render_icon.py`, then commit the PNG.
 
 ## 6. Run it
 GitHub → **Actions** → **iOS build** → **Run workflow** (leave "upload" checked).
