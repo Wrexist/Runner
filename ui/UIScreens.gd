@@ -39,6 +39,7 @@ class StartScreen extends Control:
 	signal play_pressed
 	signal settings_pressed
 	signal album_pressed
+	signal about_pressed
 	func _build() -> void:
 		add_child(UIScreens._bg())
 		var col := UIScreens._column()
@@ -55,6 +56,9 @@ class StartScreen extends Control:
 		var settings := UIScreens._button("Settings")
 		settings.pressed.connect(func(): settings_pressed.emit())
 		col.add_child(settings)
+		var about := UIScreens._button("About")
+		about.pressed.connect(func(): about_pressed.emit())
+		col.add_child(about)
 		add_child(col)
 
 static func make_start_screen() -> StartScreen:
@@ -388,5 +392,65 @@ class Tutorial extends Control:
 
 static func make_tutorial() -> Tutorial:
 	var s := Tutorial.new()
+	s._build()
+	return s
+
+# ---------------------------------------------------------------- About / Credits
+## Reachable from Start. Two jobs: (1) reassure parents — this app collects no
+## data, has no ads, no tracking (a truthful Kids-Category selling point), and
+## (2) credit third-party assets. Credits are DATA: each theme may list its asset
+## authors under an optional `credits` array in theme.json, so a reskin carries
+## its own attribution. Any CC-BY asset MUST appear here; CC0 is welcome too.
+class About extends Control:
+	signal closed
+	func _build() -> void:
+		add_child(UIScreens._bg())
+		var col := UIScreens._column()
+		col.add_child(UIScreens._label("About", 48))
+		col.add_child(UIScreens._label("%s  v%s" % [
+			ThemeManager.display_name(),
+			str(ProjectSettings.get_setting("application/config/version", "1.0"))], 26))
+		# Privacy promise, in plain words. Mirrors the real behavior: SaveManager
+		# is local-only and there are no SDKs/network calls.
+		col.add_child(UIScreens._label("No ads. No tracking.\nWe never collect your data.", 24))
+		col.add_child(UIScreens._label("Made with Godot Engine (MIT)", 20))
+		var credits: Array = ThemeManager.get_val("credits", [])
+		if not credits.is_empty():
+			col.add_child(UIScreens._label("Art & sound", 26))
+			# Scroll so a long credits list stays usable on a small phone screen.
+			var scroll := ScrollContainer.new()
+			scroll.custom_minimum_size = Vector2(360, 220)
+			scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+			scroll.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			var list := VBoxContainer.new()
+			list.add_theme_constant_override("separation", 8)
+			for entry in credits:
+				list.add_child(UIScreens._label(UIScreens._credit_line(entry), 18))
+			scroll.add_child(list)
+			col.add_child(scroll)
+		var back := UIScreens._button("Back")
+		back.pressed.connect(func(): closed.emit())
+		col.add_child(back)
+		add_child(col)
+
+## Format one credits entry. Accepts a plain string, or a dict with any of
+## {asset/name, author/by, license, source/url} — all fields optional.
+static func _credit_line(entry: Variant) -> String:
+	if entry is String:
+		return entry
+	if entry is Dictionary:
+		var what := str(entry.get("asset", entry.get("name", "")))
+		var who := str(entry.get("author", entry.get("by", "")))
+		var lic := str(entry.get("license", ""))
+		var line := what
+		if who != "":
+			line += (" — " if line != "" else "") + who
+		if lic != "":
+			line += "  (%s)" % lic
+		return line if line != "" else "—"
+	return str(entry)
+
+static func make_about() -> About:
+	var s := About.new()
 	s._build()
 	return s

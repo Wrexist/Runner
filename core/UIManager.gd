@@ -40,7 +40,13 @@ func _show_start() -> void:
 	s.play_pressed.connect(_on_play_pressed)
 	s.settings_pressed.connect(func(): _show_settings(_show_start))
 	s.album_pressed.connect(_show_album)
+	s.about_pressed.connect(_show_about)
 	_show(s)
+
+func _show_about() -> void:
+	var a := UILayer.make_about()
+	a.closed.connect(_show_start)
+	_show(a)
 
 ## First-ever Play shows a one-time "how to play" card; afterward it plays directly.
 func _on_play_pressed() -> void:

@@ -32,6 +32,7 @@ func _run_all() -> void:
 	_test_save_unlocks()
 	_test_difficulty()
 	_test_iap_and_reset()
+	_test_about_screen()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -122,3 +123,17 @@ func _test_iap_and_reset() -> void:
 	_check("reset clears lifetime stat", SaveManager.lifetime_rescued == 0)
 	_check("reset keeps IAP entitlement", SaveManager.all_unlocked_iap)
 	SaveManager.all_unlocked_iap = false
+
+## The About screen builds from theme data; verify it constructs without error
+## and that the credits formatter handles strings, dicts, and partial dicts.
+func _test_about_screen() -> void:
+	var about := UIScreens.make_about()
+	_check("About screen builds", about != null and about.get_child_count() > 0)
+	about.free()
+	_check("credit_line passes a string through",
+		UIScreens._credit_line("Kenney") == "Kenney")
+	_check("credit_line formats a full dict",
+		UIScreens._credit_line({"asset": "fox.glb", "author": "Quaternius", "license": "CC0"})
+			== "fox.glb — Quaternius  (CC0)")
+	_check("credit_line tolerates a partial dict",
+		UIScreens._credit_line({"author": "Kenney"}) == "Kenney")

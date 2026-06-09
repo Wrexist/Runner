@@ -48,8 +48,8 @@ What's left is mostly **🖥️ editor / 🍎 Apple** work, plus a little 🤖 p
 **Goal:** nothing code-shaped left before content.
 - [x] 🤖 Engine, screens, accessibility, IAP abstraction, tests (done this stream).
 - [ ] 🤖 **Localization scaffolding** (deferred to keep the verified build stable — see Phase 5).
-- [ ] 🤖 Set real `PRODUCT_ID` and confirm `IAP.price_text()` will read the store price once the plugin is in.
-- [ ] 🤖 (Optional) Add a short **Credits/About** screen with the privacy-policy text (no external link needed).
+- [x] 🤖 Set real `PRODUCT_ID` (`com.critterdash.app.unlockall`); `IAP.price_text()` will read the store price once the plugin is in.
+- [x] 🤖 Add a short **Credits/About** screen (reachable from Start): version, "no ads / no tracking / no data" promise, Godot credit, and data-driven `credits[]` attribution per theme.
 
 **Done when:** `godot --headless --path . res://tests/Tests.tscn` prints `TESTS: ALL PASS` and the game boots clean.
 

@@ -62,5 +62,6 @@
     "rescue": "res://themes/forest/audio/rescue.ogg",
     "gem_pickup": "res://themes/forest/audio/gem.ogg",
     "miss": "res://themes/forest/audio/miss.ogg"
-  }
+  },
+  "credits": []
 }

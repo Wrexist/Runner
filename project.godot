@@ -8,6 +8,7 @@ config_version=5
 [application]
 
 config/name="Critter Dash"
+config/version="1.0"
 config/description="A gentle, reskinnable lane-based rescue runner for kids."
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.3", "Mobile")

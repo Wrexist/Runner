@@ -32,6 +32,7 @@ editing code to make a theme work, fix the engine to read that value from
 | `assets.*` | (art wiring) | model/texture paths |
 | `rescuable_critters[]` | GameCore | `{id, model, unlock_score}` earn-by-play |
 | `audio.*` | juice/audio | music + sfx paths; missing = silent, never crash |
+| `credits[]` | About screen | optional attribution; each entry a string or `{asset, author, license}`. Any **CC-BY** asset MUST be listed here. Mirror `docs/CREDITS.md`. |
 
 Tuning that has a `difficulty` override is read via `ThemeManager.diff_val(key)`
 (preset → top-level → default). Everything else uses `get_val`.
