@@ -32,6 +32,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"lane_marker",
 	# Adventure depth: gentle power-up "builds"
 	"slow_factor", "powerup_interval", "powerup_duration", "audio.powerup",
+	# Adventure depth: in-run biome journey
+	"biome_interval",
 ]
 
 func _ready() -> void:
@@ -108,6 +110,7 @@ func _run_all() -> void:
 	_test_powerup_spawn()
 	_test_powerup_hud()
 	_test_magnet()
+	_test_biomes()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1079,6 +1082,27 @@ func _test_magnet() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## The world journeys through biomes within a run: the sky palette shifts after
+## the interval and resets to base on menu — gameplay tuning is never touched.
+func _test_biomes() -> void:
+	ThemeManager.load_theme("forest")
+	var base_top: Color = ThemeManager.color("background_top")
+	var base_gem: Color = ThemeManager.gem_color("red")
+	var got := {"name": ""}
+	var cb := func(n): got["name"] = n
+	Biomes.biome_changed.connect(cb)
+	GameCore.start_run()
+	var interval := int(ThemeManager.get_val("biome_interval", 8))
+	for i in interval:
+		GameCore.rescue_critter("bunny")
+	_check("biome: advances after the interval", got["name"] != "")
+	_check("biome: the sky palette shifts", ThemeManager.color("background_top") != base_top)
+	_check("biome: gameplay (gem colors) untouched", ThemeManager.gem_color("red") == base_gem)
+	Biomes.biome_changed.disconnect(cb)
+	GameCore.go_to_menu()
+	_check("biome: resets to base on menu", ThemeManager.color("background_top") == base_top)
+	SaveManager.unlocked_critters = []
 
 ## The Spawner drops a power-up pickup (rotating, valid kind) into the world.
 func _test_powerup_spawn() -> void:

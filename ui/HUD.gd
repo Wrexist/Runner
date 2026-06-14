@@ -97,6 +97,7 @@ func _ready() -> void:
 	GameCore.critter_unlocked.connect(_on_critter_unlocked)
 	Powerups.powerup_changed.connect(_on_powerup_changed)
 	GameCore.shield_used.connect(_on_shield_used)
+	Biomes.biome_changed.connect(func(_n): _float_text(tr("New area!")))
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)

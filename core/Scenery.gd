@@ -29,6 +29,18 @@ func _ready() -> void:
 	_rng.randomize()
 	GameCore.run_started.connect(_repopulate)
 	GameCore.returned_to_menu.connect(_repopulate)
+	ThemeManager.theme_loaded.connect(func(_id): _reskin())
+	_repopulate()
+
+## Rebuild props from scratch so they pick up a new theme/biome palette (the
+## canopy tint reads background_bottom). Called on a re-skin.
+func _reskin() -> void:
+	for p in _live:
+		p.queue_free()
+	for p in _free:
+		p.queue_free()
+	_live.clear()
+	_free.clear()
 	_repopulate()
 
 func _apply_tuning() -> void:
