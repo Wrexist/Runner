@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://core/Spawner.gd" id="2_spawner"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://core/Trail.gd" id="8_trail"]
 [ext_resource type="Script" path="res://core/Scenery.gd" id="9_scenery"]
 [ext_resource type="Script" path="res://core/Ambient.gd" id="10_ambient"]
+[ext_resource type="Script" path="res://core/LaneMarkers.gd" id="11_lane_markers"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(12, 120)
@@ -46,5 +47,8 @@ script = ExtResource("9_scenery")
 
 [node name="Ambient" type="Node3D" parent="."]
 script = ExtResource("10_ambient")
+
+[node name="LaneMarkers" type="Node3D" parent="."]
+script = ExtResource("11_lane_markers")
 
 [node name="HUD" parent="." instance=ExtResource("5_hud")]

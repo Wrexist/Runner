@@ -29,6 +29,7 @@ const EXTENDED_KEYS: Array[String] = [
 	# W-G procedural scenery & characters
 	"critter_detail", "player_shape", "scenery", "ambient",
 	"fog_enabled", "fog_density", "ambient_energy", "light_energy", "light_color",
+	"lane_marker",
 ]
 
 func _ready() -> void:
@@ -100,6 +101,7 @@ func _run_all() -> void:
 	_test_scenery_styles()
 	_test_ambient()
 	_test_atmosphere()
+	_test_lane_markers()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -998,6 +1000,37 @@ func _test_scenery() -> void:
 		_check("scenery: scrolls forward during play", mover.position.z > zb)
 	GameCore.go_to_menu()
 	sc.free()
+	SaveManager.settings["reduce_motion"] = false
+
+## Lane markers sit on the computed lane boundaries, freeze the scroll (but stay
+## drawn) under reduce_motion, and scroll when motion is on.
+func _test_lane_markers() -> void:
+	ThemeManager.load_theme("forest")
+	var lm = preload("res://core/LaneMarkers.gd").new()
+	add_child(lm)
+	_check("markers: dashes built", lm._dashes.size() > 0)
+	_check("markers: two dividers for 3 lanes", lm._boundaries.size() == 2)
+	var aligned := true
+	for d in lm._dashes:
+		var on_boundary := false
+		for bx in lm._boundaries:
+			if absf(d.position.x - bx) < 0.001:
+				on_boundary = true
+		if not on_boundary:
+			aligned = false
+	_check("markers: dashes sit on lane boundaries", aligned)
+	GameCore.start_run()
+	SaveManager.settings["reduce_motion"] = true
+	var d0 = lm._dashes[0]
+	var zb := d0.position.z
+	lm._process(0.3)
+	_check("markers: frozen under reduce_motion", d0.position.z == zb)
+	_check("markers: still drawn under reduce_motion", lm._dashes.size() > 0)
+	SaveManager.settings["reduce_motion"] = false
+	lm._process(0.05)
+	_check("markers: scroll when motion is on", d0.position.z > zb)
+	GameCore.go_to_menu()
+	lm.free()
 	SaveManager.settings["reduce_motion"] = false
 
 ## SkyRig builds a valid Environment for every theme and applies themed light

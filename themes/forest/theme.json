@@ -75,6 +75,7 @@
   "ambient_energy": 0.7,
   "light_energy": 1.0,
   "light_color": "#fff4e0",
+  "lane_marker": {"enabled": true, "color": "#ffffff", "dash_len": 1.2, "dash_gap": 1.4},
   "camera_follow": 0.4,
   "camera_smooth": 5.0,
   "camera_zoom_amount": 0.0,
