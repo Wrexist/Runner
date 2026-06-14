@@ -43,6 +43,36 @@ editing code to make a theme work, fix the engine to read that value from
 Tuning that has a `difficulty` override is read via `ThemeManager.diff_val(key)`
 (preset → top-level → default). Everything else uses `get_val`.
 
+## Polish-overhaul tunables (all optional; code has safe defaults)
+
+These were added to make the game feel like a top-tier runner. They are OPTIONAL
+(every reader passes a default), but `tests/Tests.gd` `_test_theme_schema_extended`
+enforces PARITY: each must be present in **every** theme or **none**. Add a key to
+all three themes and to `EXTENDED_KEYS` in the same change.
+
+| key | used by | default | notes |
+|---|---|---|---|
+| `swipe_threshold_px` | Player | 40 | px before a drag counts as a swipe |
+| `tap_dead_zone_frac` | Player | 0.12 | ignore taps within this frac of centre |
+| `lane_change_cooldown` | Player | 0.0 | min seconds between lane changes (0 = off) |
+| `carry_glow` / `carry_badge_scale` | Player | 1.4 / 1.0 | carried-colour badge emission / size |
+| `haptic_ms` | Effects.haptic | `{light:12,rescue:25}` | vibration ms per kind (mobile only) |
+| `warmup_seconds` | GameCore (`diff_val`) | 2.5 | grace period before the speed ramp |
+| `milestone_rescues` | GameCore | `[25,50,100]` | rescue counts that fire a celebration |
+| `spawn_patterns` | Spawner | (single fallback) | array of `{type:single|rest|double, weight}` |
+| `forgiveness_z` / `near_miss_z` | Collectible | 0.6 / 0.8 | reward pickup tolerance / dodge window |
+| `stumble_flash_alpha` / `stumble_flash_time` | HUD→ScreenFX | 0.18 / 0.25 | gentle stumble dim (alpha ≤ 0.25, no shake) |
+| `gem_emission` | Collectible | 0.8 | gem glow (cages stay matte) |
+| `glow_intensity` | SkyRig | 0.4 | world glow post-FX |
+| `ground_uv_speed` | SkyRig | 0.04 | ground scroll rate |
+| `camera_follow` / `camera_smooth` | CameraRig | 0.4 / 5.0 | lane-follow amount / lerp speed |
+| `camera_zoom_amount` | CameraRig | 0.0 | extra FOV° at max speed (0 = off; subtle, bounded) |
+| `audio.{menu_music,ui_click,whoosh,near_miss,jingle}` | AudioManager | (fail-soft) | extra SFX/music keys; silent until sourced |
+
+COMPLIANCE: `spawn_patterns` can never wall the track — the Spawner enforces "≥1
+lane always clear" in code regardless of data. Forgiveness only helps rewards
+(the hazard stays fair). Streaks/milestones/near-miss are celebration-only.
+
 ## Compliance note
 
 `unlock_score` gates are **earned by play**, never randomized and never sold.
