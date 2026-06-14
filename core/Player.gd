@@ -55,6 +55,14 @@ func _ready() -> void:
 ## stays (and gets tinted by the carried color). Fail-soft.
 func _load_theme_model() -> void:
 	_model = ThemeModels.instance(ThemeManager.asset("player_model"))
+	if _model == null:
+		# No .glb: build a themed procedural character/vehicle (not a bare box).
+		# Treated exactly like a loaded model — _body() returns it, so bob/lean,
+		# the root carry badge, and the sibling collision Area3D are all unaffected.
+		_model = ThemeModels.player_visual(
+			str(ThemeManager.get_val("player_shape", "critter")),
+			ThemeManager.color("accent", Color(0.95, 0.6, 0.62)))
+		_model.name = "ProcModel"
 	if _model:
 		add_child(_model)
 		var placeholder := get_node_or_null("MeshInstance3D") as MeshInstance3D

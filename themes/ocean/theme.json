@@ -33,6 +33,7 @@
   },
   "gem_emission": 0.8,
   "critter_detail": "full",
+  "player_shape": "sub",
   "spawn_interval_start": 1.4,
   "spawn_interval_min": 0.75,
   "max_stumbles": 3,

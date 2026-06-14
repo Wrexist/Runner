@@ -144,6 +144,55 @@ static func _prim(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
 	mi.material_override = mat
 	return mi
 
+## A procedural PLAYER silhouette (used when no `player_model` .glb is present) so
+## the runner reads as a themed character/vehicle instead of a bare box. Accent-
+## driven; fail-soft to a neutral capsule for an unknown shape.
+static func player_visual(shape: String, accent: Color, body_radius: float = 0.4) -> Node3D:
+	var root := Node3D.new()
+	var r := body_radius
+	match shape:
+		"rocket":
+			var body := CapsuleMesh.new()
+			body.radius = r * 0.55
+			body.height = r * 2.0
+			root.add_child(_prim(body, accent, Vector3(0, r * 0.8, 0)))
+			var nose := CylinderMesh.new()        # top_radius 0 = a cone
+			nose.top_radius = 0.0
+			nose.bottom_radius = r * 0.55
+			nose.height = r * 0.7
+			root.add_child(_prim(nose, accent.lightened(0.25), Vector3(0, r * 1.9, 0)))
+			var fin := PrismMesh.new()
+			fin.size = Vector3(r * 0.5, r * 0.6, r * 0.12)
+			root.add_child(_prim(fin, accent.darkened(0.2), Vector3(-r * 0.55, r * 0.2, 0)))
+			root.add_child(_prim(fin, accent.darkened(0.2), Vector3(r * 0.55, r * 0.2, 0)))
+		"sub":
+			var hull := CapsuleMesh.new()
+			hull.radius = r * 0.65
+			hull.height = r * 2.4
+			var hmi := _prim(hull, accent, Vector3(0, r * 0.55, 0))
+			hmi.rotation = Vector3(deg_to_rad(90.0), 0.0, 0.0)   # lie along z (forward)
+			root.add_child(hmi)
+			var tower := CylinderMesh.new()
+			tower.top_radius = r * 0.22
+			tower.bottom_radius = r * 0.3
+			tower.height = r * 0.55
+			root.add_child(_prim(tower, accent.darkened(0.12), Vector3(0, r * 1.05, r * 0.1)))
+			root.add_child(_prim(_sphere(r * 0.2), Color(0.85, 0.95, 1.0), Vector3(0, r * 0.55, -r * 1.1)))
+		"critter":
+			root.add_child(_blob(r, accent, Vector3(0, r * 0.2, 0)))
+			var head_y := r * 1.1
+			root.add_child(_blob(r * 0.62, accent.lightened(0.12), Vector3(0, head_y, 0)))
+			_add_ears(root, accent.lightened(0.12), r, head_y, false)
+			var ec := Color(0.12, 0.12, 0.14)
+			root.add_child(_blob(r * 0.1, ec, Vector3(-r * 0.2, head_y + r * 0.05, r * 0.5)))
+			root.add_child(_blob(r * 0.1, ec, Vector3(r * 0.2, head_y + r * 0.05, r * 0.5)))
+		_:
+			var cap := CapsuleMesh.new()
+			cap.radius = r * 0.6
+			cap.height = r * 2.0
+			root.add_child(_prim(cap, accent, Vector3(0, r * 0.6, 0)))
+	return root
+
 static func _blob(radius: float, color: Color, offset: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var sm := SphereMesh.new()

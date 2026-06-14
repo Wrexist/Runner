@@ -27,7 +27,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"gem_emission", "glow_intensity", "ground_uv_speed",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 	# W-G procedural scenery & characters
-	"critter_detail",
+	"critter_detail", "player_shape",
 ]
 
 func _ready() -> void:
@@ -94,6 +94,7 @@ func _run_all() -> void:
 	_test_camera_reads_theme()
 	_test_ground_scroll()
 	_test_critter_variety()
+	_test_player_visual()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -956,6 +957,29 @@ func _test_critter_variety() -> void:
 	b.free()
 	s.free()
 	v.free()
+
+## The procedural player builds for every shape and swaps in WITHOUT disturbing
+## collision, the hidden box, _body(), or the carry badge.
+func _test_player_visual() -> void:
+	for shape in ["critter", "rocket", "sub", "unknown_xyz"]:
+		var v := ThemeModels.player_visual(shape, Color.WHITE)
+		_check("player visual builds for '%s'" % shape, v is Node3D and v.get_child_count() > 0)
+		v.free()
+	ThemeManager.load_theme("forest")
+	var p = preload("res://scenes/Player.tscn").instantiate()
+	add_child(p)
+	var area = p.get_node_or_null("Area3D")
+	_check("player: collision Area3D intact (layer 2 / mask 1)",
+		area != null and area.collision_layer == 2 and area.collision_mask == 1)
+	var box = p.get_node_or_null("MeshInstance3D")
+	_check("player: box placeholder hidden after proc swap", box != null and not box.visible)
+	_check("player: _body() is the proc model, not the box",
+		p._body() != null and p._body() != box)
+	p.carry_color("red")
+	var badge = p.get_node_or_null("CarryBadge")
+	_check("player: carry badge still shows with a proc body", badge != null and badge.visible)
+	p.free()
+	ThemeManager.load_theme("forest")
 
 ## Gem and cage read as different silhouettes even with zero art (sphere vs ring).
 func _test_collectible_silhouette() -> void:
