@@ -70,6 +70,7 @@ func _run_all() -> void:
 	_test_spawn_patterns()
 	_test_forgiveness_and_near_miss()
 	_test_pool_reuse()
+	_test_screenfx()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -684,6 +685,21 @@ func _test_spawn_patterns() -> void:
 
 func _count_near_miss() -> void:
 	_near_miss_count += 1
+
+## Screen-space juice is fully suppressed under reduce_motion and otherwise mounts
+## a self-freeing overlay (and never throws headless).
+func _test_screenfx() -> void:
+	SaveManager.settings["reduce_motion"] = true
+	var before := ScreenFX._layer.get_child_count()
+	ScreenFX.flash(Color.WHITE, 0.2, 0.2)
+	ScreenFX.vignette(Color.BLACK, 0.2)
+	ScreenFX.confetti(10)
+	_check("screenfx: reduce_motion suppresses all effects",
+		ScreenFX._layer.get_child_count() == before)
+	SaveManager.settings["reduce_motion"] = false
+	ScreenFX.flash(Color.WHITE, 0.9, 0.2)   # over-cap alpha is clamped internally
+	_check("screenfx: flash mounts an overlay when motion is on",
+		ScreenFX._layer.get_child_count() > before)
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled
 ## node is fully re-initialized to its new color on reuse.
