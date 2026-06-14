@@ -91,6 +91,7 @@ func _run_all() -> void:
 	_test_collectible_silhouette()
 	_test_camera_reads_theme()
 	_test_ground_scroll()
+	_test_state_restored()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -705,6 +706,19 @@ func _test_spawn_patterns() -> void:
 
 func _count_near_miss() -> void:
 	_near_miss_count += 1
+
+## Final hygiene: leave the engine in its canonical default state so nothing
+## leaks between the suite and a real launch (forest theme, gentle difficulty).
+func _test_state_restored() -> void:
+	ThemeManager.load_theme("forest")
+	SaveManager.settings["difficulty"] = "easy"
+	SaveManager.settings["reduce_motion"] = false
+	SaveManager.all_unlocked_iap = false
+	SaveManager.unlocked_critters = []
+	GameCore.go_to_menu()
+	_check("state: default theme is forest", ThemeManager.active_theme == "forest")
+	_check("state: difficulty restored to gentle default", ThemeManager.difficulty() == "easy")
+	_check("state: not mid-run after the suite", not GameCore.is_running())
 
 ## Screen-space juice is fully suppressed under reduce_motion and otherwise mounts
 ## a self-freeing overlay (and never throws headless).
