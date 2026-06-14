@@ -138,10 +138,43 @@ func _build_rock() -> Node3D:
 	return root
 
 func _build_asteroid() -> Node3D:
-	return _build_rock()      # space style realized in B2; rock is the fail-soft base
+	var root := Node3D.new()
+	var base := ThemeManager.color("background_bottom", Color(0.4, 0.4, 0.5)).lightened(0.05)
+	var main := _mesh(_ball(0.55), base, Vector3(0, 0.4, 0))
+	main.scale = Vector3(1.1, 0.8, 1.0)              # lumpy / uneven rock
+	root.add_child(main)
+	root.add_child(_mesh(_ball(0.28), base.darkened(0.1), Vector3(0.4, 0.55, 0.15)))
+	var cry := PrismMesh.new()                        # a bright crystal accent (glows via bloom)
+	cry.size = Vector3(0.2, 0.45, 0.2)
+	root.add_child(_mesh(cry, ThemeManager.color("accent", Color(0.5, 0.9, 1.0)), Vector3(-0.25, 0.7, 0.0)))
+	return root
 
 func _build_coral() -> Node3D:
-	return _build_rock()      # ocean style realized in B2
+	var root := Node3D.new()
+	var col := ThemeManager.color("accent", Color(1.0, 0.6, 0.5))
+	var stalk := CylinderMesh.new()
+	stalk.top_radius = 0.1
+	stalk.bottom_radius = 0.16
+	stalk.height = 1.0
+	root.add_child(_mesh(stalk, col, Vector3(0, 0.5, 0)))
+	var br := CylinderMesh.new()
+	br.top_radius = 0.07
+	br.bottom_radius = 0.1
+	br.height = 0.7
+	var b1 := _mesh(br, col.lightened(0.1), Vector3(0.18, 0.9, 0))
+	b1.rotation = Vector3(0, 0, deg_to_rad(35.0))
+	root.add_child(b1)
+	var b2 := _mesh(br, col.lightened(0.05), Vector3(-0.18, 0.85, 0))
+	b2.rotation = Vector3(0, 0, deg_to_rad(-30.0))
+	root.add_child(b2)
+	root.add_child(_mesh(_ball(0.12), col.lightened(0.18), Vector3(0, 1.05, 0)))   # rounded tip
+	return root
+
+func _ball(r: float) -> SphereMesh:
+	var sm := SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0
+	return sm
 
 ## A non-shadow-casting, tinted mesh (props are far background — keep the light cheap).
 func _mesh(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:

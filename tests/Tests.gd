@@ -96,6 +96,7 @@ func _run_all() -> void:
 	_test_critter_variety()
 	_test_player_visual()
 	_test_scenery()
+	_test_scenery_styles()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -995,6 +996,20 @@ func _test_scenery() -> void:
 	GameCore.go_to_menu()
 	sc.free()
 	SaveManager.settings["reduce_motion"] = false
+
+## Every theme's scenery style builds non-empty props, all outside the lanes.
+func _test_scenery_styles() -> void:
+	for id in ["forest", "space", "ocean"]:
+		ThemeManager.load_theme(id)
+		var sc = preload("res://core/Scenery.gd").new()
+		add_child(sc)
+		var ok := sc._live.size() > 0
+		for p in sc._live:
+			if absf(p.position.x) < sc._play_half or p.get_child_count() == 0:
+				ok = false
+		_check("scenery[%s]: props built outside lanes" % id, ok)
+		sc.free()
+	ThemeManager.load_theme("forest")
 
 ## The procedural player builds for every shape and swaps in WITHOUT disturbing
 ## collision, the hidden box, _body(), or the carry badge.
