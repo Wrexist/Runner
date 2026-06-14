@@ -45,6 +45,8 @@ func _run_all() -> void:
 	_test_wav_loop_math()
 	_test_player_lean_no_stack()
 	_test_celebration_signals()
+	_test_run_stats()
+	_test_end_run_records_stats()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -461,4 +463,41 @@ func _test_celebration_signals() -> void:
 	GameCore.critter_unlocked.disconnect(ucb)
 	GameCore.milestone_reached.disconnect(mcb)
 	SaveManager.unlocked_critters = []
+	GameCore.go_to_menu()
+
+## Personal-best stats only ever rise, survive a reset only via the IAP/settings
+## carve-out, and new settings keys migrate in with defaults.
+func _test_run_stats() -> void:
+	SaveManager.best_streak = 0
+	SaveManager.most_rescues_in_run = 0
+	SaveManager.longest_run_seconds = 0.0
+	SaveManager.record_run_stats(5, 12, 30.0)
+	_check("stats: record sets bests", SaveManager.best_streak == 5
+		and SaveManager.most_rescues_in_run == 12
+		and is_equal_approx(SaveManager.longest_run_seconds, 30.0))
+	SaveManager.record_run_stats(3, 8, 20.0)   # a worse run must not lower bests
+	_check("stats: record only raises bests",
+		SaveManager.best_streak == 5 and SaveManager.most_rescues_in_run == 12)
+	_check("stats: haptics setting present by default", SaveManager.settings.has("haptics"))
+	_check("stats: master_volume setting present by default", SaveManager.settings.has("master_volume"))
+	# reset wipes stats but keeps settings + the IAP entitlement.
+	SaveManager.all_unlocked_iap = true
+	SaveManager.reset_progress()
+	_check("stats: reset zeroes best_streak", SaveManager.best_streak == 0)
+	_check("stats: reset keeps IAP entitlement", SaveManager.all_unlocked_iap)
+	_check("stats: reset keeps settings (haptics)", SaveManager.settings.has("haptics"))
+	SaveManager.all_unlocked_iap = false
+
+func _test_end_run_records_stats() -> void:
+	SaveManager.best_streak = 0
+	SaveManager.most_rescues_in_run = 0
+	GameCore.start_run()
+	GameCore.rescue_critter("bunny")
+	GameCore.rescue_critter("bunny")
+	GameCore.rescue_critter("bunny")   # streak peaks at 3
+	var maxs := int(ThemeManager.get_val("max_stumbles", 3))
+	for i in maxs:
+		GameCore.stumble()             # ends the run
+	_check("stats: end_run records most_rescues_in_run", SaveManager.most_rescues_in_run >= 3)
+	_check("stats: end_run records best_streak", SaveManager.best_streak >= 3)
 	GameCore.go_to_menu()

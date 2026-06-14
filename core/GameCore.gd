@@ -157,5 +157,6 @@ func end_run() -> void:
 	if is_high:
 		SaveManager.high_score = score
 	SaveManager.runs_played += 1
-	SaveManager.save_game()   # persist high score + lifetime stats together
+	# Record this run's personal bests + persist everything in one save.
+	SaveManager.record_run_stats(_streak_peak, rescued_this_run.size(), elapsed)
 	emit_signal("run_ended", score, is_high)
