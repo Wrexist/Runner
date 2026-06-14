@@ -23,6 +23,17 @@ func _apply() -> void:
 	if DisplayServer.get_name() != "headless":
 		env.glow_enabled = true
 		env.glow_intensity = float(ThemeManager.get_val("glow_intensity", 0.4))
+		env.glow_bloom = 0.15
+		env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+		env.glow_hdr_threshold = 0.95
+		# A filmic tonemap + a gentle colour grade — the "produced", cohesive image.
+		env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+		env.tonemap_exposure = float(ThemeManager.get_val("tonemap_exposure", 1.0))
+		env.tonemap_white = 1.0
+		env.adjustment_enabled = true
+		env.adjustment_brightness = 1.0
+		env.adjustment_contrast = float(ThemeManager.get_val("grade_contrast", 1.05))
+		env.adjustment_saturation = float(ThemeManager.get_val("grade_saturation", 1.1))
 		# A vertical gradient (top -> horizon) for depth, straight from the palette.
 		var psky := ProceduralSkyMaterial.new()
 		psky.sky_top_color = ThemeManager.color("background_top", Color(0.5, 0.7, 0.9))

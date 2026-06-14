@@ -25,6 +25,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"audio.near_miss", "audio.jingle",
 	# W-F procedural visuals
 	"gem_emission", "glow_intensity", "ground_uv_speed",
+	"tonemap_exposure", "grade_contrast", "grade_saturation",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 	# W-G procedural scenery & characters
 	"critter_detail", "player_shape", "scenery", "ambient",

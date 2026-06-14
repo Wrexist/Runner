@@ -79,6 +79,9 @@
     }
   },
   "glow_intensity": 0.4,
+  "tonemap_exposure": 1.0,
+  "grade_contrast": 1.05,
+  "grade_saturation": 1.1,
   "ground_uv_speed": 0.04,
   "scenery": {"style": "trees", "density": 1.0, "max_props": 14, "min_x_margin": 0.8, "side_band": 4.0, "scale_min": 0.8, "scale_max": 1.4},
   "ambient": {"style": "fireflies", "amount": 24, "color": "#fff2a8", "box": [6, 3, 20], "speed": 0.4},
