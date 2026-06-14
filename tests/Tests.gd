@@ -41,6 +41,9 @@ func _run_all() -> void:
 	_test_language_picker()
 	_test_iap_event_handlers()
 	_test_theme_models()
+	_test_hud_reduce_motion()
+	_test_wav_loop_math()
+	_test_player_lean_no_stack()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -377,3 +380,51 @@ func _test_theme_models() -> void:
 	var v := ThemeModels.critter_visual({"id": "bunny"})
 	_check("models: critter_visual falls back to a Node3D", v is Node3D and v.get_child_count() > 0)
 	v.free()
+
+## Accessibility: with reduce_motion on, the HUD must not animate (no score-pop
+## scale, no sliding floaters) — it still shows the text, just without movement.
+func _test_hud_reduce_motion() -> void:
+	var prev: bool = bool(SaveManager.settings.get("reduce_motion", false))
+	SaveManager.settings["reduce_motion"] = true
+	var hud = preload("res://ui/HUD.gd").new()   # untyped for dynamic member access
+	add_child(hud)   # triggers _ready: builds labels + connects signals
+	hud._on_score_changed(7)
+	_check("hud: score pop suppressed under reduce_motion", hud._score_label.scale == Vector2.ONE)
+	var before := hud._root.get_child_count()
+	hud._float_text("Nice!")
+	_check("hud: floater still appears under reduce_motion (static)",
+		hud._root.get_child_count() == before + 1)
+	hud.free()
+	SaveManager.settings["reduce_motion"] = prev
+
+## The placeholder WAV loop point must follow bit depth AND channel count, not
+## assume 16-bit mono (which silently mis-loops stereo / 8-bit clips).
+func _test_wav_loop_math() -> void:
+	var w := AudioStreamWAV.new()
+	var bytes := PackedByteArray()
+	bytes.resize(8)
+	w.data = bytes
+	w.format = AudioStreamWAV.FORMAT_16_BITS
+	w.stereo = false
+	_check("wav: 16-bit mono loop_end = bytes/2", AudioManager._wav_loop_end(w) == 4)
+	w.stereo = true
+	_check("wav: 16-bit stereo loop_end = bytes/4", AudioManager._wav_loop_end(w) == 2)
+	w.format = AudioStreamWAV.FORMAT_8_BITS
+	w.stereo = false
+	_check("wav: 8-bit mono loop_end = bytes/1", AudioManager._wav_loop_end(w) == 8)
+
+## Rapid lane changes must not stack overlapping lean tweens (which fight over
+## rotation:z); starting a new lean kills the previous one.
+func _test_player_lean_no_stack() -> void:
+	var prev: bool = bool(SaveManager.settings.get("reduce_motion", false))
+	SaveManager.settings["reduce_motion"] = false
+	var p = preload("res://scenes/Player.tscn").instantiate()   # untyped for dynamic access
+	add_child(p)
+	p.move_lane(1)
+	var first: Tween = p._lean_tween
+	p.move_lane(-1)
+	_check("lean: previous tween killed on a new lean", first == null or not first.is_valid())
+	_check("lean: exactly one current lean tween tracked",
+		p._lean_tween != null and p._lean_tween.is_valid())
+	p.free()
+	SaveManager.settings["reduce_motion"] = prev

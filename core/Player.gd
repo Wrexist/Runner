@@ -15,6 +15,7 @@ var _target_x: float = 0.0
 var _swipe_start_x: float = 0.0
 var _swiping: bool = false
 var _swiped_this_touch: bool = false
+var _lean_tween: Tween                  # active lean; killed before a new one starts
 const SWIPE_THRESHOLD := 40.0          # pixels before a drag counts as a swipe
 
 ## The theme's player model, if one is present (else we keep the placeholder box
@@ -76,9 +77,13 @@ func _lean(dir: int) -> void:
 	var mesh := _body()
 	if mesh == null:
 		return
-	var t := create_tween().set_trans(Tween.TRANS_SINE)
-	t.tween_property(mesh, "rotation:z", deg_to_rad(-14.0 * dir), 0.08)
-	t.tween_property(mesh, "rotation:z", 0.0, 0.16)
+	# Kill any in-flight lean so rapid lane changes don't stack overlapping
+	# tweens (which fight over rotation:z and leave the body crooked).
+	if _lean_tween and _lean_tween.is_valid():
+		_lean_tween.kill()
+	_lean_tween = create_tween().set_trans(Tween.TRANS_SINE)
+	_lean_tween.tween_property(mesh, "rotation:z", deg_to_rad(-14.0 * dir), 0.08)
+	_lean_tween.tween_property(mesh, "rotation:z", 0.0, 0.16)
 
 ## Position from `steps` frames ago (clamped). Used by Trail.gd.
 func history_point(steps: int) -> Vector3:

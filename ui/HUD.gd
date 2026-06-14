@@ -70,8 +70,14 @@ func _make_label(size: int, color: Color) -> Label:
 	l.add_theme_color_override("font_color", color)
 	return l
 
+func _reduce_motion() -> bool:
+	return bool(SaveManager.settings.get("reduce_motion", false))
+
 func _on_score_changed(score: int) -> void:
 	_score_label.text = str(score)
+	if _reduce_motion():
+		_score_label.scale = Vector2.ONE
+		return
 	# Quick scale "pop" so the score feels alive every time it ticks up.
 	_score_label.scale = Vector2(1.25, 1.25)
 	create_tween().tween_property(_score_label, "scale", Vector2.ONE, 0.18) \
@@ -101,6 +107,13 @@ func _float_text(text: String) -> void:
 	l.position = Vector2(size.x * 0.5 - 150, size.y * 0.45)
 	l.custom_minimum_size = Vector2(300, 0)
 	_root.add_child(l)
+	if _reduce_motion():
+		# No sliding motion for motion-sensitive players: hold, fade in place, free.
+		var ts := l.create_tween()
+		ts.tween_interval(0.6)
+		ts.tween_property(l, "modulate:a", 0.0, 0.3)
+		ts.tween_callback(l.queue_free)
+		return
 	var t := l.create_tween()
 	t.set_parallel(true)
 	t.tween_property(l, "position:y", l.position.y - 130, 0.9)
