@@ -119,6 +119,7 @@ func _run_all() -> void:
 	_test_obstacle()
 	_test_choice_gate()
 	_test_discovery()
+	_test_discovery_journal()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1114,6 +1115,27 @@ func _test_choice_gate() -> void:
 	Powerups.clear_all()
 	cg.free()
 	player.free()
+	GameCore.go_to_menu()
+
+## The discovery journal records power-ups/biomes once, surfaces in the Album, and
+## clears on reset. Local-only, celebration-only.
+func _test_discovery_journal() -> void:
+	SaveManager.discoveries = []
+	SaveManager.discover("powerup:shield")
+	SaveManager.discover("powerup:shield")
+	_check("journal: recorded once (idempotent)",
+		SaveManager.discoveries.size() == 1 and SaveManager.has_discovered("powerup:shield"))
+	GameCore.start_run()
+	Powerups.clear_all()
+	Powerups.activate("magnet", 5.0)
+	_check("journal: using a power-up records it", SaveManager.has_discovered("powerup:magnet"))
+	var alb := UIScreens.make_album()
+	add_child(alb)
+	_check("journal: the Album shows the discoveries count", _find_text_descendant(alb, "Discoveries"))
+	alb.free()
+	SaveManager.reset_progress()
+	_check("journal: reset clears discoveries", SaveManager.discoveries.is_empty())
+	Powerups.clear_all()
 	GameCore.go_to_menu()
 
 ## A discovery event fires a named gentle surprise (a treat or a bonus shower).

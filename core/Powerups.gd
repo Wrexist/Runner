@@ -26,6 +26,7 @@ func activate(kind: String, duration: float = 6.0) -> void:
 		_active[kind] = 1.0
 	else:
 		_active[kind] = maxf(duration, 0.1)
+	SaveManager.discover("powerup:" + kind)
 	emit_signal("powerup_changed", kind, true)
 
 func is_active(kind: String) -> bool:

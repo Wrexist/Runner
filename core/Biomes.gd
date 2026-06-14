@@ -44,6 +44,7 @@ func _on_rescued(_id: String, total: int) -> void:
 ## palette (so green grass journeys through the day rather than turning magenta).
 func _apply() -> void:
 	var phase := _index % NAMES.size()
+	SaveManager.discover("biome:" + NAMES[phase])
 	if phase == 0:                           # back to base (Dawn)
 		ThemeManager.clear_overrides()
 		emit_signal("biome_changed", NAMES[0])

@@ -402,6 +402,7 @@ class Album extends Control:
 		for c in ThemeManager.get_val("rescuable_critters", []):
 			grid.add_child(_cell(c))
 		col.add_child(grid)
+		col.add_child(_discoveries_row())
 		# Calm, contextual place to offer the single unlock-all purchase (gated).
 		if not SaveManager.all_unlocked_iap:
 			var unlock := UIScreens._button(tr("Unlock All Critters"))
@@ -411,6 +412,35 @@ class Album extends Control:
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
+	## A gentle "collect them all" row: a chip per power-up and biome, lit once
+	## discovered (the persistent meta payoff — celebration-only, no FOMO).
+	func _discoveries_row() -> Control:
+		var box := VBoxContainer.new()
+		box.alignment = BoxContainer.ALIGNMENT_CENTER
+		var tags: Array = []
+		for k in Powerups.KINDS:
+			tags.append("powerup:" + str(k))
+		for b in Biomes.NAMES:
+			tags.append("biome:" + str(b))
+		var found := 0
+		for t in tags:
+			if SaveManager.has_discovered(str(t)):
+				found += 1
+		box.add_child(UIScreens._label(tr("Discoveries: %d / %d") % [found, tags.size()], 24))
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 8)
+		for t in tags:
+			var chip := ColorRect.new()
+			chip.custom_minimum_size = Vector2(22, 22)
+			chip.color = _chip_color(str(t)) if SaveManager.has_discovered(str(t)) else Color(0.35, 0.35, 0.4)
+			row.add_child(chip)
+		box.add_child(row)
+		return box
+	func _chip_color(tag: String) -> Color:
+		if tag.begins_with("powerup:"):
+			return Powerup.color_for(tag.trim_prefix("powerup:"))
+		return Color(0.6, 0.7, 1.0)
 	func _cell(c: Dictionary) -> Control:
 		var id := str(c.get("id", "?"))
 		var unlocked := SaveManager.is_unlocked(id)

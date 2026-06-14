@@ -21,6 +21,9 @@ var runs_played: int = 0
 var best_streak: int = 0
 var most_rescues_in_run: int = 0
 var longest_run_seconds: float = 0.0
+# Things the player has discovered (power-ups used, biomes seen) — a gentle
+# "collect them all" journal. Local-only, celebration-only; never a quota/FOMO.
+var discoveries: Array = []
 
 func _ready() -> void:
 	load_game()
@@ -36,6 +39,15 @@ func unlock_critter(id: String, save := true) -> void:
 func is_unlocked(id: String) -> bool:
 	return all_unlocked_iap or id in unlocked_critters
 
+## Record a one-time discovery (e.g. "powerup:shield", "biome:Night"). Idempotent.
+func discover(tag: String) -> void:
+	if tag not in discoveries:
+		discoveries.append(tag)
+		save_game()
+
+func has_discovered(tag: String) -> bool:
+	return tag in discoveries
+
 ## Wipe gameplay progress (parent-gated in the UI). Keeps user SETTINGS and the
 ## IAP entitlement — purchases must persist and stay restorable per App Store rules.
 func reset_progress() -> void:
@@ -47,6 +59,7 @@ func reset_progress() -> void:
 	best_streak = 0
 	most_rescues_in_run = 0
 	longest_run_seconds = 0.0
+	discoveries = []
 	save_game()
 
 func set_all_unlocked(value: bool) -> void:
@@ -78,6 +91,7 @@ func save_game() -> void:
 		"best_streak": best_streak,
 		"most_rescues_in_run": most_rescues_in_run,
 		"longest_run_seconds": longest_run_seconds,
+		"discoveries": discoveries,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -110,3 +124,4 @@ func load_game() -> void:
 	best_streak = int(parsed.get("best_streak", 0))
 	most_rescues_in_run = int(parsed.get("most_rescues_in_run", 0))
 	longest_run_seconds = float(parsed.get("longest_run_seconds", 0.0))
+	discoveries = parsed.get("discoveries", [])
