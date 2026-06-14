@@ -28,6 +28,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 	# W-G procedural scenery & characters
 	"critter_detail", "player_shape", "scenery", "ambient",
+	"fog_enabled", "fog_density", "ambient_energy", "light_energy", "light_color",
 ]
 
 func _ready() -> void:
@@ -98,6 +99,7 @@ func _run_all() -> void:
 	_test_scenery()
 	_test_scenery_styles()
 	_test_ambient()
+	_test_atmosphere()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -997,6 +999,28 @@ func _test_scenery() -> void:
 	GameCore.go_to_menu()
 	sc.free()
 	SaveManager.settings["reduce_motion"] = false
+
+## SkyRig builds a valid Environment for every theme and applies themed light
+## energy to a sibling DirectionalLight (fog is renderer-only, validated by data).
+func _test_atmosphere() -> void:
+	for id in ["forest", "space", "ocean"]:
+		ThemeManager.load_theme(id)
+		var root := Node3D.new()
+		add_child(root)
+		var ground := MeshInstance3D.new()
+		ground.name = "Ground"
+		ground.mesh = PlaneMesh.new()
+		root.add_child(ground)
+		var light := DirectionalLight3D.new()
+		light.name = "DirectionalLight3D"
+		root.add_child(light)
+		var sky = preload("res://core/SkyRig.gd").new()
+		root.add_child(sky)
+		_check("atmosphere[%s]: environment built" % id, sky.environment != null)
+		_check("atmosphere[%s]: light energy from theme" % id,
+			is_equal_approx(light.light_energy, float(ThemeManager.get_val("light_energy", 1.0))))
+		root.free()
+	ThemeManager.load_theme("forest")
 
 ## The ambient field builds from theme data and never emits under reduce_motion
 ## (or the headless renderer); it builds for every theme without throwing.

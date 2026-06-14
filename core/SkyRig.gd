@@ -15,7 +15,7 @@ func _apply() -> void:
 	var env := Environment.new()
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color.WHITE
-	env.ambient_light_energy = 0.7
+	env.ambient_light_energy = float(ThemeManager.get_val("ambient_energy", 0.7))
 	# Flat colour by default (and always under the headless CI renderer, which has
 	# no sky/post FX); a richer gradient sky + soft glow with a real renderer.
 	env.background_mode = Environment.BG_COLOR
@@ -33,8 +33,25 @@ func _apply() -> void:
 		sky.sky_material = psky
 		env.background_mode = Environment.BG_SKY
 		env.sky = sky
+		# Optional gentle distance fog: far props/cages fade into the horizon for
+		# depth (low density — never a soup).
+		if bool(ThemeManager.get_val("fog_enabled", false)):
+			env.fog_enabled = true
+			env.fog_density = float(ThemeManager.get_val("fog_density", 0.01))
+			env.fog_light_color = ThemeManager.color("background_bottom", Color(0.7, 0.8, 0.9))
 	environment = env
 	_apply_ground()
+	_apply_light()
+
+## Tune the scene's DirectionalLight from theme data (fail-soft if it's absent).
+func _apply_light() -> void:
+	var light := get_parent().get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	if light == null:
+		return
+	light.light_energy = float(ThemeManager.get_val("light_energy", 1.0))
+	var lc := str(ThemeManager.get_val("light_color", ""))
+	if lc != "":
+		light.light_color = Color(lc)
 
 ## Texture the scrolling ground from the theme. With no texture, fall back to a
 ## procedural stripe (so the floor still reads as MOVING) instead of a flat slab.
