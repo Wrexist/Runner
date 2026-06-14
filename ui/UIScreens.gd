@@ -254,6 +254,7 @@ class Settings extends Control:
 		col.add_child(UIScreens._label(tr("Settings"), 48))
 		col.add_child(_toggle("Music", "music"))
 		col.add_child(_toggle("Sounds", "sfx"))
+		col.add_child(_toggle("Haptics", "haptics"))
 		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
 		# Language picker only appears once a second locale has been imported

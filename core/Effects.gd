@@ -34,6 +34,20 @@ func burst(global_pos: Vector3, color: Color, amount: int = 16) -> void:
 	p.emitting = true
 	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(p.queue_free)
 
+## Optional, gentle vibration on supported devices. Honors the haptics setting AND
+## reduce_motion (a motion-sensitive player almost certainly wants calm), and is a
+## no-op off mobile so desktop/CI stays silent. Durations come from theme data.
+func haptic(kind: String) -> void:
+	if not bool(SaveManager.settings.get("haptics", true)):
+		return
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
+	if not OS.has_feature("mobile"):
+		return
+	var ms_v: Variant = ThemeManager.get_val("haptic_ms", {})
+	var ms: Dictionary = ms_v if ms_v is Dictionary else {}
+	Input.vibrate_handheld(int(ms.get(kind, 12)))
+
 ## A quick squash-and-stretch "pop" on any Node3D. Safe if the node goes away.
 func pop(node: Node3D, strength: float = 1.3, time: float = 0.18) -> void:
 	if node == null or not is_instance_valid(node):

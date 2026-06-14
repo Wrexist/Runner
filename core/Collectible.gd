@@ -100,6 +100,7 @@ func _on_area_entered(area: Area3D) -> void:
 		player.carry_color(color_name)
 		GameCore.add_score(1)
 		Effects.burst(global_position, _color_from_name(color_name), 8)
+		Effects.haptic("light")
 		AudioManager.play_sfx("gem_pickup", randf_range(1.0, 1.15))
 		queue_free()
 	elif kind == "cage":
@@ -108,6 +109,7 @@ func _on_area_entered(area: Area3D) -> void:
 			GameCore.rescue_critter(_pick_critter_id())
 			# Bigger, brighter burst the hotter the streak — pure celebration.
 			Effects.burst(global_position, _color_from_name(color_name), 16 + mini(GameCore.streak, 8) * 3)
+			Effects.haptic("rescue")
 		else:
 			GameCore.stumble()   # gentle: costs a life, never a hard game-over
 			Effects.burst(global_position, Color(0.6, 0.6, 0.6), 6)

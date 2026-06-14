@@ -61,6 +61,7 @@ func _run_all() -> void:
 	_test_player_input_tunables()
 	_test_input_buffer()
 	_test_carry_indicator()
+	_test_haptics()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -591,3 +592,30 @@ func _test_carry_indicator() -> void:
 	p.clear_color()
 	_check("carry: badge hidden when not carrying", badge != null and not badge.visible)
 	p.free()
+
+## Haptics are opt-out, suppressed under reduce_motion, and a safe no-op off
+## mobile (so CI/desktop never throw), and the Settings screen exposes the toggle.
+func _test_haptics() -> void:
+	SaveManager.settings["haptics"] = true
+	SaveManager.settings["reduce_motion"] = false
+	Effects.haptic("light")     # off-mobile: must be a silent no-op, never throw
+	Effects.haptic("rescue")
+	SaveManager.settings["haptics"] = false
+	Effects.haptic("light")
+	SaveManager.settings["haptics"] = true
+	_check("haptics: Effects.haptic is a safe no-op headless", true)
+	var s := UIScreens.make_settings()
+	add_child(s)
+	_check("haptics: Settings exposes a Haptics toggle", _find_text_descendant(s, tr("Haptics")))
+	s.free()
+
+## Walk a Control tree looking for a Button/Label whose text contains `substr`.
+func _find_text_descendant(node: Node, substr: String) -> bool:
+	if node is Button and substr in (node as Button).text:
+		return true
+	if node is Label and substr in (node as Label).text:
+		return true
+	for c in node.get_children():
+		if _find_text_descendant(c, substr):
+			return true
+	return false
