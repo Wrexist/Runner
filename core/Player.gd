@@ -21,6 +21,9 @@ var _tap_dead_zone_frac: float = 0.12   # ignore taps within this frac of center
 var _lane_cooldown_time: float = 0.0    # min seconds between lane changes (themed)
 var _lane_cooldown: float = 0.0         # remaining cooldown
 var _buffered_dir: int = 0              # one queued lane step taken during cooldown
+var _carry_glow: float = 1.4            # carried-badge emission energy (themed)
+var _carry_badge_scale: float = 1.0     # carried-badge size multiplier (themed)
+var _carry_pulse: Tween                 # looping glow while carrying
 
 ## The theme's player model, if one is present (else we keep the placeholder box
 ## and tint it by the carried color). Loaded fail-soft via ThemeModels.
@@ -38,6 +41,8 @@ func _ready() -> void:
 	_swipe_threshold = float(ThemeManager.get_val("swipe_threshold_px", 40.0))
 	_tap_dead_zone_frac = float(ThemeManager.get_val("tap_dead_zone_frac", 0.12))
 	_lane_cooldown_time = float(ThemeManager.get_val("lane_change_cooldown", 0.0))
+	_carry_glow = float(ThemeManager.get_val("carry_glow", 1.4))
+	_carry_badge_scale = float(ThemeManager.get_val("carry_badge_scale", 1.0))
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
@@ -197,20 +202,40 @@ func _update_carry_visual() -> void:
 func _update_carry_badge() -> void:
 	var badge := get_node_or_null("CarryBadge") as MeshInstance3D
 	if carried_color == "":
+		if _carry_pulse and _carry_pulse.is_valid():
+			_carry_pulse.kill()
 		if badge:
 			badge.visible = false
 		return
 	if badge == null:
 		badge = MeshInstance3D.new()
 		badge.name = "CarryBadge"
-		var m := StandardMaterial3D.new()
-		m.albedo_color = Color.WHITE
-		m.emission_enabled = true
-		m.emission = Color.WHITE
-		m.emission_energy_multiplier = 0.6
-		badge.material_override = m
+		badge.material_override = StandardMaterial3D.new()
 		badge.position = Vector3(0, 1.0, 0)
 		add_child(badge)
+	# A bright, glowing badge in the carried color so "I'm prepared (with THIS
+	# color)" reads at a glance — the whole Rescue Run decision hinges on it.
+	var col := ThemeManager.gem_color(carried_color)
+	var m := badge.material_override as StandardMaterial3D
+	m.albedo_color = col.lightened(0.3)
+	m.emission_enabled = true
+	m.emission = col
+	m.emission_energy_multiplier = _carry_glow
 	badge.mesh = Shapes.badge(ThemeManager.gem_symbol(carried_color))
+	badge.scale = Vector3.ONE * _carry_badge_scale
 	badge.visible = true
 	Effects.pop(badge, 1.4)
+	_start_carry_pulse(badge)
+
+## A soft, looping glow pulse while carrying (motion-safe). Killed on clear.
+func _start_carry_pulse(badge: MeshInstance3D) -> void:
+	if _carry_pulse and _carry_pulse.is_valid():
+		_carry_pulse.kill()
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
+	var m := badge.material_override as StandardMaterial3D
+	_carry_pulse = create_tween().set_loops()
+	_carry_pulse.tween_property(m, "emission_energy_multiplier", _carry_glow * 1.5, 0.6) \
+		.set_trans(Tween.TRANS_SINE)
+	_carry_pulse.tween_property(m, "emission_energy_multiplier", _carry_glow, 0.6) \
+		.set_trans(Tween.TRANS_SINE)

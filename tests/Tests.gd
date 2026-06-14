@@ -60,6 +60,7 @@ func _run_all() -> void:
 	_test_end_run_records_stats()
 	_test_player_input_tunables()
 	_test_input_buffer()
+	_test_carry_indicator()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -575,4 +576,18 @@ func _test_input_buffer() -> void:
 	p._tick_cooldown(0.2)          # expire the cooldown → release the buffered step
 	_check("buffer: buffered step released after cooldown", p.current_lane == 2)
 	_check("buffer: buffer cleared after release", p._buffered_dir == 0)
+	p.free()
+
+## The carried-color badge appears (shaped + glowing) while carrying and hides
+## when cleared — the visible signal of the core Rescue Run decision.
+func _test_carry_indicator() -> void:
+	ThemeManager.load_theme("forest")
+	var p = preload("res://scenes/Player.tscn").instantiate()
+	add_child(p)
+	p.carry_color("red")
+	var badge = p.get_node_or_null("CarryBadge")
+	_check("carry: badge appears when carrying", badge != null and badge.visible)
+	_check("carry: badge has a shape mesh", badge != null and badge.mesh != null)
+	p.clear_color()
+	_check("carry: badge hidden when not carrying", badge != null and not badge.visible)
 	p.free()
