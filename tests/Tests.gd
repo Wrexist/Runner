@@ -24,7 +24,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"audio.menu_music", "audio.ui_click", "audio.whoosh",
 	"audio.near_miss", "audio.jingle",
 	# W-F procedural visuals
-	"gem_emission",
+	"gem_emission", "glow_intensity",
+	"camera_follow", "camera_smooth", "camera_zoom_amount",
 ]
 
 func _ready() -> void:
@@ -88,6 +89,7 @@ func _run_all() -> void:
 	_test_game_over_stats()
 	_test_master_volume()
 	_test_collectible_silhouette()
+	_test_camera_reads_theme()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -878,6 +880,18 @@ func _test_game_over_stats() -> void:
 		not _find_text_descendant(go, tr("Unlock All Critters"))
 		and not _find_text_descendant(go, tr("Critter Shop")))
 	go.free()
+
+## The camera pulls follow/smooth/zoom from theme data, not hardcoded exports.
+func _test_camera_reads_theme() -> void:
+	ThemeManager.load_theme("space")
+	var cam = preload("res://core/CameraRig.gd").new()
+	add_child(cam)
+	_check("camera: follow read from theme",
+		is_equal_approx(cam.follow_amount, float(ThemeManager.get_val("camera_follow", 0.4))))
+	_check("camera: zoom amount read from theme",
+		is_equal_approx(cam._zoom_amount, float(ThemeManager.get_val("camera_zoom_amount", 0.0))))
+	cam.free()
+	ThemeManager.load_theme("forest")
 
 ## Gem and cage read as different silhouettes even with zero art (sphere vs ring).
 func _test_collectible_silhouette() -> void:

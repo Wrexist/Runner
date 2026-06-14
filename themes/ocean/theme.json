@@ -64,6 +64,10 @@
       "gem_cage_gap": 6.0
     }
   },
+  "glow_intensity": 0.35,
+  "camera_follow": 0.4,
+  "camera_smooth": 4.5,
+  "camera_zoom_amount": 0.0,
   "assets": {
     "player_model": "res://themes/ocean/models/sub.glb",
     "ground_texture": "res://themes/ocean/textures/sand.png",

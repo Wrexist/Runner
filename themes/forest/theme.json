@@ -64,6 +64,10 @@
       "gem_cage_gap": 6.0
     }
   },
+  "glow_intensity": 0.4,
+  "camera_follow": 0.4,
+  "camera_smooth": 5.0,
+  "camera_zoom_amount": 0.0,
   "assets": {
     "player_model": "res://themes/forest/models/fox.glb",
     "ground_texture": "res://themes/forest/textures/grass.png",

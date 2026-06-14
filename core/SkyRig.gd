@@ -17,7 +17,7 @@ func _apply() -> void:
 	# (Skip under the headless dummy renderer used in CI — it has no post FX.)
 	if DisplayServer.get_name() != "headless":
 		env.glow_enabled = true
-		env.glow_intensity = 0.4
+		env.glow_intensity = float(ThemeManager.get_val("glow_intensity", 0.4))
 	environment = env
 	_apply_ground()
 
@@ -34,5 +34,7 @@ func _apply_ground() -> void:
 		mat.albedo_texture = tex
 		mat.uv1_scale = Vector3(6, 60, 1)   # tile across the long ground plane
 	else:
-		mat.albedo_color = ThemeManager.color("background_bottom", Color(0.4, 0.6, 0.4)).darkened(0.12)
+		# Neutral fallback (not forest-green) so a theme missing the key degrades
+		# sensibly rather than picking up a forest bias.
+		mat.albedo_color = ThemeManager.color("background_bottom", Color(0.5, 0.52, 0.58)).darkened(0.12)
 	ground.material_override = mat
