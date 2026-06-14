@@ -76,6 +76,17 @@ all three themes and to `EXTENDED_KEYS` in the same change.
 | `ambient_energy` | SkyRig | 0.7 | ambient light energy |
 | `light_energy` / `light_color` | SkyRig | 1.0 / — | DirectionalLight tuning (fail-soft if absent) |
 | `lane_marker` | LaneMarkers | `{enabled,…}` | dashed lane dividers `{enabled,color,dash_len,dash_gap}` |
+| `slow_factor` | Powerups | 0.55 | scroll multiplier while the "slow" power-up is active |
+| `powerup_interval` / `powerup_duration` | Spawner / Powerups | 14 / 6 | seconds between power-up pickups / how long they last |
+| `obstacle_interval` | Spawner | 10 | seconds between hurdles/overhangs to jump/slide |
+| `jump_height` / `jump_seconds` / `slide_seconds` | Player | 1.6 / 0.55 / 0.55 | hop arc + duck timing |
+| `biome_interval` | Biomes | 8 | rescues between in-run biome (time-of-day) shifts |
+| `discovery_interval` | Discovery | 35 | seconds between gentle surprise events |
+| `audio.powerup` | AudioManager | (fail-soft) | power-up pickup chime |
+
+ADVENTURE COMPLIANCE: power-ups are free/forgiving (no currency, no loss, no
+gacha); obstacles offer two solutions (clear OR dodge) and only ever cause the
+gentle three-strike stumble; biomes/discovery are celebration-only, never FOMO.
 
 Nested-object keys (`scenery`, `ambient`, `lane_marker`, `haptic_ms`) are
 parity-checked at the TOP level; their fields are code-defaulted, so a theme only

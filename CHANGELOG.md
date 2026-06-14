@@ -6,6 +6,25 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **"Adventure depth" — every run is a journey, not a score attempt** (the
+  compliant core of a Runverse-style vision; no MMO/currency/combat/extraction/
+  retention-AI — those break Kids Category). Four new systems, all data-driven,
+  reduce-motion-aware, and verified against real Godot 4.3:
+  - **Gentle power-up "builds"** (`Powerups`): free, run-scoped pickups —
+    🛡 shield (absorbs a stumble), 🐌 slow (calms the world), 🧲 magnet (gems drift
+    in — not coins), ✨ double (rescues score ×2). They stack into a build shown as
+    HUD chips. Predictable rotating cadence (variety, not a gacha). No currency,
+    no loss, no FOMO.
+  - **In-run biome journey** (`Biomes`): the world transforms within a run through
+    a day → dusk → night → dawn cycle (sky/ground/scenery re-skin via a transient
+    palette override) with a "New area!" discovery beat. Gameplay tuning is never
+    touched.
+  - **Jump & slide** (up/down swipe) plus gentle **hurdles/overhangs** to clear —
+    new verbs with purpose; a missed clear is a gentle, recoverable stumble and you
+    can also just dodge to another lane (two solutions = fair).
+  - **Discovery events** (`Discovery`): occasional gentle surprises — a free treat
+    or a bonus shower with a "Surprise!" flourish — so "what will happen this run?"
+    stays alive.
 - **Top-tier "feel & juice" overhaul.** Warm-up grace before the speed ramp;
   data-driven spawn patterns (single/rest/double) with guaranteed breathing room
   and a code-enforced "≥1 lane always clear" rule; input buffering + optional lane
