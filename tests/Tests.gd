@@ -18,6 +18,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"carry_glow", "carry_badge_scale", "haptic_ms",
 	# W-B difficulty & pacing
 	"warmup_seconds", "spawn_patterns", "forgiveness_z", "near_miss_z",
+	# W-C feedback & juice
+	"stumble_flash_alpha", "stumble_flash_time",
 ]
 
 func _ready() -> void:
@@ -73,6 +75,7 @@ func _run_all() -> void:
 	_test_screenfx()
 	_test_points_popped()
 	_test_streak_counter()
+	_test_stumble_feedback_gentle()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -725,6 +728,21 @@ func _test_streak_counter() -> void:
 	_check("streak: badge hidden at streak 1", not hud._streak_label.visible)
 	hud._on_streak_changed(0)
 	_check("streak: badge hidden at streak 0", not hud._streak_label.visible)
+	hud.free()
+
+## Stumble feedback stays gentle: the flash alpha is capped low in EVERY theme,
+## and a near-miss shows a floater without touching the score.
+func _test_stumble_feedback_gentle() -> void:
+	for id in DirAccess.get_directories_at("res://themes"):
+		var a := float(_load_theme_json(id).get("stumble_flash_alpha", 0.18))
+		_check("stumble: %s flash alpha is gentle (<=0.25)" % id, a <= 0.25)
+	var hud = preload("res://ui/HUD.gd").new()
+	add_child(hud)
+	var before_score := GameCore.score
+	var before := hud._root.get_child_count()
+	GameCore.near_miss.emit()
+	_check("near-miss: a floater appears", hud._root.get_child_count() == before + 1)
+	_check("near-miss: score is unchanged", GameCore.score == before_score)
 	hud.free()
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled

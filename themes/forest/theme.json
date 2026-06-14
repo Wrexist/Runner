@@ -37,6 +37,8 @@
   "gem_cage_gap": 6.0,
   "forgiveness_z": 0.6,
   "near_miss_z": 0.8,
+  "stumble_flash_alpha": 0.18,
+  "stumble_flash_time": 0.25,
   "spawn_patterns": [
     {"type": "single", "weight": 6},
     {"type": "rest", "weight": 2},

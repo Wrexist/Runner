@@ -73,6 +73,7 @@ func _ready() -> void:
 	GameCore.new_best.connect(func(): _float_text(tr("New Best!")))
 	GameCore.points_popped.connect(_on_points_popped)
 	GameCore.streak_changed.connect(_on_streak_changed)
+	GameCore.near_miss.connect(func(): _float_text(tr("Whew!")))
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -170,6 +171,12 @@ func _on_streak_changed(streak: int) -> void:
 
 func _on_stumbled(_lives_remaining: int) -> void:
 	_refresh_lives()
+	# A gentle "oof": a brief, low-alpha screen dim (NO shake, NO strobe) plus a
+	# soft floater. Caps come from theme data and ScreenFX clamps the alpha.
+	ScreenFX.flash(Color(0.12, 0.10, 0.16),
+		float(ThemeManager.get_val("stumble_flash_alpha", 0.18)),
+		float(ThemeManager.get_val("stumble_flash_time", 0.25)))
+	_float_text(tr("Oops!"))
 
 func _on_run_started() -> void:
 	_root.visible = true
