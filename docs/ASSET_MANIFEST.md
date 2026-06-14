@@ -1,5 +1,8 @@
 # Asset Manifest — exactly what to source (Phase 2)
 
+> Prefer **AI-generated** art? See `docs/ART_PROMPTS.md` for copy/paste icon,
+> 3D-model, and texture prompts tuned to each theme palette.
+
 Every file slot the engine reads, the exact path it must land at, the spec it
 must meet, and a specific **CC0** pack to get it from. Paths come straight from
 `themes/<id>/theme.json` — drop a file at the path and it just works (engine
