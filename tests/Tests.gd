@@ -69,6 +69,7 @@ func _run_all() -> void:
 	_test_speed_warmup()
 	_test_spawn_patterns()
 	_test_forgiveness_and_near_miss()
+	_test_pool_reuse()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -683,6 +684,29 @@ func _test_spawn_patterns() -> void:
 
 func _count_near_miss() -> void:
 	_near_miss_count += 1
+
+## The collectible pool reuses freed nodes (no unbounded growth) and a recycled
+## node is fully re-initialized to its new color on reuse.
+func _test_pool_reuse() -> void:
+	ThemeManager.load_theme("forest")
+	var sp = preload("res://core/Spawner.gd").new()
+	sp.gem_scene = preload("res://scenes/Gem.tscn")
+	sp.cage_scene = preload("res://scenes/Cage.tscn")
+	add_child(sp)
+	sp.lanes_count = 3
+	sp._spawn_one("gem", 0.0, -40.0, "red", 1)
+	var count_after_first := sp.get_child_count()
+	var gem_a = sp.get_child(count_after_first - 1)
+	for c in sp.get_children():
+		sp.release(c)               # back to the pool, not freed
+	sp._spawn_one("gem", 0.0, -40.0, "blue", 0)
+	_check("pool: reuse does not grow the node count", sp.get_child_count() == count_after_first)
+	var gem_b = sp.get_child(sp.get_child_count() - 1)
+	_check("pool: the same instance is reused", gem_a == gem_b)
+	_check("pool: reused node re-initialized to new color", gem_b.color_name == "blue")
+	_check("pool: reused node is active again",
+		gem_b.visible and gem_b.is_in_group("collectible"))
+	sp.free()
 
 ## Rewards are forgiving (a gem in the player's lane within the window is picked
 ## up even without a perfect overlap); the hazard stays fair; and dodging an

@@ -18,6 +18,7 @@ var gem_cage_gap: float = 6.0   # reaction-time window (theme/difficulty lever)
 var patterns: Array = []        # data-driven spawn sequence (see theme.json)
 var _last_lane: int = -1
 var _rng := RandomNumberGenerator.new()
+var _free: Dictionary = {"gem": [], "cage": []}   # recycled collectibles by kind
 const SPAWN_Z := -40.0          # spawn ahead, scroll toward player at z=0
 
 func _ready() -> void:
@@ -43,7 +44,7 @@ func _clear_field() -> void:
 	spawn_timer = 0.0
 	_last_lane = -1
 	for c in get_tree().get_nodes_in_group("collectible"):
-		c.queue_free()
+		release(c)
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
@@ -93,8 +94,8 @@ func _spawn_multi(count: int) -> void:
 		var color: String = colors[_rng.randi() % colors.size()]
 		var x := (lane - (lanes_count - 1) / 2.0) * lane_width
 		# Gem first (closer), cage behind it (further), same lane + color.
-		_spawn_one(gem_scene, x, SPAWN_Z, color, lane)
-		_spawn_one(cage_scene, x, SPAWN_Z - gem_cage_gap, color, lane)
+		_spawn_one("gem", x, SPAWN_Z, color, lane)
+		_spawn_one("cage", x, SPAWN_Z - gem_cage_gap, color, lane)
 	# Track the previous lane only for single beats (keeps an obvious safe lane
 	# between consecutive singles); multi beats already leave a clear lane.
 	_last_lane = int(lanes[0]) if lanes.size() == 1 else -1
@@ -115,11 +116,47 @@ func _choose_lanes(count: int) -> Array:
 		pool[j] = tmp
 	return pool.slice(0, n)
 
-func _spawn_one(scene: PackedScene, x: float, z: float, color: String, lane: int) -> void:
-	if scene == null:
+func _spawn_one(kind: String, x: float, z: float, color: String, lane: int) -> void:
+	var inst := _acquire(kind)
+	if inst == null:
 		return
-	var inst := scene.instantiate()
-	add_child(inst)
 	inst.position = Vector3(x, 0, z)
 	if inst.has_method("setup"):
 		inst.setup(color, lane)
+
+## Pull a collectible of `kind` from the pool, or instantiate one (growing the
+## pool) if none are free — so a pacing change can never starve spawns.
+func _acquire(kind: String) -> Node3D:
+	var pool: Array = _free.get(kind, [])
+	var inst: Node3D = null
+	while inst == null and not pool.is_empty():
+		inst = pool.pop_back() as Node3D
+		if not is_instance_valid(inst):
+			inst = null
+	if inst == null:
+		var scene: PackedScene = gem_scene if kind == "gem" else cage_scene
+		if scene == null:
+			return null
+		inst = scene.instantiate() as Node3D
+		add_child(inst)
+	inst.visible = true
+	inst.set_process(true)
+	if not inst.is_in_group("collectible"):
+		inst.add_to_group("collectible")
+	return inst
+
+## Return a finished collectible to its pool: hidden + inert, reused next spawn.
+## Idempotent (group membership is the guard), so a despawn and a clear-field
+## release can't double-pool the same node.
+func release(node: Node3D) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if not node.is_in_group("collectible"):
+		return
+	node.remove_from_group("collectible")
+	node.visible = false
+	node.set_process(false)
+	var kind := str(node.get("kind"))
+	if not _free.has(kind):
+		_free[kind] = []
+	_free[kind].append(node)
