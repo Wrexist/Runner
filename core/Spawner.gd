@@ -10,6 +10,7 @@ extends Node3D
 @export var powerup_scene: PackedScene
 @export var obstacle_scene: PackedScene
 @export var choice_scene: PackedScene
+@export var giant_scene: PackedScene
 
 var spawn_timer: float = 0.0
 var interval: float = 1.4
@@ -27,6 +28,8 @@ var _obstacle_interval: float = 10.0  # seconds between hurdles/overhangs (theme
 var _obstacle_alt: bool = true        # alternate hurdle / overhang
 var _choice_timer: float = 0.0
 var _choice_interval: float = 25.0    # seconds between branching choice gates (themed)
+var _giant_timer: float = 0.0
+var _giant_interval: float = 55.0     # seconds between rare giant-friend encounters
 var _last_lane: int = -1
 var _rng := RandomNumberGenerator.new()
 var _free: Dictionary = {"gem": [], "cage": []}   # recycled collectibles by kind
@@ -51,6 +54,7 @@ func _apply_tuning() -> void:
 	_powerup_interval = float(ThemeManager.get_val("powerup_interval", 14.0))
 	_obstacle_interval = float(ThemeManager.get_val("obstacle_interval", 10.0))
 	_choice_interval = float(ThemeManager.get_val("choice_interval", 25.0))
+	_giant_interval = float(ThemeManager.get_val("giant_interval", 55.0))
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.
@@ -59,6 +63,7 @@ func _clear_field() -> void:
 	_powerup_timer = _powerup_interval   # first power-up comes a little into the run
 	_obstacle_timer = _obstacle_interval
 	_choice_timer = _choice_interval
+	_giant_timer = _giant_interval
 	_last_lane = -1
 	for c in get_tree().get_nodes_in_group("collectible"):
 		release(c)
@@ -67,6 +72,8 @@ func _clear_field() -> void:
 	for o in get_tree().get_nodes_in_group("obstacle"):
 		o.queue_free()
 	for g in get_tree().get_nodes_in_group("choicegate"):
+		g.queue_free()
+	for g in get_tree().get_nodes_in_group("giant"):
 		g.queue_free()
 
 func _process(delta: float) -> void:
@@ -93,6 +100,18 @@ func _process(delta: float) -> void:
 	if _choice_timer <= 0.0 and choice_scene != null:
 		_spawn_choice()
 		_choice_timer = _choice_interval
+	# A rare, gentle giant-friend spectacle (a "world event").
+	_giant_timer -= delta
+	if _giant_timer <= 0.0 and giant_scene != null:
+		_spawn_giant()
+		_giant_timer = _giant_interval
+
+func _spawn_giant() -> void:
+	var g := giant_scene.instantiate()
+	add_child(g)
+	g.position = Vector3(0.0, 1.0, SPAWN_Z)   # centred, elevated spectacle
+	if g.has_method("setup"):
+		g.setup()
 
 func _spawn_choice() -> void:
 	var cg := choice_scene.instantiate()

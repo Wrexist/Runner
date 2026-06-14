@@ -36,8 +36,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"biome_interval", "discovery_interval",
 	# Adventure depth: jump & slide
 	"jump_height", "jump_seconds", "slide_seconds", "obstacle_interval",
-	# Adventure depth: branching choice gates
-	"choice_interval",
+	# Adventure depth: branching choice gates + giant encounter
+	"choice_interval", "giant_interval",
 ]
 
 func _ready() -> void:
@@ -119,6 +119,7 @@ func _run_all() -> void:
 	_test_jump_slide()
 	_test_obstacle()
 	_test_choice_gate()
+	_test_giant()
 	_test_discovery()
 	_test_discovery_journal()
 	_test_state_restored()
@@ -1169,6 +1170,29 @@ func _test_discovery_journal() -> void:
 	SaveManager.reset_progress()
 	_check("journal: reset clears discoveries", SaveManager.discoveries.is_empty())
 	Powerups.clear_all()
+	GameCore.go_to_menu()
+
+## The gentle giant encounter is pure reward + spectacle: a bonus, a free
+## power-up, and the giant_met signal — never a stumble.
+func _test_giant() -> void:
+	ThemeManager.load_theme("forest")
+	GameCore.start_run()
+	Powerups.clear_all()
+	var got := {"v": false}
+	var cb := func(): got["v"] = true
+	GameCore.giant_met.connect(cb)
+	var g = preload("res://core/Giant.gd").new()
+	add_child(g)
+	g.setup()
+	_check("giant: builds a big procedural friend", g.get_child_count() > 0)
+	var before := GameCore.score
+	var stumbles_before := GameCore.stumbles
+	g._resolve()
+	_check("giant: rewards score + signals, never stumbles",
+		got["v"] and GameCore.score > before and GameCore.stumbles == stumbles_before)
+	GameCore.giant_met.disconnect(cb)
+	Powerups.clear_all()
+	g.free()
 	GameCore.go_to_menu()
 
 ## A discovery event fires a named gentle surprise (a treat or a bonus shower).

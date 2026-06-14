@@ -30,6 +30,7 @@ func _ready() -> void:
 	GameCore.new_best.connect(func(): play_sfx("jingle"))
 	GameCore.milestone_reached.connect(func(_k, _v): play_sfx("jingle"))
 	Discovery.discovery.connect(func(_n): play_sfx("jingle"))
+	GameCore.giant_met.connect(func(): play_sfx("jingle"))
 	_apply_master_volume()
 	play_menu_music()   # calm menu loop on launch (fail-soft silent if absent)
 

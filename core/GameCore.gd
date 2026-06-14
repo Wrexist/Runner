@@ -18,6 +18,7 @@ signal milestone_reached(kind: String, value: int)  # e.g. ("rescues", 25)
 signal near_miss                             # dodged an unprepared cage by a hair
 signal points_popped(amount: int, world_pos: Vector3)  # for floating "+N" text
 signal shield_used                           # a shield power-up absorbed a stumble
+signal giant_met                             # a gentle giant-friend spectacle reached
 
 enum State { MENU, PLAYING, GAME_OVER }
 

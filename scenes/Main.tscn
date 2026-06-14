@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://core/Spawner.gd" id="2_spawner"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/Powerup.tscn" id="12_powerup"]
 [ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="13_obstacle"]
 [ext_resource type="PackedScene" path="res://scenes/ChoiceGate.tscn" id="14_choice"]
+[ext_resource type="PackedScene" path="res://scenes/Giant.tscn" id="15_giant"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(12, 120)
@@ -47,6 +48,7 @@ cage_scene = ExtResource("4_cage")
 powerup_scene = ExtResource("12_powerup")
 obstacle_scene = ExtResource("13_obstacle")
 choice_scene = ExtResource("14_choice")
+giant_scene = ExtResource("15_giant")
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("9_scenery")

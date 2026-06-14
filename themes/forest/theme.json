@@ -29,6 +29,7 @@
   "powerup_duration": 6.0,
   "obstacle_interval": 10.0,
   "choice_interval": 24.0,
+  "giant_interval": 55.0,
   "gem_colors": ["red", "blue", "yellow"],
   "gem_palette": {
     "red": "#eb5a52",
