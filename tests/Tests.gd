@@ -82,6 +82,7 @@ func _run_all() -> void:
 	_test_celebration_feedback()
 	_test_audio_handlers()
 	_test_button_roles()
+	_test_settings_toggle_switch()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -846,6 +847,29 @@ func _test_forgiveness_and_near_miss() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## Settings toggles are real CheckButton switches now, and flipping one persists.
+func _test_settings_toggle_switch() -> void:
+	var s := UIScreens.make_settings()
+	add_child(s)
+	var cb := _find_checkbutton(s, tr("Music"))
+	_check("settings: Music is a CheckButton switch", cb != null)
+	if cb:
+		var prev: bool = bool(SaveManager.settings.get("music", true))
+		cb.toggled.emit(not prev)
+		_check("settings: flipping the switch persists",
+			bool(SaveManager.settings.get("music", true)) == (not prev))
+		SaveManager.set_setting("music", prev)
+	s.free()
+
+func _find_checkbutton(node: Node, label: String) -> CheckButton:
+	if node is CheckButton and label in (node as CheckButton).text:
+		return node
+	for c in node.get_children():
+		var r := _find_checkbutton(c, label)
+		if r:
+			return r
+	return null
 
 ## Walk a Control tree looking for a Button/Label whose text contains `substr`.
 func _find_text_descendant(node: Node, substr: String) -> bool:

@@ -244,7 +244,13 @@ class Pause extends Control:
 	signal settings_pressed
 	signal home_pressed
 	func _build() -> void:
-		add_child(UIScreens._bg())
+		# A translucent dim over the frozen world (friendlier than an opaque panel
+		# — the player still sees the paused game behind it).
+		var dim := ColorRect.new()
+		dim.color = Color(0, 0, 0, 0.55)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(dim)
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label(tr("Paused"), 52))
 		var resume := UIScreens._button(tr("Resume"))
@@ -334,22 +340,25 @@ class Settings extends Control:
 			remove_child(c)
 			c.free()
 		_build()
-	func _toggle(label: String, key: String) -> Button:
-		var b := UIScreens._button("")
-		_refresh(b, label, key)
-		b.pressed.connect(_on_toggle.bind(b, label, key))
-		return b
-	func _on_toggle(b: Button, label: String, key: String) -> void:
-		SaveManager.set_setting(key, not bool(SaveManager.settings.get(key, true)))
-		_refresh(b, label, key)
-		if key == "music":
-			if bool(SaveManager.settings["music"]):
-				AudioManager.play_music()
-			else:
-				AudioManager.stop_music()
-	func _refresh(b: Button, label: String, key: String) -> void:
-		var on := bool(SaveManager.settings.get(key, true))
-		b.text = "%s:  %s" % [tr(label), tr("On") if on else tr("Off")]
+	## A real switch (CheckButton) — clearer than text "On/Off" and accessible.
+	func _toggle(label: String, key: String) -> CheckButton:
+		var cb := CheckButton.new()
+		cb.text = tr(label)
+		cb.custom_minimum_size = Vector2(280, 64)
+		cb.add_theme_font_size_override("font_size", 26)
+		cb.add_theme_color_override("font_color", ThemeManager.color("ui_text", Color.BLACK))
+		cb.button_pressed = bool(SaveManager.settings.get(key, true))
+		cb.toggled.connect(func(on):
+			SaveManager.set_setting(key, on)
+			AudioManager.play_sfx("ui_click")
+			if key == "music":
+				if not on:
+					AudioManager.stop_music()
+				elif GameCore.is_running():
+					AudioManager.play_music()
+				else:
+					AudioManager.play_menu_music())
+		return cb
 
 static func make_settings() -> Settings:
 	var s := Settings.new()
