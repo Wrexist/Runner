@@ -13,8 +13,14 @@ var carried_color: String = ""
 
 var _target_x: float = 0.0
 var _swipe_start_x: float = 0.0
+var _swipe_start_y: float = 0.0
 var _swiping: bool = false
 var _swiped_this_touch: bool = false
+var _vstate := "ground"               # "ground" | "jump" | "slide"
+var _vtime := 0.0
+var _jump_height := 1.6
+var _jump_seconds := 0.55
+var _slide_seconds := 0.55
 var _lean_tween: Tween                  # active lean; killed before a new one starts
 var _swipe_threshold: float = 40.0      # px before a drag counts as a swipe (themed)
 var _tap_dead_zone_frac: float = 0.12   # ignore taps within this frac of center
@@ -43,6 +49,9 @@ func _ready() -> void:
 	_lane_cooldown_time = float(ThemeManager.get_val("lane_change_cooldown", 0.0))
 	_carry_glow = float(ThemeManager.get_val("carry_glow", 1.4))
 	_carry_badge_scale = float(ThemeManager.get_val("carry_badge_scale", 1.0))
+	_jump_height = float(ThemeManager.get_val("jump_height", 1.6))
+	_jump_seconds = float(ThemeManager.get_val("jump_seconds", 0.55))
+	_slide_seconds = float(ThemeManager.get_val("slide_seconds", 0.55))
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
@@ -79,6 +88,8 @@ func _on_run_started() -> void:
 	position.x = _target_x
 	_lane_cooldown = 0.0
 	_buffered_dir = 0
+	_vstate = "ground"
+	_vtime = 0.0
 	_history.clear()
 	clear_color()
 
@@ -115,6 +126,62 @@ func _tick_cooldown(delta: float) -> void:
 		_buffered_dir = 0
 		_apply_lane_move(d)
 
+## Up = a short hop (clears a hurdle); Down = a quick duck/slide (passes under an
+## overhang). One vertical action at a time; gentle and brief.
+func jump() -> void:
+	if _vstate != "ground":
+		return
+	_vstate = "jump"
+	_vtime = 0.0
+	Effects.haptic("light")
+	AudioManager.play_sfx("whoosh")
+
+func slide() -> void:
+	if _vstate != "ground":
+		return
+	_vstate = "slide"
+	_vtime = 0.0
+	Effects.haptic("light")
+	AudioManager.play_sfx("whoosh")
+
+func is_airborne() -> bool:
+	return _vstate == "jump"
+
+func is_sliding() -> bool:
+	return _vstate == "slide"
+
+## Drive the hop/duck (and the idle bob when grounded). Jump/slide are GAMEPLAY,
+## so the brief deliberate motion shows even under reduce_motion; only the ambient
+## idle bob is motion-gated.
+func _update_vertical(delta: float) -> void:
+	var b := _body()
+	if b == null:
+		return
+	match _vstate:
+		"jump":
+			_vtime += delta
+			if _vtime >= _jump_seconds:
+				_vstate = "ground"
+				b.position.y = 0.0
+				b.scale.y = 1.0
+			else:
+				b.position.y = sin((_vtime / _jump_seconds) * PI) * _jump_height
+		"slide":
+			_vtime += delta
+			b.scale.y = 0.55
+			b.position.y = -0.15
+			if _vtime >= _slide_seconds:
+				_vstate = "ground"
+				b.scale.y = 1.0
+				b.position.y = 0.0
+		_:
+			b.scale.y = 1.0
+			if not bool(SaveManager.settings.get("reduce_motion", false)):
+				_bob_t += delta
+				b.position.y = sin(_bob_t * 2.5) * 0.06
+			else:
+				b.position.y = 0.0
+
 ## A quick lean into the turn that settles back — makes movement feel alive.
 func _lean(dir: int) -> void:
 	if bool(SaveManager.settings.get("reduce_motion", false)):
@@ -144,10 +211,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			move_lane(-1)
 		elif event.keycode == KEY_RIGHT:
 			move_lane(1)
+		elif event.keycode == KEY_UP:
+			jump()
+		elif event.keycode == KEY_DOWN:
+			slide()
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
 			_swipe_start_x = touch.position.x
+			_swipe_start_y = touch.position.y
 			_swiping = true
 			_swiped_this_touch = false
 		else:
@@ -163,22 +235,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag and _swiping and not _swiped_this_touch:
 		var drag := event as InputEventScreenDrag
 		var dx := drag.position.x - _swipe_start_x
-		if absf(dx) >= _swipe_threshold:
+		var dy := drag.position.y - _swipe_start_y
+		# Pick the dominant axis: left/right changes lane; up/down hops/ducks.
+		if absf(dx) >= _swipe_threshold and absf(dx) >= absf(dy):
 			move_lane(1 if dx > 0.0 else -1)
-			_swiped_this_touch = true   # one lane per swipe; release to move again
+			_swiped_this_touch = true   # one action per swipe; release to act again
+		elif absf(dy) >= _swipe_threshold and absf(dy) > absf(dx):
+			if dy < 0.0:
+				jump()                  # swipe up (screen y grows downward)
+			else:
+				slide()
+			_swiped_this_touch = true
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
 	_tick_cooldown(delta)
 	position.x = move_toward(position.x, _target_x, move_speed * delta)
-	# A soft idle bob makes the runner feel alive (body only — doesn't disturb the
-	# trail breadcrumb, which reads the root position). Motion-safe.
-	if not bool(SaveManager.settings.get("reduce_motion", false)):
-		_bob_t += delta
-		var b := _body()
-		if b:
-			b.position.y = sin(_bob_t * 2.5) * 0.06
+	_update_vertical(delta)   # hop / duck, plus the motion-safe idle bob
 	_history.push_front(global_position)
 	if _history.size() > HISTORY_MAX:
 		_history.resize(HISTORY_MAX)

@@ -34,6 +34,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"slow_factor", "powerup_interval", "powerup_duration", "audio.powerup",
 	# Adventure depth: in-run biome journey
 	"biome_interval",
+	# Adventure depth: jump & slide
+	"jump_height", "jump_seconds", "slide_seconds",
 ]
 
 func _ready() -> void:
@@ -111,6 +113,7 @@ func _run_all() -> void:
 	_test_powerup_hud()
 	_test_magnet()
 	_test_biomes()
+	_test_jump_slide()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1082,6 +1085,27 @@ func _test_magnet() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## Jump and slide are distinct timed states, one at a time, that return to ground.
+func _test_jump_slide() -> void:
+	ThemeManager.load_theme("forest")
+	var p = preload("res://scenes/Player.tscn").instantiate()
+	add_child(p)
+	GameCore.start_run()
+	p.jump()
+	_check("jump: enters airborne state", p.is_airborne())
+	p._update_vertical(p._jump_seconds + 0.1)
+	_check("jump: returns to ground", not p.is_airborne())
+	p.slide()
+	_check("slide: enters sliding state", p.is_sliding())
+	p._update_vertical(p._slide_seconds + 0.1)
+	_check("slide: returns to ground", not p.is_sliding())
+	p.slide()
+	p.jump()
+	_check("vertical: one action at a time (jump blocked mid-slide)",
+		p.is_sliding() and not p.is_airborne())
+	p.free()
+	GameCore.go_to_menu()
 
 ## The world journeys through biomes within a run: the sky palette shifts after
 ## the interval and resets to base on menu — gameplay tuning is never touched.
