@@ -58,6 +58,7 @@ func _ready() -> void:
 	GameCore.run_ended.connect(func(_s, _h): _root.visible = false)
 	GameCore.returned_to_menu.connect(func(): _root.visible = false)
 	GameCore.new_best.connect(func(): _float_text(tr("New Best!")))
+	GameCore.points_popped.connect(_on_points_popped)
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -100,12 +101,16 @@ func _streak_word(streak: int) -> String:
 
 ## A happy word that floats up from the center and fades. Pure positive feedback.
 func _float_text(text: String) -> void:
-	var l := _make_label(44, ThemeManager.color("accent", Color(1.0, 0.55, 0.6)))
+	var size := get_viewport().get_visible_rect().size
+	_float_at(text, Vector2(size.x * 0.5, size.y * 0.45), ThemeManager.color("accent", Color(1.0, 0.55, 0.6)), 44, 300)
+
+## A floating label that rises and fades from a screen point. Motion-safe.
+func _float_at(text: String, center: Vector2, color: Color, font_size: int = 36, width: float = 140.0) -> void:
+	var l := _make_label(font_size, color)
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var size := get_viewport().get_visible_rect().size
-	l.position = Vector2(size.x * 0.5 - 150, size.y * 0.45)
-	l.custom_minimum_size = Vector2(300, 0)
+	l.custom_minimum_size = Vector2(width, 0)
+	l.position = center - Vector2(width * 0.5, 0)
 	_root.add_child(l)
 	if _reduce_motion():
 		# No sliding motion for motion-sensitive players: hold, fade in place, free.
@@ -116,9 +121,23 @@ func _float_text(text: String) -> void:
 		return
 	var t := l.create_tween()
 	t.set_parallel(true)
-	t.tween_property(l, "position:y", l.position.y - 130, 0.9)
-	t.tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.2)
+	t.tween_property(l, "position:y", l.position.y - 110, 0.85)
+	t.tween_property(l, "modulate:a", 0.0, 0.85).set_delay(0.2)
 	t.chain().tween_callback(l.queue_free)
+
+## Float a "+N" right where the points were earned (gem/cage world position).
+func _on_points_popped(amount: int, world_pos: Vector3) -> void:
+	if amount <= 0:
+		return
+	_float_at("+%d" % amount, _world_to_screen(world_pos),
+		ThemeManager.color("accent", Color(1.0, 0.85, 0.4)), 34, 120)
+
+func _world_to_screen(world_pos: Vector3) -> Vector2:
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		return cam.unproject_position(world_pos)
+	var s := get_viewport().get_visible_rect().size
+	return Vector2(s.x * 0.5, s.y * 0.45)
 
 func _on_stumbled(_lives_remaining: int) -> void:
 	_refresh_lives()

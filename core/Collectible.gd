@@ -175,6 +175,7 @@ func _resolve(player: Node3D) -> void:
 	if kind == "gem":
 		player.carry_color(color_name)
 		GameCore.add_score(1)
+		GameCore.points_popped.emit(1, global_position)
 		Effects.burst(global_position, _color_from_name(color_name), 8)
 		Effects.haptic("light")
 		AudioManager.play_sfx("gem_pickup", randf_range(1.0, 1.15))
@@ -182,7 +183,9 @@ func _resolve(player: Node3D) -> void:
 	elif kind == "cage":
 		if player.carried_color == color_name:
 			player.clear_color()
+			var before := GameCore.score
 			GameCore.rescue_critter(_pick_critter_id())
+			GameCore.points_popped.emit(GameCore.score - before, global_position)
 			# Bigger, brighter burst the hotter the streak — pure celebration.
 			Effects.burst(global_position, _color_from_name(color_name), 16 + mini(GameCore.streak, 8) * 3)
 			Effects.haptic("rescue")

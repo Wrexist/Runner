@@ -71,6 +71,7 @@ func _run_all() -> void:
 	_test_forgiveness_and_near_miss()
 	_test_pool_reuse()
 	_test_screenfx()
+	_test_points_popped()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -700,6 +701,17 @@ func _test_screenfx() -> void:
 	ScreenFX.flash(Color.WHITE, 0.9, 0.2)   # over-cap alpha is clamped internally
 	_check("screenfx: flash mounts an overlay when motion is on",
 		ScreenFX._layer.get_child_count() > before)
+
+## A "+N" floater appears where points were earned; non-positive amounts don't.
+func _test_points_popped() -> void:
+	var hud = preload("res://ui/HUD.gd").new()
+	add_child(hud)
+	var before := hud._root.get_child_count()
+	hud._on_points_popped(7, Vector3.ZERO)
+	_check("popups: +N floater mounts", hud._root.get_child_count() == before + 1)
+	hud._on_points_popped(0, Vector3.ZERO)
+	_check("popups: non-positive amount does not float", hud._root.get_child_count() == before + 1)
+	hud.free()
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled
 ## node is fully re-initialized to its new color on reuse.
