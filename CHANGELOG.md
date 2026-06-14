@@ -6,6 +6,35 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **Top-tier "feel & juice" overhaul.** Warm-up grace before the speed ramp;
+  data-driven spawn patterns (single/rest/double) with guaranteed breathing room
+  and a code-enforced "≥1 lane always clear" rule; input buffering + optional lane
+  cooldown; reward-only forgiveness windows + celebration-only near-miss; object
+  pooling for gems/cages. Juice: a `ScreenFX` autoload (gentle flash/vignette/
+  confetti), floating "+N" popups, a visible streak badge, milestone + critter-
+  unlock celebrations, a glowing carried-color indicator. UI: screen fade-ins,
+  button roles + press-pop + click sound, real toggle switches, a dimmed pause,
+  an in-run difficulty badge, and personal-best stats on Game Over. Audio: menu
+  music, lane whoosh, near-miss/jingle SFX, pause fade, master volume. Optional
+  gentle haptics. Per-run best stats (local-only, celebration-only).
+- **Procedural "complete game" visuals (no imported art).** Feature-assembled
+  critters (deterministic ears/tail/fin/antennae/eyes per id) and a themed
+  procedural player (forest critter / space rocket / ocean sub); pooled scrolling
+  side scenery (`Scenery.gd` — trees/asteroids/coral, clamped outside the lanes);
+  a drifting ambient particle field (`Ambient.gd` — fireflies/stars/bubbles);
+  a gradient sky + scrolling ground; optional distance fog + themed light; and
+  dashed lane markers (`LaneMarkers.gd`). Every new motion/particle path is
+  reduce-motion-aware; all are data-driven theme keys kept in 3-theme parity.
+
+### Fixed
+- **Project now loads & all tests pass on real Godot (CI green).** Headless
+  Godot 4.3 in CI caught GDScript parse errors that regex checks missed and that
+  broke project load: `var x := …` type-inference on Variant loop/array values
+  (`Spawner.gd`) and on untyped-node properties (`Tests.gd`). Cast/typed
+  explicitly; fixed a lean test for Godot 4.3's `kill()`/`is_running()` semantics.
+- **es/sv translations recompiled** to include the strings added this cycle.
+
+### Added (earlier)
 - **More alive-feeling juice (motion-safe).** Gems gently spin + bob and pop in as
   they spawn; cages bob softly; the player has a subtle idle bob; the rescue conga
   line undulates out-of-phase behind you. All of it is skipped under the
