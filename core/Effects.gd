@@ -20,14 +20,14 @@ func burst(global_pos: Vector3, color: Color, amount: int = 16) -> void:
 	p.initial_velocity_min = 2.0
 	p.initial_velocity_max = 4.5
 	p.gravity = Vector3(0, -7, 0)
-	p.scale_amount_min = 0.12
-	p.scale_amount_max = 0.28
+	p.scale_amount_min = 0.10
+	p.scale_amount_max = 0.30
+	p.angular_velocity_min = -360.0   # gentle tumble so chips read as confetti
+	p.angular_velocity_max = 360.0
 	p.color = color
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.1
-	mesh.height = 0.2
-	mesh.radial_segments = 6
-	mesh.rings = 3
+	# Little flat "confetti chip" instead of a sphere — reads more festive, still cheap.
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.14, 0.14, 0.03)
 	p.mesh = mesh
 	add_child(p)
 	p.global_position = global_pos
