@@ -72,6 +72,7 @@ func _run_all() -> void:
 	_test_pool_reuse()
 	_test_screenfx()
 	_test_points_popped()
+	_test_streak_counter()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -711,6 +712,19 @@ func _test_points_popped() -> void:
 	_check("popups: +N floater mounts", hud._root.get_child_count() == before + 1)
 	hud._on_points_popped(0, Vector3.ZERO)
 	_check("popups: non-positive amount does not float", hud._root.get_child_count() == before + 1)
+	hud.free()
+
+## The streak badge shows from streak 2 and hides at 0/1 (silent reset, no shame).
+func _test_streak_counter() -> void:
+	var hud = preload("res://ui/HUD.gd").new()
+	add_child(hud)
+	hud._on_streak_changed(3)
+	_check("streak: badge visible at streak>=2",
+		hud._streak_label.visible and "3" in hud._streak_label.text)
+	hud._on_streak_changed(1)
+	_check("streak: badge hidden at streak 1", not hud._streak_label.visible)
+	hud._on_streak_changed(0)
+	_check("streak: badge hidden at streak 0", not hud._streak_label.visible)
 	hud.free()
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled

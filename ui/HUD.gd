@@ -6,6 +6,7 @@ var _root: Control
 var _score_label: Label
 var _rescue_label: Label
 var _lives_label: Label
+var _streak_label: Label
 
 func _ready() -> void:
 	var text_color := ThemeManager.color("ui_text", Color.BLACK)
@@ -40,6 +41,18 @@ func _ready() -> void:
 	_lives_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_root.add_child(_lives_label)
 
+	# A celebration-only streak badge under the score (hidden at streak 0/1). It
+	# never counts down, never gates anything — pure "you're on a roll" flair.
+	_streak_label = _make_label(30, ThemeManager.color("accent", Color(1.0, 0.6, 0.3)))
+	_streak_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_streak_label.offset_left = -120
+	_streak_label.offset_right = 120
+	_streak_label.offset_top = 82
+	_streak_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_streak_label.pivot_offset = Vector2(120, 18)
+	_streak_label.visible = false
+	_root.add_child(_streak_label)
+
 	# Big, easy pause target (auto-pause on backgrounding is handled in GameCore).
 	var pause_btn := Button.new()
 	pause_btn.text = "II"
@@ -59,6 +72,7 @@ func _ready() -> void:
 	GameCore.returned_to_menu.connect(func(): _root.visible = false)
 	GameCore.new_best.connect(func(): _float_text(tr("New Best!")))
 	GameCore.points_popped.connect(_on_points_popped)
+	GameCore.streak_changed.connect(_on_streak_changed)
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -138,6 +152,21 @@ func _world_to_screen(world_pos: Vector3) -> Vector2:
 		return cam.unproject_position(world_pos)
 	var s := get_viewport().get_visible_rect().size
 	return Vector2(s.x * 0.5, s.y * 0.45)
+
+## Show/hide the streak badge. Resets silently to hidden on a stumble (streak 0)
+## or a fresh run — no "you lost your streak!" shaming.
+func _on_streak_changed(streak: int) -> void:
+	if streak < 2:
+		_streak_label.visible = false
+		return
+	_streak_label.text = tr("Streak %d") % streak
+	_streak_label.visible = true
+	if _reduce_motion():
+		_streak_label.scale = Vector2.ONE
+		return
+	_streak_label.scale = Vector2(1.3, 1.3)
+	create_tween().tween_property(_streak_label, "scale", Vector2.ONE, 0.18) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _on_stumbled(_lives_remaining: int) -> void:
 	_refresh_lives()
