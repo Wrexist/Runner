@@ -26,6 +26,8 @@ const EXTENDED_KEYS: Array[String] = [
 	# W-F procedural visuals
 	"gem_emission", "glow_intensity", "ground_uv_speed",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
+	# W-G procedural scenery & characters
+	"critter_detail",
 ]
 
 func _ready() -> void:
@@ -91,6 +93,7 @@ func _run_all() -> void:
 	_test_collectible_silhouette()
 	_test_camera_reads_theme()
 	_test_ground_scroll()
+	_test_critter_variety()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -929,6 +932,30 @@ func _test_camera_reads_theme() -> void:
 		is_equal_approx(cam._zoom_amount, float(ThemeManager.get_val("camera_zoom_amount", 0.0))))
 	cam.free()
 	ThemeManager.load_theme("forest")
+
+## Procedural critters are deterministic per id, richer than the legacy blob, and
+## varied across ids; "simple" detail falls back to the gentle two-blob.
+func _test_critter_variety() -> void:
+	ThemeManager.load_theme("forest")
+	var a := ThemeModels._build_creature("bunny", 0.28)
+	var b := ThemeModels._build_creature("bunny", 0.28)
+	_check("critter: same id -> same structure", a.get_child_count() == b.get_child_count())
+	_check("critter: full creature richer than a blob", a.get_child_count() > 3)
+	var counts := {}
+	for id in ["bunny", "hedgehog", "owl", "deer", "clownfish", "robo"]:
+		var c := ThemeModels._build_creature(id, 0.28)
+		counts[c.get_child_count()] = true
+		c.free()
+	_check("critter: ids produce varied silhouettes", counts.size() >= 2)
+	var s := ThemeModels._simple_creature("bunny", 0.28)
+	_check("critter: simple detail is the two-blob", s.get_child_count() == 2)
+	var v := ThemeModels.critter_visual({"id": "owl"})
+	_check("critter: critter_visual returns a populated Node3D",
+		v is Node3D and v.get_child_count() > 0)
+	a.free()
+	b.free()
+	s.free()
+	v.free()
 
 ## Gem and cage read as different silhouettes even with zero art (sphere vs ring).
 func _test_collectible_silhouette() -> void:

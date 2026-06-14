@@ -50,20 +50,99 @@ static func critter_color(id: String) -> Color:
 	var hue := float(absi(hash(id)) % 360) / 360.0
 	return Color.from_hsv(hue, 0.5, 0.95)
 
-## The visual for a rescued critter: its real model if present, else a cute
-## two-blob procedural placeholder colored by `critter_color`.
+## The visual for a rescued critter: its real model if present, else a charming
+## procedural creature colored by `critter_color`. `critter_detail` ("full" |
+## "simple") lets a calmer/low-end theme fall back to the gentle two-blob form.
 static func critter_visual(critter: Dictionary, body_radius: float = 0.28) -> Node3D:
 	var model := instance(str(critter.get("model", "")))
 	if model:
 		return model
 	var id := str(critter.get("id", "critter"))
+	if str(ThemeManager.get_val("critter_detail", "full")) == "simple":
+		return _simple_creature(id, body_radius)
+	return _build_creature(id, body_radius)
+
+## The original gentle two-blob (kept for "simple" detail / continuity).
+static func _simple_creature(id: String, body_radius: float) -> Node3D:
 	var col := critter_color(id)
 	var root := Node3D.new()
 	root.add_child(_blob(body_radius, col, Vector3.ZERO))
-	# A smaller, lighter "head" gives a friendly silhouette instead of a plain ball.
 	root.add_child(_blob(body_radius * 0.6, col.lightened(0.18),
 		Vector3(0, body_radius * 0.85, 0)))
 	return root
+
+## A feature-assembled creature: body + head + eyes, plus a DETERMINISTIC set of
+## features (ears / tail / fin / antennae / snout) chosen from the id hash, so each
+## rescued friend has a distinct silhouette — still soft and kid-friendly, no art.
+static func _build_creature(id: String, body_radius: float) -> Node3D:
+	var col := critter_color(id)
+	var accent := col.lightened(0.18)
+	var h := absi(hash(id))
+	var r := body_radius
+	var root := Node3D.new()
+	root.add_child(_blob(r, col, Vector3.ZERO))                 # body
+	var head_y := r * 0.95
+	root.add_child(_blob(r * 0.62, accent, Vector3(0, head_y, 0)))  # head
+	# Two tiny dark eyes — a big, cheap "alive" readability win.
+	var eye := Color(0.12, 0.12, 0.14)
+	root.add_child(_blob(r * 0.12, eye, Vector3(-r * 0.22, head_y + r * 0.08, r * 0.5)))
+	root.add_child(_blob(r * 0.12, eye, Vector3(r * 0.22, head_y + r * 0.08, r * 0.5)))
+	# Disjoint bit-slices of the hash pick the silhouette features.
+	match h % 3:
+		1: _add_ears(root, accent, r, head_y, false)   # round ears
+		2: _add_ears(root, accent, r, head_y, true)    # pointy ears
+	match (h / 3) % 3:
+		0: root.add_child(_prim(_sphere(r * 0.3), col.lightened(0.1), Vector3(0, 0, -r * 0.95)))   # tail nub
+		1: _add_fin(root, accent, r)                   # back fin
+	if (h / 9) % 2 == 1:
+		_add_antennae(root, accent, r, head_y)
+	if (h / 18) % 2 == 1:
+		root.add_child(_prim(_sphere(r * 0.18), accent, Vector3(0, head_y - r * 0.05, r * 0.6)))   # snout
+	return root
+
+static func _add_ears(root: Node3D, color: Color, r: float, head_y: float, pointy: bool) -> void:
+	var ear: Mesh
+	if pointy:
+		var pm := PrismMesh.new()
+		pm.size = Vector3(r * 0.3, r * 0.5, r * 0.2)
+		ear = pm
+	else:
+		ear = _sphere(r * 0.22)
+	var ey := head_y + r * 0.55
+	root.add_child(_prim(ear, color, Vector3(-r * 0.34, ey, 0)))
+	root.add_child(_prim(ear, color, Vector3(r * 0.34, ey, 0)))
+
+static func _add_fin(root: Node3D, color: Color, r: float) -> void:
+	var pm := PrismMesh.new()
+	pm.size = Vector3(r * 0.5, r * 0.7, r * 0.12)
+	root.add_child(_prim(pm, color, Vector3(0, r * 0.7, -r * 0.1)))
+
+static func _add_antennae(root: Node3D, color: Color, r: float, head_y: float) -> void:
+	var stalk := CylinderMesh.new()
+	stalk.top_radius = r * 0.04
+	stalk.bottom_radius = r * 0.04
+	stalk.height = r * 0.5
+	var ay := head_y + r * 0.7
+	root.add_child(_prim(stalk, color, Vector3(-r * 0.18, ay, 0)))
+	root.add_child(_prim(stalk, color, Vector3(r * 0.18, ay, 0)))
+	root.add_child(_prim(_sphere(r * 0.08), color.lightened(0.2), Vector3(-r * 0.18, ay + r * 0.3, 0)))
+	root.add_child(_prim(_sphere(r * 0.08), color.lightened(0.2), Vector3(r * 0.18, ay + r * 0.3, 0)))
+
+static func _sphere(radius: float) -> SphereMesh:
+	var sm := SphereMesh.new()
+	sm.radius = radius
+	sm.height = radius * 2.0
+	return sm
+
+## A tinted MeshInstance3D from any mesh at a local position.
+static func _prim(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = pos
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mi.material_override = mat
+	return mi
 
 static func _blob(radius: float, color: Color, offset: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
