@@ -11,7 +11,11 @@ var _failures := 0
 ## (so they're NOT in the strict required-key block), but must stay in PARITY:
 ## present in every theme.json or none. Each feature commit appends its key here.
 ## Dotted paths (e.g. "audio.menu_music") are supported.
-const EXTENDED_KEYS: Array[String] = []
+const EXTENDED_KEYS: Array[String] = [
+	# W-A game feel & input
+	"swipe_threshold_px", "tap_dead_zone_frac", "lane_change_cooldown",
+	"carry_glow", "carry_badge_scale", "haptic_ms",
+]
 
 func _ready() -> void:
 	_run_all()
@@ -54,6 +58,7 @@ func _run_all() -> void:
 	_test_celebration_signals()
 	_test_run_stats()
 	_test_end_run_records_stats()
+	_test_player_input_tunables()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -537,3 +542,14 @@ func _test_end_run_records_stats() -> void:
 	_check("stats: end_run records most_rescues_in_run", SaveManager.most_rescues_in_run >= 3)
 	_check("stats: end_run records best_streak", SaveManager.best_streak >= 3)
 	GameCore.go_to_menu()
+
+## Input tunables come from theme data, not hardcoded constants.
+func _test_player_input_tunables() -> void:
+	ThemeManager.load_theme("forest")
+	var p = preload("res://scenes/Player.tscn").instantiate()
+	add_child(p)
+	_check("input: swipe threshold read from theme",
+		p._swipe_threshold == float(ThemeManager.get_val("swipe_threshold_px", 40.0)))
+	_check("input: tap dead-zone read from theme",
+		p._tap_dead_zone_frac == float(ThemeManager.get_val("tap_dead_zone_frac", 0.12)))
+	p.free()

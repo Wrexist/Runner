@@ -16,7 +16,8 @@ var _swipe_start_x: float = 0.0
 var _swiping: bool = false
 var _swiped_this_touch: bool = false
 var _lean_tween: Tween                  # active lean; killed before a new one starts
-const SWIPE_THRESHOLD := 40.0          # pixels before a drag counts as a swipe
+var _swipe_threshold: float = 40.0      # px before a drag counts as a swipe (themed)
+var _tap_dead_zone_frac: float = 0.12   # ignore taps within this frac of center
 
 ## The theme's player model, if one is present (else we keep the placeholder box
 ## and tint it by the carried color). Loaded fail-soft via ThemeModels.
@@ -31,6 +32,8 @@ func _ready() -> void:
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
 	move_speed = float(ThemeManager.get_val("move_speed", 12.0))   # lane-slide feel
+	_swipe_threshold = float(ThemeManager.get_val("swipe_threshold_px", 40.0))
+	_tap_dead_zone_frac = float(ThemeManager.get_val("tap_dead_zone_frac", 0.12))
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
@@ -107,15 +110,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			_swiped_this_touch = false
 		else:
 			# A tap (no swipe) moves toward the side of the screen tapped — the
-			# most forgiving control for tiny, imprecise hands.
+			# most forgiving control for tiny, imprecise hands. A small dead zone
+			# around center ignores accidental near-center taps.
 			if not _swiped_this_touch:
 				var half := get_viewport().get_visible_rect().size.x * 0.5
-				move_lane(1 if touch.position.x >= half else -1)
+				var off := touch.position.x - half
+				if absf(off) >= half * _tap_dead_zone_frac:
+					move_lane(1 if off > 0.0 else -1)
 			_swiping = false
 	elif event is InputEventScreenDrag and _swiping and not _swiped_this_touch:
 		var drag := event as InputEventScreenDrag
 		var dx := drag.position.x - _swipe_start_x
-		if absf(dx) >= SWIPE_THRESHOLD:
+		if absf(dx) >= _swipe_threshold:
 			move_lane(1 if dx > 0.0 else -1)
 			_swiped_this_touch = true   # one lane per swipe; release to move again
 
