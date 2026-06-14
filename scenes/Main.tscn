@@ -1,0 +1,42 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://core/Spawner.gd" id="2_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/Gem.tscn" id="3_gem"]
+[ext_resource type="PackedScene" path="res://scenes/Cage.tscn" id="4_cage"]
+[ext_resource type="PackedScene" path="res://ui/HUD.tscn" id="5_hud"]
+[ext_resource type="Script" path="res://core/CameraRig.gd" id="6_camera"]
+[ext_resource type="Script" path="res://core/SkyRig.gd" id="7_sky"]
+[ext_resource type="Script" path="res://core/Trail.gd" id="8_trail"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(12, 120)
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+script = ExtResource("7_sky")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 6, 8)
+script = ExtResource("6_camera")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -40)
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+
+[node name="Trail" type="Node3D" parent="."]
+script = ExtResource("8_trail")
+
+[node name="Spawner" type="Node3D" parent="."]
+script = ExtResource("2_spawner")
+gem_scene = ExtResource("3_gem")
+cage_scene = ExtResource("4_cage")
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]

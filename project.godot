@@ -1,0 +1,44 @@
+; Engine configuration file.
+; Critter Dash — Godot 4.3, portrait, mobile renderer.
+; Autoload order matters: SaveManager + ThemeManager must be ready before
+; GameCore and UIManager use them.
+
+config_version=5
+
+[application]
+
+config/name="Critter Dash"
+config/version="1.0"
+config/description="A gentle, reskinnable lane-based rescue runner for kids."
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
+config/icon="res://icon.svg"
+boot_splash/show_image=false
+
+[autoload]
+
+SaveManager="*res://core/SaveManager.gd"
+ThemeManager="*res://core/ThemeManager.gd"
+GameCore="*res://core/GameCore.gd"
+AudioManager="*res://core/AudioManager.gd"
+Effects="*res://core/Effects.gd"
+IAP="*res://core/IAP.gd"
+UIManager="*res://core/UIManager.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation="portrait"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true
+
+[physics]
+
+3d/run_on_separate_thread=false

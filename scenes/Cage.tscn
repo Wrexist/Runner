@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/Collectible.gd" id="1_collectible"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_cage"]
+size = Vector3(1.0, 1.0, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cage"]
+size = Vector3(1.0, 1.0, 1.0)
+
+[node name="Cage" type="Area3D" groups=["collectible"]]
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("1_collectible")
+kind = "cage"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_cage")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_cage")
+
+[connection signal="area_entered" from="." to="." method="_on_area_entered"]

@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  validate-data:
+    name: Validate theme data & structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate every theme.json parses
+        run: |
+          python3 - <<'PY'
+          import json, glob, sys
+          required = ["display_name", "palette", "lanes", "lane_width",
+                      "scroll_speed_start", "scroll_speed_max", "gem_colors",
+                      "spawn_interval_start", "spawn_interval_min",
+                      "rescuable_critters"]
+          ok = True
+          for path in glob.glob("themes/*/theme.json"):
+              with open(path) as f:
+                  data = json.load(f)               # raises on bad JSON
+              missing = [k for k in required if k not in data]
+              if missing:
+                  print(f"::error file={path}::missing keys {missing}")
+                  ok = False
+              else:
+                  print(f"ok: {path}")
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Check required project files exist
+        run: |
+          for f in project.godot scenes/Main.tscn core/GameCore.gd \
+                   core/ThemeManager.gd core/SaveManager.gd; do
+            test -f "$f" || { echo "::error::missing $f"; exit 1; }
+          done
+          echo "All required project files present."
+
+  godot-validate:
+    name: Godot headless load (no script errors)
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: "4.3-stable"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.3 (headless, from official GitHub release)
+        run: |
+          set -euo pipefail
+          # Download the official Linux headless build rather than a third-party
+          # container image (whose tag was unreliable). libfontconfig1 is the one
+          # runtime lib the text server needs under --headless.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1 unzip
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$URL"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+          godot --version
+
+      - name: Headless import & validate
+        run: |
+          # Import binary assets first (e.g. placeholder .wav) so resource loads
+          # are deterministic, then load the project and fail on script errors.
+          godot --headless --path . --import 2>&1 | tail -5 || true
+          godot --headless --path . --quit-after 5 2>&1 | tee godot.log || true
+          if grep -qiE "SCRIPT ERROR|Parse Error|Failed to load script" godot.log; then
+            echo "::error::Godot reported script/parse errors"
+            exit 1
+          fi
+          echo "Godot loaded the project with no script/parse errors."
+
+      - name: Run headless logic tests
+        run: |
+          # Tests.gd asserts the core loop rules and quits 0 (pass) / 1 (fail).
+          godot --headless --path . res://tests/Tests.tscn 2>&1 | tee tests.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ] || grep -qiE "SCRIPT ERROR|Parse Error|FAIL " tests.log; then
+            echo "::error::Headless logic tests failed"
+            exit 1
+          fi
+          grep -q "TESTS: ALL PASS" tests.log || { echo "::error::tests did not report pass"; exit 1; }

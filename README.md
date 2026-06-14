@@ -1,80 +1,128 @@
-# Critter Dash — Godot Project
+# Critter Dash — Godot 4 Project
 
-A gentle, lane-based **rescue runner** for kids. Reskinnable engine.
-Differentiator: the **Rescue Run** mechanic — match a colored gem, then swipe
-into the same-colored cage to rescue a critter that joins your trail. One object
-is both reward and hazard depending on your prep.
+A gentle, lane-based **rescue runner** for kids. A **reskinnable engine**: one
+set of logic driven entirely by per-theme JSON, so new games ship as new themes
++ art, not new code.
 
----
+**The differentiator — the Rescue Run:** match a colored gem, then swipe into the
+same-colored cage to **rescue** a critter (reward). Skip the gem and that cage is
+a **hazard**. One object, two meanings, decided by your preparation.
 
-## What's built (and works as text/code)
-
-```
-project.godot          Godot 4 config, autoloads, portrait, mobile renderer
-core/
-  GameCore.gd          Run state, scoring, difficulty ramp, signals
-  ThemeManager.gd      Loads theme.json -> fully reskinnable
-  SaveManager.gd       Local-only save (COPPA-safe, no network)
-  Player.gd            Lane movement (swipe/drag, no tilt) + carried-color
-  Spawner.gd           The Rescue Run hook (gem -> matching cage)
-  Collectible.gd       Gem & cage behavior, scroll, collision, rescue
-themes/forest/
-  theme.json           All tuning + asset paths for one skin
-```
+> 👉 New here? Read [`CLAUDE.md`](CLAUDE.md) for the architecture and the
+> non-negotiable Kids-Category compliance rules.
 
 ---
 
-## STEP 1 — Install Godot (your Mac)
+## Status: code-complete, content-pending ✅
 
-1. Download **Godot 4.3 Standard** (not .NET) from https://godotengine.org/download
-2. It's a single app, no installer. Drag to Applications.
-3. Open it → **Import** → select this `critter-dash` folder → it loads.
+The full engine, every front-end screen, accessibility, localization, and the
+StoreKit IAP integration are wired and **covered by a headless test suite that
+runs in CI** (`TESTS: ALL PASS`). It plays now with **placeholder box/sphere
+meshes**. What remains can only be done in the Godot editor / on a Mac:
+**art-audio import**, **iOS export & signing**, and the **on-device IAP**
+(install the native plugin + create the App Store Connect product; the
+integration code is already written and feature-detected). See
+[`docs/HANDOFF.md`](docs/HANDOFF.md) for the exact next steps.
 
-## STEP 2 — Things Claude Code CANNOT do for you (editor-only, ~30 min)
+```
+project.godot          Godot 4.3 config + autoloads (load order matters)
+icon.svg               Placeholder app icon
+core/                  Engine logic — never reskinned (see core/CLAUDE.md)
+  GameCore.gd          Run state, score, difficulty ramp, gentle 3-stumble loss, signals
+  ThemeManager.gd      Loads themes/<active>/theme.json — source of ALL tuning
+  SaveManager.gd       Local-only save (COPPA-safe, no network ever)
+  UIManager.gd         Front-end flow: start → run → game-over → gated shop
+  Player.gd            Lane movement (swipe + arrow keys, no tilt) + carried color
+  Spawner.gd           The Rescue Run hook: gem then matching-color cage, same lane
+  Collectible.gd       Gem & cage behavior, scroll, area collision, rescue/stumble
+scenes/                Gameplay scenes as text .tscn
+  Main.tscn  Player.tscn  Gem.tscn  Cage.tscn
+  IAP.gd               One non-consumable "unlock all" — real StoreKit, stub fallback
+ui/
+  HUD.gd / HUD.tscn    Signal-driven HUD: score, rescues, lives
+  UIScreens.gd         Start / Game-Over / Pause / Settings / Album / Tutorial /
+                       Parental-Gate / Shop / About (all built from theme data)
+themes/                Pure data + art (see themes/CLAUDE.md)
+  forest/theme.json    Default theme — "Forest Friends"
+  space/theme.json     Reskin proof — "Star Rescue"
+  ocean/theme.json     Third theme — "Reef Rescue" (data-only)
+localization/          ui_strings.csv — en source + es (see docs/LOCALIZATION.md)
+tests/                 Headless logic tests (run in CI) — Tests.gd / Tests.tscn
+.github/workflows/     CI: theme-data validation + Godot headless tests
+docs/                  Launch plan, asset manifest, handoff, review, prompts
+PRIVACY.md             "Data Not Collected" policy for the App Store label
+```
 
-These need clicking in the Godot editor. There's no text-only path:
+---
 
-1. **Create the scenes** (`Main.tscn`, `Player.tscn`, `Gem.tscn`, `Cage.tscn`).
-   In the editor: New Scene → add nodes below → attach the matching script →
-   save into `scenes/`.
-   - `Player.tscn`: `Node3D` (attach Player.gd) → child `MeshInstance3D` +
-     `Area3D` with `CollisionShape3D`. Add Player to group **"player"**.
-   - `Gem.tscn` / `Cage.tscn`: `Area3D` (attach Collectible.gd, set `kind`) →
-     child `MeshInstance3D` + `CollisionShape3D`. Connect `body_entered`
-     signal to `_on_body_entered`.
-   - `Main.tscn`: `Node3D` → `Camera3D` (behind/above, angled down) →
-     directional light → ground plane → Player instance → Spawner node
-     (assign Gem.tscn and Cage.tscn to its exported fields in the Inspector).
-2. **Import a 3D asset pack.** Download a free CC0 low-poly animal pack from
-   **kenney.nl** or **quaternius.com**, drop `.glb` files into
-   `themes/forest/models/`, then point `theme.json` asset paths at them.
-3. **iOS export preset.** Project → Export → Add iOS → set bundle id, team.
+## Run it
 
-> Use placeholder box meshes first. Get the loop working, THEN add art.
-> Don't block yourself on assets — gray boxes prove the game.
+1. Install **Godot 4.3 Standard** (not .NET) from <https://godotengine.org/download>.
+2. Open this folder in Godot → press **Play** (runs `scenes/Main.tscn`).
+3. **Desktop test (no phone needed):** use **←/→ arrow keys** to change lanes.
+   On a device, **swipe** left/right.
 
-## STEP 3 — Claude Code prompt sequence (run these in order)
+**What you should see:** gems and cages scroll toward the player box over a
+themed sky. Grab a gem to carry its color (sparkle + pickup sound), then hit the
+same-color cage to rescue a critter — particle burst, a happy word floats up, the
+score pops, and the rescued critter joins a **conga line that snakes behind you**.
+A rescue streak makes the sounds and bursts grow. Hit an *unprepared* cage and you
+gently stumble (lose a ❤). Three stumbles ends the run → Game Over → Shop (always
+behind the parental gate).
 
-1. "Generate `scenes/Player.tscn`, `Gem.tscn`, `Cage.tscn`, `Main.tscn` as Godot
-   4 `.tscn` text files wired to the existing scripts, using BoxMesh placeholders."
-2. "Add a HUD scene (`ui/HUD.tscn` + script) showing score and rescued-trail count,
-   driven by GameCore signals."
-3. "Add a start screen and game-over screen with a parental-gate before any
-   purchase button (Apple Kids requirement)."
-4. "Make rescued critters spawn and follow the player in a trailing conga line."
-5. "Add a juice pass: tween pop on rescue, particle burst, audio hooks via theme.json."
-6. "Wire the Godot iOS IAP plugin for a single 'unlock all critters' purchase
-   that sets SaveManager.all_unlocked_iap."
-7. "Write a second theme folder (`themes/space/`) with its own theme.json to
-   prove the reskin works with zero code changes."
+Note: art/audio are placeholder geometry until you import CC0 assets, so the
+"sounds" are silent until `theme.json` audio paths point at real `.ogg` files —
+the audio system is wired and fail-soft, it just has nothing to play yet.
 
-## Compliance reminders (don't skip)
-- No analytics SDKs. No network calls collecting data. (COPPA)
-- Parental gate before IAP / external links. (Apple Kids Category)
-- No randomized boxes, no pay-to-win, no behavioral ad targeting.
-- Consider shipping ad-free at one fixed price — cleaner review, better fit.
+Switch the whole game to another theme by setting
+`ThemeManager.active_theme = "space"` (or `"ocean"`) — no other code changes needed.
 
-## Testing without a Mac build
-Press **Play** in the Godot editor. Use arrow keys (left/right) to change lanes —
-the keyboard fallback is built into Player.gd so you can test the loop on desktop
-before any iOS export.
+---
+
+## Verify (headless, no display)
+
+```bash
+godot --headless --path . --import                 # compile/import: no SCRIPT/Parse errors
+godot --headless --path . res://tests/Tests.tscn   # logic tests: "TESTS: ALL PASS"
+godot --headless --path . --quit-after 120         # boots Main (audio-missing warnings expected)
+```
+
+The test suite covers the run loop, scoring, pause, game-over, save/unlocks,
+difficulty, IAP (stub + StoreKit event handlers), screen builds, i18n catalog
+coverage, and per-theme schema validation. CI runs all of it on every push.
+
+---
+
+## What still needs the Godot editor (Claude can't do these from text)
+
+1. **Import art/audio.** Drop CC0 `.glb` / `.png` / `.ogg` from
+   [kenney.nl](https://kenney.nl) / [quaternius.com](https://quaternius.com) into
+   `themes/<id>/models|textures|audio/` at the paths the theme already names, then
+   let Godot import them (open the editor once, or run `--import`). They load at
+   runtime automatically — **no mesh-swapping or scene edits** (`core/ThemeModels.gd`).
+   Until then the game runs on charming procedural placeholders.
+2. **iOS export + IAP plugin.** Project → Export → add iOS, set bundle id / team,
+   add the native `InAppStore` plugin (the StoreKit code in `core/IAP.gd` is
+   written and waits for it), create the product in App Store Connect, then
+   TestFlight. Bundle id is `com.critterdash.app`.
+
+> 🚀 **Going to the App Store?** Follow [`docs/LAUNCH_PLAN.md`](docs/LAUNCH_PLAN.md)
+> — a complete phased roadmap (accounts → art → playtest → QA → IAP → export →
+> App Store Connect → TestFlight → review → launch), with store copy in
+> [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md).
+
+---
+
+## Extending it
+
+The [`docs/CLAUDE_CODE_PROMPTS.md`](docs/CLAUDE_CODE_PROMPTS.md) sequence drives
+further work **one prompt → one test → one commit**. Helpful slash commands live
+in `.claude/commands/` (`/new-theme`, `/compliance-check`, `/add-scene`), and a
+`kids-compliance-auditor` subagent reviews changes against the Kids-Category rules.
+
+## Compliance (do not skip)
+
+No analytics, no network data collection, no behavioral ad targeting (COPPA). A
+parental gate precedes any purchase/external link (Apple Kids). No loot boxes, no
+pay-to-win — just one optional flat "unlock all" purchase. Full detail in
+[`CLAUDE.md`](CLAUDE.md) and [`PRIVACY.md`](PRIVACY.md).
