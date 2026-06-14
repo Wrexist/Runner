@@ -31,6 +31,7 @@
     "aqua": "sphere",
     "gold": "cylinder"
   },
+  "gem_emission": 0.8,
   "spawn_interval_start": 1.4,
   "spawn_interval_min": 0.75,
   "max_stumbles": 3,

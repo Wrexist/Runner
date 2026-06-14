@@ -75,6 +75,11 @@ func _apply_color() -> void:
 func _solid(c: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = c
+	# Gems glow (inviting jewels); cages stay matte + darkened (a hazard to read).
+	if kind == "gem":
+		mat.emission_enabled = true
+		mat.emission = c
+		mat.emission_energy_multiplier = float(ThemeManager.get_val("gem_emission", 0.8))
 	return mat
 
 ## A white shape floating above the item so the color is also readable as a

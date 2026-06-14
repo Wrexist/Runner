@@ -23,6 +23,8 @@ const EXTENDED_KEYS: Array[String] = [
 	# W-E audio (fail-soft keys)
 	"audio.menu_music", "audio.ui_click", "audio.whoosh",
 	"audio.near_miss", "audio.jingle",
+	# W-F procedural visuals
+	"gem_emission",
 ]
 
 func _ready() -> void:
@@ -85,6 +87,7 @@ func _run_all() -> void:
 	_test_settings_toggle_switch()
 	_test_game_over_stats()
 	_test_master_volume()
+	_test_collectible_silhouette()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -875,6 +878,22 @@ func _test_game_over_stats() -> void:
 		not _find_text_descendant(go, tr("Unlock All Critters"))
 		and not _find_text_descendant(go, tr("Critter Shop")))
 	go.free()
+
+## Gem and cage read as different silhouettes even with zero art (sphere vs ring).
+func _test_collectible_silhouette() -> void:
+	ThemeManager.load_theme("forest")
+	var gem = preload("res://scenes/Gem.tscn").instantiate()
+	var cage = preload("res://scenes/Cage.tscn").instantiate()
+	add_child(gem)
+	add_child(cage)
+	gem.setup("red", 0)
+	cage.setup("red", 0)
+	var gm = gem.get_node("MeshInstance3D").mesh
+	var cm = cage.get_node("MeshInstance3D").mesh
+	_check("silhouette: gem and cage use different mesh shapes",
+		gm != null and cm != null and gm.get_class() != cm.get_class())
+	gem.free()
+	cage.free()
 
 ## Master volume maps to the Master bus in dB and persists.
 func _test_master_volume() -> void:
