@@ -24,6 +24,7 @@
   "speed_ramp_per_second": 0.13,
   "warmup_seconds": 3.0,
   "slow_factor": 0.5,
+  "dash_factor": 1.5,
   "powerup_interval": 15.0,
   "powerup_duration": 6.0,
   "obstacle_interval": 11.0,

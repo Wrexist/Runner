@@ -31,7 +31,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"fog_enabled", "fog_density", "ambient_energy", "light_energy", "light_color",
 	"lane_marker",
 	# Adventure depth: gentle power-up "builds"
-	"slow_factor", "powerup_interval", "powerup_duration", "audio.powerup",
+	"slow_factor", "dash_factor", "powerup_interval", "powerup_duration", "audio.powerup",
 	# Adventure depth: in-run biome journey + discovery
 	"biome_interval", "discovery_interval",
 	# Adventure depth: jump & slide
@@ -114,6 +114,7 @@ func _run_all() -> void:
 	_test_powerup_spawn()
 	_test_powerup_hud()
 	_test_magnet()
+	_test_rainbow()
 	_test_biomes()
 	_test_jump_slide()
 	_test_obstacle()
@@ -1048,6 +1049,13 @@ func _test_powerups() -> void:
 	Powerups._process(2.0)
 	_check("powerup: slow expires", not Powerups.is_active("slow")
 		and is_equal_approx(GameCore.scroll_speed(), 10.0))
+	# Dash speeds the world up AND is invincible (a stumble is shrugged off).
+	Powerups.activate("dash", 5.0)
+	_check("powerup: dash speeds the world up", GameCore.scroll_speed() > 10.0)
+	var dash_lives := GameCore.stumbles
+	GameCore.stumble()
+	_check("powerup: dash shrugs off a stumble (invincible)", GameCore.stumbles == dash_lives)
+	Powerups.clear_all()
 	Powerups.activate("double", 5.0)
 	_check("powerup: double doubles rescue score", Powerups.rescue_multiplier() == 2)
 	GameCore.start_run()
@@ -1067,6 +1075,31 @@ func _test_powerup_hud() -> void:
 	_check("powerup hud: chips clear when the build ends", hud._powerup_row.get_child_count() == 0)
 	hud.free()
 	GameCore.go_to_menu()
+
+## The rainbow power-up auto-prepares every cage (an unprepared cage still rescues).
+func _test_rainbow() -> void:
+	ThemeManager.load_theme("forest")
+	SaveManager.settings["reduce_motion"] = true
+	GameCore.start_run()
+	var player = preload("res://scenes/Player.tscn").instantiate()
+	add_child(player)
+	player.clear_color()              # unprepared
+	var cage = preload("res://core/Collectible.gd").new()
+	cage.kind = "cage"
+	add_child(cage)
+	cage.setup("blue", player.current_lane)
+	cage.position = Vector3(0.0, 0.0, 0.2)
+	Powerups.clear_all()
+	Powerups.activate("rainbow", 5.0)
+	var rescued_before := GameCore.rescued_this_run.size()
+	cage._resolve(player)
+	_check("powerup: rainbow auto-rescues an unprepared cage",
+		GameCore.rescued_this_run.size() == rescued_before + 1)
+	Powerups.clear_all()
+	cage.free()
+	player.free()
+	GameCore.go_to_menu()
+	SaveManager.settings["reduce_motion"] = false
 
 ## The magnet power-up pulls gems toward the player's lane (cages are never pulled).
 func _test_magnet() -> void:

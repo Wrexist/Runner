@@ -43,7 +43,7 @@ func is_running() -> bool:
 ## The speed the WORLD scrolls at — the difficulty ramp (current_speed) softened
 ## by an active "slow" power-up. Scrolling systems read this (not current_speed).
 func scroll_speed() -> float:
-	return current_speed * Powerups.slow_multiplier()
+	return current_speed * Powerups.speed_multiplier()
 
 func start_run() -> void:
 	score = 0
@@ -157,6 +157,8 @@ func stumble() -> void:
 	if Powerups.consume_shield():
 		emit_signal("shield_used")
 		return
+	if Powerups.is_active("dash"):
+		return                       # the dash zoom is invincible — plow through
 	stumbles += 1
 	streak = 0
 	var max_stumbles := int(ThemeManager.get_val("max_stumbles", 3))

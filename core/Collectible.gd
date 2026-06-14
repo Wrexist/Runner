@@ -192,7 +192,8 @@ func _resolve(player: Node) -> void:
 		AudioManager.play_sfx("gem_pickup", randf_range(1.0, 1.15))
 		_despawn()
 	elif kind == "cage":
-		if player.carried_color == color_name:
+		# Rainbow power-up auto-prepares every cage (super forgiving, delightful).
+		if player.carried_color == color_name or Powerups.is_active("rainbow"):
 			player.clear_color()
 			var before := GameCore.score
 			GameCore.rescue_critter(_pick_critter_id())

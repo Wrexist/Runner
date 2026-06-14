@@ -26,6 +26,8 @@ static func color_for(kind: String) -> Color:
 		"slow": return Color(0.72, 0.6, 1.0)
 		"magnet": return Color(1.0, 0.5, 0.6)
 		"double": return Color(1.0, 0.85, 0.3)
+		"rainbow": return Color(0.95, 0.5, 0.9)
+		"dash": return Color(0.3, 1.0, 0.9)
 		_: return Color.WHITE
 
 func _process(delta: float) -> void:

@@ -11,7 +11,7 @@ extends Node
 
 signal powerup_changed(kind: String, active: bool)
 
-const KINDS := ["shield", "slow", "magnet", "double"]
+const KINDS := ["shield", "slow", "magnet", "double", "rainbow", "dash"]
 
 var _active: Dictionary = {}   # kind -> seconds remaining ("shield" holds a charge)
 
@@ -40,9 +40,15 @@ func consume_shield() -> bool:
 		return true
 	return false
 
-## Scroll-speed factor (<1 while "slow" is active), read by the scrolling systems.
-func slow_multiplier() -> float:
-	return float(ThemeManager.get_val("slow_factor", 0.55)) if is_active("slow") else 1.0
+## Combined scroll-speed factor: "slow" softens it, "dash" speeds it up (the
+## thrilling zoom). Read by the scrolling systems via GameCore.scroll_speed().
+func speed_multiplier() -> float:
+	var m := 1.0
+	if is_active("slow"):
+		m *= float(ThemeManager.get_val("slow_factor", 0.55))
+	if is_active("dash"):
+		m *= float(ThemeManager.get_val("dash_factor", 1.6))
+	return m
 
 func rescue_multiplier() -> int:
 	return 2 if is_active("double") else 1
