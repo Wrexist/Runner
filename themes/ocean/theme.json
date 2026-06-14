@@ -20,6 +20,7 @@
   "scroll_speed_max": 17.0,
   "speed_ramp_per_second": 0.13,
   "warmup_seconds": 3.0,
+  "slow_factor": 0.5,
   "gem_colors": ["coral", "aqua", "gold"],
   "gem_palette": {
     "coral": "#ff7f6e",

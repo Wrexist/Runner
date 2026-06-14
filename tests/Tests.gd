@@ -30,6 +30,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"critter_detail", "player_shape", "scenery", "ambient",
 	"fog_enabled", "fog_density", "ambient_energy", "light_energy", "light_color",
 	"lane_marker",
+	# Adventure depth: gentle power-up "builds"
+	"slow_factor",
 ]
 
 func _ready() -> void:
@@ -102,6 +104,7 @@ func _run_all() -> void:
 	_test_ambient()
 	_test_atmosphere()
 	_test_lane_markers()
+	_test_powerups()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1004,6 +1007,38 @@ func _test_scenery() -> void:
 	GameCore.go_to_menu()
 	sc.free()
 	SaveManager.settings["reduce_motion"] = false
+
+## Gentle power-up "builds": shield absorbs a stumble (no life lost) once, slow
+## softens scroll_speed and expires, double multiplies rescues, and a new run
+## clears the build. All celebration/forgiveness — never a penalty.
+func _test_powerups() -> void:
+	ThemeManager.load_theme("forest")
+	GameCore.start_run()
+	Powerups.clear_all()
+	var before := GameCore.stumbles
+	var used := {"v": false}
+	var cb := func(): used["v"] = true
+	GameCore.shield_used.connect(cb)
+	Powerups.activate("shield")
+	GameCore.stumble()
+	_check("powerup: shield absorbs the stumble (no life lost)", GameCore.stumbles == before)
+	_check("powerup: shield_used fired", used["v"])
+	_check("powerup: shield consumed after one hit", not Powerups.is_active("shield"))
+	GameCore.shield_used.disconnect(cb)
+	GameCore.stumble()
+	_check("powerup: without a shield, a stumble costs a life", GameCore.stumbles == before + 1)
+	GameCore.current_speed = 10.0
+	Powerups.activate("slow", 1.0)
+	_check("powerup: slow softens scroll_speed", GameCore.scroll_speed() < 10.0)
+	Powerups._process(2.0)
+	_check("powerup: slow expires", not Powerups.is_active("slow")
+		and is_equal_approx(GameCore.scroll_speed(), 10.0))
+	Powerups.activate("double", 5.0)
+	_check("powerup: double doubles rescue score", Powerups.rescue_multiplier() == 2)
+	GameCore.start_run()
+	_check("powerup: a new run clears the build", not Powerups.is_active("double"))
+	Powerups.clear_all()
+	GameCore.go_to_menu()
 
 ## Lane markers sit on the computed lane boundaries, freeze the scroll (but stay
 ## drawn) under reduce_motion, and scroll when motion is on.

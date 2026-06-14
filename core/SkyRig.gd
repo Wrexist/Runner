@@ -91,5 +91,5 @@ func _process(delta: float) -> void:
 		return
 	if not GameCore.is_running():
 		return
-	_ground_scroll += GameCore.current_speed * delta * _ground_uv_speed
+	_ground_scroll += GameCore.scroll_speed() * delta * _ground_uv_speed
 	_ground_mat.uv1_offset = Vector3(0.0, _ground_scroll, 0.0)

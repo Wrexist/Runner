@@ -76,7 +76,7 @@ func _process(delta: float) -> void:
 		return
 	if bool(SaveManager.settings.get("reduce_motion", false)):
 		return                       # static dashes stay drawn; only the scroll freezes
-	var dz := GameCore.current_speed * delta
+	var dz := GameCore.scroll_speed() * delta
 	var span := RECYCLE_Z - SPAWN_Z
 	for d in _dashes:
 		d.position.z += dz

@@ -17,6 +17,7 @@ signal critter_unlocked(id: String)          # a NEW critter just crossed its sc
 signal milestone_reached(kind: String, value: int)  # e.g. ("rescues", 25)
 signal near_miss                             # dodged an unprepared cage by a hair
 signal points_popped(amount: int, world_pos: Vector3)  # for floating "+N" text
+signal shield_used                           # a shield power-up absorbed a stumble
 
 enum State { MENU, PLAYING, GAME_OVER }
 
@@ -38,6 +39,11 @@ var _streak_peak: int = 0                    # best streak reached this run (for
 ## the HUD/tweens keep animating.
 func is_running() -> bool:
 	return state == State.PLAYING and not paused
+
+## The speed the WORLD scrolls at — the difficulty ramp (current_speed) softened
+## by an active "slow" power-up. Scrolling systems read this (not current_speed).
+func scroll_speed() -> float:
+	return current_speed * Powerups.slow_multiplier()
 
 func start_run() -> void:
 	score = 0
@@ -113,7 +119,8 @@ func rescue_critter(id: String) -> void:
 	_streak_peak = maxi(_streak_peak, streak)
 	SaveManager.lifetime_rescued += 1   # persisted on run end
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
-	add_score(10 + mini(streak, 5))
+	# Doubled while a "double" power-up is active (celebration only).
+	add_score((10 + mini(streak, 5)) * Powerups.rescue_multiplier())
 	# Earn-by-score unlock: unlock EVERY critter whose threshold is now met, not
 	# just the one this rescue happened to surface. This makes the Album's
 	# "Reach N" promise deterministic instead of waiting on the random rescue pick.
@@ -145,6 +152,10 @@ func _check_milestones() -> void:
 ## instant game-over. Kids get to recover; the run only ends after max_stumbles.
 func stumble() -> void:
 	if state != State.PLAYING:
+		return
+	# A shield power-up absorbs the hit entirely — forgiving, never a punishment.
+	if Powerups.consume_shield():
+		emit_signal("shield_used")
 		return
 	stumbles += 1
 	streak = 0

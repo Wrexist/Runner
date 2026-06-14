@@ -67,7 +67,7 @@ func _process(delta: float) -> void:
 		return
 	if bool(SaveManager.settings.get("reduce_motion", false)):
 		return                      # static dressing stays; only the scroll freezes
-	var dz := GameCore.current_speed * delta
+	var dz := GameCore.scroll_speed() * delta
 	for p in _live.duplicate():
 		p.position.z += dz
 		if p.position.z > RECYCLE_Z:

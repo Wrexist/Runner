@@ -106,7 +106,7 @@ func _color_from_name(n: String) -> Color:
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
-	position.z += GameCore.current_speed * delta
+	position.z += GameCore.scroll_speed() * delta
 	# Inviting idle motion on the body only (collision stays put). Gems spin
 	# faster than cages; both bob softly. Skipped entirely under Reduce Motion.
 	if not _reduce and _visual:

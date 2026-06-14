@@ -20,6 +20,7 @@
   "scroll_speed_max": 20.0,
   "speed_ramp_per_second": 0.18,
   "warmup_seconds": 2.0,
+  "slow_factor": 0.6,
   "gem_colors": ["blue", "purple", "orange"],
   "gem_palette": {
     "blue": "#5ad1ff",
