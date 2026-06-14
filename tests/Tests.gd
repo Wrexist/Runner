@@ -27,7 +27,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"gem_emission", "glow_intensity", "ground_uv_speed",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 	# W-G procedural scenery & characters
-	"critter_detail", "player_shape", "scenery",
+	"critter_detail", "player_shape", "scenery", "ambient",
 ]
 
 func _ready() -> void:
@@ -97,6 +97,7 @@ func _run_all() -> void:
 	_test_player_visual()
 	_test_scenery()
 	_test_scenery_styles()
+	_test_ambient()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -996,6 +997,27 @@ func _test_scenery() -> void:
 	GameCore.go_to_menu()
 	sc.free()
 	SaveManager.settings["reduce_motion"] = false
+
+## The ambient field builds from theme data and never emits under reduce_motion
+## (or the headless renderer); it builds for every theme without throwing.
+func _test_ambient() -> void:
+	for id in ["forest", "space", "ocean"]:
+		ThemeManager.load_theme(id)
+		var am = preload("res://core/Ambient.gd").new()
+		add_child(am)
+		var cfg = ThemeManager.get_val("ambient", {})
+		_check("ambient[%s]: emitter built" % id, am._p is CPUParticles3D)
+		_check("ambient[%s]: amount from theme" % id, am._p.amount == int(cfg.get("amount", 24)))
+		SaveManager.settings["reduce_motion"] = true
+		am._process(0.1)
+		_check("ambient[%s]: off under reduce_motion" % id, not am._p.emitting)
+		if DisplayServer.get_name() == "headless":
+			SaveManager.settings["reduce_motion"] = false
+			am._process(0.1)
+			_check("ambient[%s]: off under headless renderer" % id, not am._p.emitting)
+		am.free()
+	SaveManager.settings["reduce_motion"] = false
+	ThemeManager.load_theme("forest")
 
 ## Every theme's scenery style builds non-empty props, all outside the lanes.
 func _test_scenery_styles() -> void:
