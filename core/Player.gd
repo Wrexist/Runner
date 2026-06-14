@@ -177,8 +177,8 @@ func _update_vertical(delta: float) -> void:
 		_:
 			b.scale.y = 1.0
 			if not bool(SaveManager.settings.get("reduce_motion", false)):
-				_bob_t += delta
-				b.position.y = sin(_bob_t * 2.5) * 0.06
+				# Shared run-time phase — synced with gems/power-ups (choreographed).
+				b.position.y = sin(GameCore.elapsed * 3.0) * 0.06
 			else:
 				b.position.y = 0.0
 

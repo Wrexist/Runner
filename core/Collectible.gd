@@ -109,7 +109,8 @@ func _process(delta: float) -> void:
 	if not _reduce and _visual:
 		_t += delta
 		_visual.rotation.y += delta * (2.2 if kind == "gem" else 0.7)
-		_visual.position.y = sin(_t * 3.0 + _bob_phase) * 0.08
+		# Shared run-time phase, so every collectible bobs in choreographed unison.
+		_visual.position.y = sin(GameCore.elapsed * 3.0) * 0.08
 	_check_proximity()
 	if position.z > 4.0:        # passed the player; recycle back to the pool
 		_despawn()
