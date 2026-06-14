@@ -274,8 +274,7 @@ class Settings extends Control:
 		_refresh_difficulty(b)
 		b.pressed.connect(func():
 			var now := str(SaveManager.settings.get("difficulty", "easy"))
-			SaveManager.settings["difficulty"] = "normal" if now == "easy" else "easy"
-			SaveManager.save_game()
+			SaveManager.set_setting("difficulty", "normal" if now == "easy" else "easy")
 			_refresh_difficulty(b))
 		return b
 	func _refresh_difficulty(b: Button) -> void:
@@ -302,8 +301,7 @@ class Settings extends Control:
 						break
 			var next: String = str(langs[(idx + 1) % langs.size()])
 			TranslationServer.set_locale(next)
-			SaveManager.settings["locale"] = next
-			SaveManager.save_game()
+			SaveManager.set_setting("locale", next)
 			_relayout())                                   # re-translate every label
 		return b
 	func _refresh_language(b: Button) -> void:
@@ -321,8 +319,7 @@ class Settings extends Control:
 		b.pressed.connect(_on_toggle.bind(b, label, key))
 		return b
 	func _on_toggle(b: Button, label: String, key: String) -> void:
-		SaveManager.settings[key] = not bool(SaveManager.settings.get(key, true))
-		SaveManager.save_game()
+		SaveManager.set_setting(key, not bool(SaveManager.settings.get(key, true)))
 		_refresh(b, label, key)
 		if key == "music":
 			if bool(SaveManager.settings["music"]):

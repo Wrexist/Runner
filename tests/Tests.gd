@@ -62,6 +62,7 @@ func _run_all() -> void:
 	_test_input_buffer()
 	_test_carry_indicator()
 	_test_haptics()
+	_test_settings_autosave()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -608,6 +609,20 @@ func _test_haptics() -> void:
 	add_child(s)
 	_check("haptics: Settings exposes a Haptics toggle", _find_text_descendant(s, tr("Haptics")))
 	s.free()
+
+## Every setting change funnels through set_setting(), which writes to disk
+## immediately — so a toggle survives a reload.
+func _test_settings_autosave() -> void:
+	var prev: bool = bool(SaveManager.settings.get("sfx", true))
+	SaveManager.set_setting("sfx", false)
+	var f := FileAccess.open(SaveManager.SAVE_PATH, FileAccess.READ)
+	_check("autosave: save file written by set_setting", f != null)
+	if f:
+		var parsed: Variant = JSON.parse_string(f.get_as_text())
+		f.close()
+		var saved: Dictionary = (parsed.get("settings", {}) if parsed is Dictionary else {})
+		_check("autosave: set_setting persisted the change", saved.get("sfx", true) == false)
+	SaveManager.set_setting("sfx", prev)
 
 ## Walk a Control tree looking for a Button/Label whose text contains `substr`.
 func _find_text_descendant(node: Node, substr: String) -> bool:
