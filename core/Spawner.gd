@@ -15,10 +15,13 @@ var colors: Array = ["red", "blue", "yellow"]
 var lanes_count: int = 3
 var lane_width: float = 2.0
 var gem_cage_gap: float = 6.0   # reaction-time window (theme/difficulty lever)
+var patterns: Array = []        # data-driven spawn sequence (see theme.json)
 var _last_lane: int = -1
+var _rng := RandomNumberGenerator.new()
 const SPAWN_Z := -40.0          # spawn ahead, scroll toward player at z=0
 
 func _ready() -> void:
+	_rng.randomize()
 	_apply_tuning()
 	# Re-read tuning each run so a difficulty change in Settings takes effect.
 	GameCore.run_started.connect(_apply_tuning)
@@ -32,6 +35,7 @@ func _apply_tuning() -> void:
 	colors = ThemeManager.get_val("gem_colors", ["red", "blue", "yellow"])
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
+	patterns = ThemeManager.get_val("spawn_patterns", [])
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.
@@ -46,23 +50,70 @@ func _process(delta: float) -> void:
 		return
 	spawn_timer -= delta
 	if spawn_timer <= 0.0:
-		_spawn_pair()
+		_spawn_beat()
 		# Tighten spacing as the run speeds up, but never below the floor.
 		var t: float = clamp(GameCore.elapsed / 60.0, 0.0, 1.0)
 		spawn_timer = lerp(interval, interval_min, t)
 
-func _spawn_pair() -> void:
-	# Avoid repeating the same lane twice in a row so there's always an easy,
-	# obvious safe lane — keeps it fair and gentle for the youngest players.
-	var lane := randi() % lanes_count
-	if lane == _last_lane and lanes_count > 1:
-		lane = (lane + 1 + (randi() % (lanes_count - 1))) % lanes_count
-	_last_lane = lane
-	var color: String = colors[randi() % colors.size()]
-	var x := (lane - (lanes_count - 1) / 2.0) * lane_width
-	# Gem first (closer), cage behind it (further), same lane + color.
-	_spawn_one(gem_scene, x, SPAWN_Z, color, lane)
-	_spawn_one(cage_scene, x, SPAWN_Z - gem_cage_gap, color, lane)
+func _spawn_beat() -> void:
+	_realize_pattern(_next_pattern())
+
+## Pick the next pattern by weight from theme data; fall back to a single pair so
+## a theme with no `spawn_patterns` behaves exactly as before.
+func _next_pattern() -> Dictionary:
+	if patterns.is_empty():
+		return {"type": "single"}
+	var total := 0.0
+	for p in patterns:
+		total += maxf(float(p.get("weight", 1.0)), 0.0)
+	if total <= 0.0:
+		return patterns[0]
+	var r := _rng.randf() * total
+	for p in patterns:
+		r -= maxf(float(p.get("weight", 1.0)), 0.0)
+		if r <= 0.0:
+			return p
+	return patterns[patterns.size() - 1]
+
+func _realize_pattern(pat: Dictionary) -> void:
+	match str(pat.get("type", "single")):
+		"rest":
+			pass                       # a guaranteed empty beat (breathing room)
+		"double":
+			_spawn_multi(2)            # a bounded "danger zone"
+		_:
+			_spawn_multi(1)
+
+## Spawn `count` gem+cage pairs in distinct lanes. SAFETY FLOOR (independent of
+## theme data): never occupy more than lanes_count-1 lanes, so at least one lane
+## is ALWAYS clear to dodge into — the gentle-by-design invariant, in code.
+func _spawn_multi(count: int) -> void:
+	var lanes := _choose_lanes(count)
+	for lane in lanes:
+		var color: String = colors[_rng.randi() % colors.size()]
+		var x := (lane - (lanes_count - 1) / 2.0) * lane_width
+		# Gem first (closer), cage behind it (further), same lane + color.
+		_spawn_one(gem_scene, x, SPAWN_Z, color, lane)
+		_spawn_one(cage_scene, x, SPAWN_Z - gem_cage_gap, color, lane)
+	# Track the previous lane only for single beats (keeps an obvious safe lane
+	# between consecutive singles); multi beats already leave a clear lane.
+	_last_lane = int(lanes[0]) if lanes.size() == 1 else -1
+
+func _choose_lanes(count: int) -> Array:
+	var n := clampi(count, 1, maxi(lanes_count - 1, 1))
+	var pool: Array = []
+	for i in lanes_count:
+		pool.append(i)
+	# For a single spawn, avoid repeating the immediately-previous lane.
+	if n == 1 and _last_lane != -1 and lanes_count > 1:
+		pool.erase(_last_lane)
+	# Fisher–Yates with the seedable rng, then take the first n.
+	for i in range(pool.size() - 1, 0, -1):
+		var j := _rng.randi_range(0, i)
+		var tmp: int = pool[i]
+		pool[i] = pool[j]
+		pool[j] = tmp
+	return pool.slice(0, n)
 
 func _spawn_one(scene: PackedScene, x: float, z: float, color: String, lane: int) -> void:
 	if scene == null:

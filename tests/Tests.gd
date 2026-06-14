@@ -16,7 +16,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"swipe_threshold_px", "tap_dead_zone_frac", "lane_change_cooldown",
 	"carry_glow", "carry_badge_scale", "haptic_ms",
 	# W-B difficulty & pacing
-	"warmup_seconds",
+	"warmup_seconds", "spawn_patterns",
 ]
 
 func _ready() -> void:
@@ -66,6 +66,7 @@ func _run_all() -> void:
 	_test_haptics()
 	_test_settings_autosave()
 	_test_speed_warmup()
+	_test_spawn_patterns()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -653,6 +654,30 @@ func _test_speed_warmup() -> void:
 	_check("speed: easy stays flat past warm-up", is_equal_approx(GameCore.current_speed, estart))
 	GameCore.go_to_menu()
 	SaveManager.settings["difficulty"] = "easy"   # restore gentle default
+
+## The spawn-pattern system never walls the track (>=1 lane always clear, even
+## for an over-eager pattern), falls back to single pairs with no data, and can
+## select a "rest" beat.
+func _test_spawn_patterns() -> void:
+	var sp = preload("res://core/Spawner.gd").new()
+	add_child(sp)
+	sp.lanes_count = 3
+	sp._last_lane = -1
+	for count in [2, 3, 5]:        # even a greedy request can't occupy every lane
+		for i in 25:
+			var lanes = sp._choose_lanes(count)
+			_check("spawn: leaves >=1 lane clear (req %d)" % count,
+				lanes.size() >= 1 and lanes.size() <= sp.lanes_count - 1)
+			var uniq := {}
+			for l in lanes:
+				uniq[l] = true
+			_check("spawn: chosen lanes distinct (req %d)" % count, uniq.size() == lanes.size())
+	sp.patterns = []
+	_check("spawn: empty table falls back to single", sp._next_pattern().get("type", "") == "single")
+	sp.patterns = [{"type": "rest", "weight": 1}]
+	_check("spawn: rest pattern selectable", sp._next_pattern().get("type", "") == "rest")
+	sp._realize_pattern({"type": "rest"})   # an empty beat must not throw
+	sp.free()
 
 ## Walk a Control tree looking for a Button/Label whose text contains `substr`.
 func _find_text_descendant(node: Node, substr: String) -> bool:

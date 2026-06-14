@@ -35,6 +35,11 @@
   "spawn_interval_min": 0.65,
   "max_stumbles": 3,
   "gem_cage_gap": 6.0,
+  "spawn_patterns": [
+    {"type": "single", "weight": 5},
+    {"type": "rest", "weight": 1},
+    {"type": "double", "weight": 2}
+  ],
   "difficulty": {
     "easy": {
       "scroll_speed_start": 7.0,
