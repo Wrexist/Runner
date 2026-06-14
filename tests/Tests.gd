@@ -84,6 +84,7 @@ func _run_all() -> void:
 	_test_button_roles()
 	_test_settings_toggle_switch()
 	_test_game_over_stats()
+	_test_master_volume()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -874,6 +875,15 @@ func _test_game_over_stats() -> void:
 		not _find_text_descendant(go, tr("Unlock All Critters"))
 		and not _find_text_descendant(go, tr("Critter Shop")))
 	go.free()
+
+## Master volume maps to the Master bus in dB and persists.
+func _test_master_volume() -> void:
+	AudioManager.set_master_volume(0.5)
+	_check("volume: master bus reflects the setting in dB",
+		is_equal_approx(AudioServer.get_bus_volume_db(0), linear_to_db(0.5)))
+	_check("volume: setting persisted",
+		is_equal_approx(float(SaveManager.settings.get("master_volume", 1.0)), 0.5))
+	AudioManager.set_master_volume(1.0)   # restore full
 
 func _find_checkbutton(node: Node, label: String) -> CheckButton:
 	if node is CheckButton and label in (node as CheckButton).text:

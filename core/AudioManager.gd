@@ -29,7 +29,18 @@ func _ready() -> void:
 	GameCore.near_miss.connect(func(): play_sfx("near_miss"))
 	GameCore.new_best.connect(func(): play_sfx("jingle"))
 	GameCore.milestone_reached.connect(func(_k, _v): play_sfx("jingle"))
+	_apply_master_volume()
 	play_menu_music()   # calm menu loop on launch (fail-soft silent if absent)
+
+## A single global volume, applied to the Master bus (independent of music/sfx
+## toggles and the pause fade).
+func set_master_volume(v: float) -> void:
+	SaveManager.set_setting("master_volume", clampf(v, 0.0, 1.0))
+	_apply_master_volume()
+
+func _apply_master_volume() -> void:
+	var v := clampf(float(SaveManager.settings.get("master_volume", 1.0)), 0.0001, 1.0)
+	AudioServer.set_bus_volume_db(0, linear_to_db(v))
 
 ## Duck the music on pause instead of a hard cut, and lift it back on resume.
 func set_paused(is_paused: bool) -> void:

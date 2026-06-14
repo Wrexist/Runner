@@ -287,6 +287,7 @@ class Settings extends Control:
 		col.add_child(_toggle("Haptics", "haptics"))
 		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
+		col.add_child(_volume_button())
 		# Language picker only appears once a second locale has been imported
 		# (see docs/LOCALIZATION.md) — no dead UI in the English-only build.
 		var langs := _available_locales()
@@ -310,6 +311,20 @@ class Settings extends Control:
 	func _refresh_difficulty(b: Button) -> void:
 		var d := str(SaveManager.settings.get("difficulty", "easy"))
 		b.text = tr("Difficulty:  %s") % (tr("Easy") if d == "easy" else tr("Normal"))
+	## A simple Low / Med / High global volume (font-safe cycle, no slider).
+	func _volume_button() -> Button:
+		var b := UIScreens._button("")
+		_refresh_volume(b)
+		b.pressed.connect(func():
+			var v := float(SaveManager.settings.get("master_volume", 1.0))
+			var nv := 0.66 if v > 0.83 else (0.33 if v > 0.5 else 1.0)
+			AudioManager.set_master_volume(nv)
+			_refresh_volume(b))
+		return b
+	func _refresh_volume(b: Button) -> void:
+		var v := float(SaveManager.settings.get("master_volume", 1.0))
+		var lvl := tr("High") if v > 0.83 else (tr("Med") if v > 0.5 else tr("Low"))
+		b.text = tr("Volume:  %s") % lvl
 	## English source ("en") plus any imported locales the engine has loaded.
 	func _available_locales() -> Array:
 		var out: Array = ["en"]
