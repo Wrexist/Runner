@@ -24,7 +24,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"audio.menu_music", "audio.ui_click", "audio.whoosh",
 	"audio.near_miss", "audio.jingle",
 	# W-F procedural visuals
-	"gem_emission", "glow_intensity",
+	"gem_emission", "glow_intensity", "ground_uv_speed",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 ]
 
@@ -90,6 +90,7 @@ func _run_all() -> void:
 	_test_master_volume()
 	_test_collectible_silhouette()
 	_test_camera_reads_theme()
+	_test_ground_scroll()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -880,6 +881,28 @@ func _test_game_over_stats() -> void:
 		not _find_text_descendant(go, tr("Unlock All Critters"))
 		and not _find_text_descendant(go, tr("Critter Shop")))
 	go.free()
+
+## The ground scrolls during play and freezes under reduce_motion.
+func _test_ground_scroll() -> void:
+	ThemeManager.load_theme("forest")
+	var root := Node3D.new()
+	add_child(root)
+	var ground := MeshInstance3D.new()
+	ground.name = "Ground"
+	ground.mesh = PlaneMesh.new()
+	root.add_child(ground)
+	var sky = preload("res://core/SkyRig.gd").new()
+	root.add_child(sky)             # _ready builds the env + ground material
+	GameCore.start_run()
+	SaveManager.settings["reduce_motion"] = true
+	sky._ground_scroll = 0.0
+	sky._process(0.2)
+	_check("ground: no scroll under reduce_motion", sky._ground_scroll == 0.0)
+	SaveManager.settings["reduce_motion"] = false
+	sky._process(0.2)
+	_check("ground: scrolls during play", sky._ground_scroll > 0.0)
+	GameCore.go_to_menu()
+	root.free()
 
 ## The camera pulls follow/smooth/zoom from theme data, not hardcoded exports.
 func _test_camera_reads_theme() -> void:

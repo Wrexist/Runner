@@ -65,6 +65,7 @@
     }
   },
   "glow_intensity": 0.6,
+  "ground_uv_speed": 0.05,
   "camera_follow": 0.45,
   "camera_smooth": 5.5,
   "camera_zoom_amount": 4.0,
