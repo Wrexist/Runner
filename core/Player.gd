@@ -18,6 +18,9 @@ var _swiped_this_touch: bool = false
 var _lean_tween: Tween                  # active lean; killed before a new one starts
 var _swipe_threshold: float = 40.0      # px before a drag counts as a swipe (themed)
 var _tap_dead_zone_frac: float = 0.12   # ignore taps within this frac of center
+var _lane_cooldown_time: float = 0.0    # min seconds between lane changes (themed)
+var _lane_cooldown: float = 0.0         # remaining cooldown
+var _buffered_dir: int = 0              # one queued lane step taken during cooldown
 
 ## The theme's player model, if one is present (else we keep the placeholder box
 ## and tint it by the carried color). Loaded fail-soft via ThemeModels.
@@ -34,6 +37,7 @@ func _ready() -> void:
 	move_speed = float(ThemeManager.get_val("move_speed", 12.0))   # lane-slide feel
 	_swipe_threshold = float(ThemeManager.get_val("swipe_threshold_px", 40.0))
 	_tap_dead_zone_frac = float(ThemeManager.get_val("tap_dead_zone_frac", 0.12))
+	_lane_cooldown_time = float(ThemeManager.get_val("lane_change_cooldown", 0.0))
 	current_lane = lanes_count / 2       # integer center lane
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
@@ -60,6 +64,8 @@ func _on_run_started() -> void:
 	current_lane = lanes_count / 2
 	_target_x = _lane_to_x(current_lane)
 	position.x = _target_x
+	_lane_cooldown = 0.0
+	_buffered_dir = 0
 	_history.clear()
 	clear_color()
 
@@ -67,11 +73,32 @@ func _lane_to_x(lane: int) -> float:
 	return (lane - (lanes_count - 1) / 2.0) * lane_width
 
 func move_lane(dir: int) -> void:
+	# During the brief post-move cooldown, remember the latest intent and apply it
+	# when the cooldown ends — so a quick double-swipe queues instead of dropping.
+	# The buffer holds a single step, so input can never run away.
+	if _lane_cooldown > 0.0:
+		_buffered_dir = dir
+		return
+	_apply_lane_move(dir)
+
+func _apply_lane_move(dir: int) -> void:
 	var before := current_lane
 	current_lane = clampi(current_lane + dir, 0, lanes_count - 1)
 	_target_x = _lane_to_x(current_lane)
 	if current_lane != before:
 		_lean(dir)
+		_lane_cooldown = _lane_cooldown_time
+
+## Tick the lane cooldown and release a buffered step when it expires. Called each
+## frame while running (extracted so headless tests can pump it directly).
+func _tick_cooldown(delta: float) -> void:
+	if _lane_cooldown <= 0.0:
+		return
+	_lane_cooldown = maxf(_lane_cooldown - delta, 0.0)
+	if _lane_cooldown == 0.0 and _buffered_dir != 0:
+		var d := _buffered_dir
+		_buffered_dir = 0
+		_apply_lane_move(d)
 
 ## A quick lean into the turn that settles back — makes movement feel alive.
 func _lean(dir: int) -> void:
@@ -128,6 +155,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
+	_tick_cooldown(delta)
 	position.x = move_toward(position.x, _target_x, move_speed * delta)
 	# A soft idle bob makes the runner feel alive (body only — doesn't disturb the
 	# trail breadcrumb, which reads the root position). Motion-safe.

@@ -59,6 +59,7 @@ func _run_all() -> void:
 	_test_run_stats()
 	_test_end_run_records_stats()
 	_test_player_input_tunables()
+	_test_input_buffer()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -552,4 +553,26 @@ func _test_player_input_tunables() -> void:
 		p._swipe_threshold == float(ThemeManager.get_val("swipe_threshold_px", 40.0)))
 	_check("input: tap dead-zone read from theme",
 		p._tap_dead_zone_frac == float(ThemeManager.get_val("tap_dead_zone_frac", 0.12)))
+	p.free()
+
+## A lane change during the cooldown is buffered (one step), then released when
+## the cooldown expires — never dropped, and never more than a single queued step.
+func _test_input_buffer() -> void:
+	var p = preload("res://scenes/Player.tscn").instantiate()
+	add_child(p)
+	p._lane_cooldown_time = 0.1   # force a cooldown window for the test
+	p.current_lane = 0
+	p._target_x = p._lane_to_x(0)
+	p._lane_cooldown = 0.0
+	p._buffered_dir = 0
+	p.move_lane(1)
+	_check("buffer: first move applies immediately", p.current_lane == 1)
+	_check("buffer: cooldown started", p._lane_cooldown > 0.0)
+	p.move_lane(1)                 # within cooldown → buffered, not applied yet
+	_check("buffer: move during cooldown is held", p.current_lane == 1 and p._buffered_dir == 1)
+	p.move_lane(1)                 # buffer holds only the latest single step
+	_check("buffer: only one step queued", p._buffered_dir == 1)
+	p._tick_cooldown(0.2)          # expire the cooldown → release the buffered step
+	_check("buffer: buffered step released after cooldown", p.current_lane == 2)
+	_check("buffer: buffer cleared after release", p._buffered_dir == 0)
 	p.free()
