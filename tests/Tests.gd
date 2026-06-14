@@ -15,6 +15,8 @@ const EXTENDED_KEYS: Array[String] = [
 	# W-A game feel & input
 	"swipe_threshold_px", "tap_dead_zone_frac", "lane_change_cooldown",
 	"carry_glow", "carry_badge_scale", "haptic_ms",
+	# W-B difficulty & pacing
+	"warmup_seconds",
 ]
 
 func _ready() -> void:
@@ -63,6 +65,7 @@ func _run_all() -> void:
 	_test_carry_indicator()
 	_test_haptics()
 	_test_settings_autosave()
+	_test_speed_warmup()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -623,6 +626,33 @@ func _test_settings_autosave() -> void:
 		var saved: Dictionary = (parsed.get("settings", {}) if parsed is Dictionary else {})
 		_check("autosave: set_setting persisted the change", saved.get("sfx", true) == false)
 	SaveManager.set_setting("sfx", prev)
+
+## The speed curve holds at the starting speed during the warm-up grace, then
+## ramps (on normal) toward — but never past — the cap. Easy stays flat throughout.
+func _test_speed_warmup() -> void:
+	SaveManager.settings["difficulty"] = "normal"
+	ThemeManager.load_theme("forest")
+	var start := float(ThemeManager.diff_val("scroll_speed_start", 8.0))
+	var smax := float(ThemeManager.diff_val("scroll_speed_max", 18.0))
+	var warmup := float(ThemeManager.diff_val("warmup_seconds", 2.5))
+	GameCore.start_run()
+	GameCore._process(warmup * 0.5)              # still inside warm-up
+	_check("speed: held at start during warm-up", is_equal_approx(GameCore.current_speed, start))
+	GameCore._process(warmup)                    # cross the warm-up boundary
+	GameCore._process(1.0)
+	_check("speed: ramps up after warm-up (normal)", GameCore.current_speed > start)
+	for i in 2000:
+		GameCore._process(0.1)                   # plenty of time to hit the cap
+	_check("speed: never exceeds the cap", GameCore.current_speed <= smax)
+	# Easy: flat ramp means flat speed even long past warm-up.
+	SaveManager.settings["difficulty"] = "easy"
+	ThemeManager.load_theme("forest")
+	var estart := float(ThemeManager.diff_val("scroll_speed_start", 8.0))
+	GameCore.start_run()
+	GameCore._process(10.0)
+	_check("speed: easy stays flat past warm-up", is_equal_approx(GameCore.current_speed, estart))
+	GameCore.go_to_menu()
+	SaveManager.settings["difficulty"] = "easy"   # restore gentle default
 
 ## Walk a Control tree looking for a Button/Label whose text contains `substr`.
 func _find_text_descendant(node: Node, substr: String) -> bool:

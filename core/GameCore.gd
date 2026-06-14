@@ -84,10 +84,15 @@ func _process(delta: float) -> void:
 	if not is_running():
 		return
 	elapsed += delta
-	# Gentle, predictable speed ramp — never punishing spikes. On "easy" the
-	# ramp is 0, so speed stays flat for the youngest players.
-	var ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 0.15))
+	# Gentle, predictable pacing — never punishing spikes. Every run opens with a
+	# warm-up grace period (speed held at the starting value, room to settle in),
+	# then a smooth ramp toward the cap. On "easy" the ramp is 0, so speed stays
+	# flat for the youngest players.
 	var smax := float(ThemeManager.diff_val("scroll_speed_max", 18.0))
+	if elapsed <= float(ThemeManager.diff_val("warmup_seconds", 2.5)):
+		current_speed = float(ThemeManager.diff_val("scroll_speed_start", 8.0))
+		return
+	var ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 0.15))
 	current_speed = min(current_speed + ramp * delta, smax)
 
 func add_score(amount: int) -> void:

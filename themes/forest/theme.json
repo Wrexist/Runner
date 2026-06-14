@@ -19,6 +19,7 @@
   "scroll_speed_start": 8.0,
   "scroll_speed_max": 18.0,
   "speed_ramp_per_second": 0.15,
+  "warmup_seconds": 2.5,
   "gem_colors": ["red", "blue", "yellow"],
   "gem_palette": {
     "red": "#eb5a52",
