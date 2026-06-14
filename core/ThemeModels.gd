@@ -31,9 +31,7 @@ static func instance(path: String) -> Node3D:
 ## and cages, which MUST read as a single theme color for the matching mechanic.
 static func tint(root: Node, color: Color) -> void:
 	for mi in _mesh_instances(root):
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = color
-		mi.material_override = mat
+		mi.material_override = Style.surface(color)
 
 static func _mesh_instances(root: Node) -> Array:
 	var out: Array = []
@@ -139,9 +137,7 @@ static func _prim(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.position = pos
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mi.material_override = mat
+	mi.material_override = Style.surface(color)
 	return mi
 
 ## A procedural PLAYER silhouette (used when no `player_model` .glb is present) so
@@ -200,7 +196,5 @@ static func _blob(radius: float, color: Color, offset: Vector3) -> MeshInstance3
 	sm.height = radius * 2.0
 	mi.mesh = sm
 	mi.position = offset
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mi.material_override = mat
+	mi.material_override = Style.surface(color)
 	return mi

@@ -19,13 +19,7 @@ func setup(kind: String, lane_idx: int) -> void:
 	bm.size = Vector3(1.4, 0.45, 0.25)
 	mesh.mesh = bm
 	mesh.position = Vector3(0, 0.25 if _kind == "hurdle" else 1.7, 0)   # low bar vs high bar
-	var c := ThemeManager.color("accent", Color(0.9, 0.6, 0.5)).darkened(0.1)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = c
-	mat.emission_enabled = true
-	mat.emission = c
-	mat.emission_energy_multiplier = 0.4
-	mesh.material_override = mat
+	mesh.material_override = Style.emissive(ThemeManager.color("accent", Color(0.9, 0.6, 0.5)).darkened(0.1), 0.4)
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():

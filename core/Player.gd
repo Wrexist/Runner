@@ -275,12 +275,11 @@ func _update_carry_visual() -> void:
 	if _model == null:
 		var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
 		if mesh:
-			var mat := StandardMaterial3D.new()
 			# Carried color while prepared; a friendly themed base color otherwise
 			# (so the placeholder reads as a character, not a blank white box).
-			mat.albedo_color = ThemeManager.gem_color(carried_color) if carried_color != "" \
+			var col := ThemeManager.gem_color(carried_color) if carried_color != "" \
 				else ThemeManager.color("accent", Color(0.95, 0.6, 0.62))
-			mesh.material_override = mat
+			mesh.material_override = Style.surface(col)
 	_update_carry_badge()
 
 func _update_carry_badge() -> void:
@@ -294,7 +293,7 @@ func _update_carry_badge() -> void:
 	if badge == null:
 		badge = MeshInstance3D.new()
 		badge.name = "CarryBadge"
-		badge.material_override = StandardMaterial3D.new()
+		badge.material_override = Style.surface(Color.WHITE)
 		badge.position = Vector3(0, 1.0, 0)
 		add_child(badge)
 	# A bright, glowing badge in the carried color so "I'm prepared (with THIS

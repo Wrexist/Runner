@@ -11,13 +11,7 @@ func setup(kind: String) -> void:
 	_kind = kind
 	var mesh := get_node_or_null("MeshInstance3D") as MeshInstance3D
 	if mesh:
-		var c := color_for(_kind)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = c.lightened(0.2)
-		mat.emission_enabled = true
-		mat.emission = c
-		mat.emission_energy_multiplier = 1.3
-		mesh.material_override = mat
+		mesh.material_override = Style.emissive(color_for(_kind), 1.3)
 
 ## Each build effect reads as a distinct colour (also used by the HUD chips).
 static func color_for(kind: String) -> Color:

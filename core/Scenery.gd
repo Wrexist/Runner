@@ -194,7 +194,5 @@ func _mesh(mesh: Mesh, color: Color, pos: Vector3) -> MeshInstance3D:
 	mi.mesh = mesh
 	mi.position = pos
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mi.material_override = mat
+	mi.material_override = Style.surface(color)
 	return mi

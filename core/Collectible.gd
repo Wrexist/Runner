@@ -73,14 +73,10 @@ func _apply_color() -> void:
 	_add_symbol_badge()
 
 func _solid(c: Color) -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = c
 	# Gems glow (inviting jewels); cages stay matte + darkened (a hazard to read).
 	if kind == "gem":
-		mat.emission_enabled = true
-		mat.emission = c
-		mat.emission_energy_multiplier = float(ThemeManager.get_val("gem_emission", 0.8))
-	return mat
+		return Style.emissive(c, float(ThemeManager.get_val("gem_emission", 0.8)))
+	return Style.surface(c)
 
 ## A white shape floating above the item so the color is also readable as a
 ## SHAPE (color-blind accessibility — see Shapes.gd).
@@ -89,12 +85,7 @@ func _add_symbol_badge() -> void:
 	if badge == null:
 		badge = MeshInstance3D.new()
 		badge.name = "SymbolBadge"
-		var m := StandardMaterial3D.new()
-		m.albedo_color = Color.WHITE
-		m.emission_enabled = true
-		m.emission = Color.WHITE
-		m.emission_energy_multiplier = 0.6
-		badge.material_override = m
+		badge.material_override = Style.emissive(Color.WHITE, 0.6)
 		badge.position = Vector3(0, 0.95, 0)
 		add_child(badge)
 	# Always refresh the shape so a pooled item shows its NEW color's symbol.

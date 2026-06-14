@@ -23,13 +23,7 @@ func setup(lanes_count: int, lane_width: float) -> void:
 		sm.radius = 0.3
 		sm.height = 0.6
 		orb.mesh = sm
-		var c := _color(kind)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = c.lightened(0.2)
-		mat.emission_enabled = true
-		mat.emission = c
-		mat.emission_energy_multiplier = 1.3
-		orb.material_override = mat
+		orb.material_override = Style.emissive(_color(kind), 1.3)
 		orb.position = Vector3(x, 1.0, 0.0)
 		add_child(orb)
 
