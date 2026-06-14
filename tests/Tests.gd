@@ -81,6 +81,7 @@ func _run_all() -> void:
 	_test_stumble_feedback_gentle()
 	_test_celebration_feedback()
 	_test_audio_handlers()
+	_test_button_roles()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -772,6 +773,18 @@ func _test_audio_handlers() -> void:
 	AudioManager.set_paused(true)
 	AudioManager.set_paused(false)
 	_check("audio: all handlers are fail-soft (no crash)", true)
+
+## Button roles drive emphasis; the default role preserves the original size.
+func _test_button_roles() -> void:
+	var primary := UIScreens._button("X", "primary")
+	var back := UIScreens._button("X", "back")
+	var default := UIScreens._button("X")
+	_check("buttons: primary taller than back",
+		primary.custom_minimum_size.y > back.custom_minimum_size.y)
+	_check("buttons: default preserves 280x76", default.custom_minimum_size == Vector2(280, 76))
+	primary.free()
+	back.free()
+	default.free()
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled
 ## node is fully re-initialized to its new color on reuse.

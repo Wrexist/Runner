@@ -26,12 +26,33 @@ static func _label(text: String, size: int) -> Label:
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
 
-static func _button(text: String) -> Button:
+## Roles drive size/emphasis: "primary" (lead action), "secondary" (default),
+## "back" (smaller, muted). Every button gets a soft click + press-pop.
+static func _button(text: String, role: String = "secondary") -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(280, 76)
-	b.add_theme_font_size_override("font_size", 28)
+	match role:
+		"primary":
+			b.custom_minimum_size = Vector2(300, 86)
+			b.add_theme_font_size_override("font_size", 32)
+		"back":
+			b.custom_minimum_size = Vector2(200, 62)
+			b.add_theme_font_size_override("font_size", 24)
+		_:
+			b.custom_minimum_size = Vector2(280, 76)
+			b.add_theme_font_size_override("font_size", 28)
+	b.pressed.connect(_on_button_pressed.bind(b))
 	return b
+
+## Soft click + a quick press-pop. Motion-safe; sound is fail-soft.
+static func _on_button_pressed(b: Button) -> void:
+	AudioManager.play_sfx("ui_click")
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
+	b.pivot_offset = b.size * 0.5
+	var t := b.create_tween()
+	t.tween_property(b, "scale", Vector2(0.95, 0.95), 0.06)
+	t.tween_property(b, "scale", Vector2.ONE, 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 static func _column() -> VBoxContainer:
 	var v := VBoxContainer.new()
@@ -53,7 +74,7 @@ class StartScreen extends Control:
 		col.add_child(UIScreens._label(tr("Best: %d") % SaveManager.high_score, 28))
 		if SaveManager.lifetime_rescued > 0:
 			col.add_child(UIScreens._label(tr("Friends rescued: %d") % SaveManager.lifetime_rescued, 22))
-		var play := UIScreens._button(tr("Play"))
+		var play := UIScreens._button(tr("Play"), "primary")
 		play.pressed.connect(func(): play_pressed.emit())
 		col.add_child(play)
 		var album := UIScreens._button(tr("My Critters"))
@@ -89,7 +110,7 @@ class GameOver extends Control:
 		col.add_child(UIScreens._label(tr("Critters rescued: %d") % _rescued, 28))
 		# Lead with the positive next action. Monetization is NOT placed at the
 		# loss moment — the Shop lives behind the calm "My Critters" album.
-		var again := UIScreens._button(tr("Play Again"))
+		var again := UIScreens._button(tr("Play Again"), "primary")
 		again.pressed.connect(func(): play_again_pressed.emit())
 		col.add_child(again)
 		var album := UIScreens._button(tr("My Critters"))
@@ -136,7 +157,7 @@ class ParentalGate extends Control:
 		col.add_child(row)
 		_feedback = UIScreens._label("", 24)
 		col.add_child(_feedback)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): cancelled.emit())
 		col.add_child(back)
 		add_child(col)
@@ -198,7 +219,7 @@ class Shop extends Control:
 		var restore := UIScreens._button(tr("Restore Purchases"))
 		restore.pressed.connect(func(): IAP.restore())
 		col.add_child(restore)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -265,7 +286,7 @@ class Settings extends Control:
 		var reset := UIScreens._button(tr("Reset Progress"))
 		reset.pressed.connect(func(): reset_requested.emit())
 		col.add_child(reset)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -359,7 +380,7 @@ class Album extends Control:
 			var unlock := UIScreens._button(tr("Unlock All Critters"))
 			unlock.pressed.connect(func(): unlock_pressed.emit())
 			col.add_child(unlock)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -486,7 +507,7 @@ class About extends Control:
 				list.add_child(UIScreens._label(UIScreens._credit_line(entry), 18))
 			scroll.add_child(list)
 			col.add_child(scroll)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
