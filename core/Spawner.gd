@@ -92,7 +92,7 @@ func _spawn_multi(count: int) -> void:
 	var lanes := _choose_lanes(count)
 	for lane in lanes:
 		var color: String = colors[_rng.randi() % colors.size()]
-		var x := (lane - (lanes_count - 1) / 2.0) * lane_width
+		var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
 		# Gem first (closer), cage behind it (further), same lane + color.
 		_spawn_one("gem", x, SPAWN_Z, color, lane)
 		_spawn_one("cage", x, SPAWN_Z - gem_cage_gap, color, lane)
