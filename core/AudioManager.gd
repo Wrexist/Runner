@@ -10,6 +10,8 @@ var _music: AudioStreamPlayer
 var _sfx_pool: Array[AudioStreamPlayer] = []
 var _next: int = 0
 var _cache: Dictionary = {}        # path -> AudioStream (or null if absent)
+var _current_music_key: String = ""
+var _music_fade: Tween
 
 func _ready() -> void:
 	_music = AudioStreamPlayer.new()
@@ -23,9 +25,24 @@ func _ready() -> void:
 	GameCore.critter_rescued.connect(_on_rescued)
 	GameCore.stumbled.connect(func(_lives): play_sfx("miss"))
 	GameCore.paused_changed.connect(set_paused)
+	GameCore.returned_to_menu.connect(play_menu_music)
+	GameCore.near_miss.connect(func(): play_sfx("near_miss"))
+	GameCore.new_best.connect(func(): play_sfx("jingle"))
+	GameCore.milestone_reached.connect(func(_k, _v): play_sfx("jingle"))
+	play_menu_music()   # calm menu loop on launch (fail-soft silent if absent)
 
+## Duck the music on pause instead of a hard cut, and lift it back on resume.
 func set_paused(is_paused: bool) -> void:
-	_music.stream_paused = is_paused
+	if _music_fade and _music_fade.is_valid():
+		_music_fade.kill()
+	if is_paused:
+		_music_fade = create_tween()
+		_music_fade.tween_property(_music, "volume_db", -30.0, 0.2)
+		_music_fade.tween_callback(func(): _music.stream_paused = true)
+	else:
+		_music.stream_paused = false
+		_music_fade = create_tween()
+		_music_fade.tween_property(_music, "volume_db", 0.0, 0.2)
 
 func _on_rescued(_id: String, _total: int) -> void:
 	# Pitch climbs with the streak so a hot run literally sounds more exciting.
@@ -44,10 +61,22 @@ func play_sfx(sound: String, pitch: float = 1.0) -> void:
 	p.play()
 
 func play_music() -> void:
+	_play_track("music")
+
+func play_menu_music() -> void:
+	_play_track("menu_music")
+
+## Switch the single music player to the theme's track for `key`. No-op if that
+## track is already playing; fail-soft to silence if the file is absent.
+func _play_track(key: String) -> void:
 	if not bool(SaveManager.settings.get("music", true)):
 		return
-	var stream := _load(ThemeManager.audio("music"))
+	if _current_music_key == key and _music.playing:
+		return
+	_current_music_key = key
+	var stream := _load(ThemeManager.audio(key))
 	if stream == null:
+		_music.stream = null     # silence for a not-yet-sourced track
 		return
 	if stream is AudioStreamOggVorbis:
 		stream.loop = true
@@ -57,8 +86,8 @@ func play_music() -> void:
 		stream.loop_begin = 0
 		stream.loop_end = _wav_loop_end(stream)
 	_music.stream = stream
-	if not _music.playing:
-		_music.play()
+	_music.volume_db = 0.0
+	_music.play()
 
 ## Frame count of a PCM WAV, accounting for bit depth AND channel count, so a
 ## placeholder loops at the right point whether it's 8/16-bit or mono/stereo

@@ -77,9 +77,14 @@
   ],
   "audio": {
     "music": "res://themes/forest/audio/music.ogg",
+    "menu_music": "res://themes/forest/audio/menu.ogg",
     "rescue": "res://themes/forest/audio/rescue.ogg",
     "gem_pickup": "res://themes/forest/audio/gem.ogg",
-    "miss": "res://themes/forest/audio/miss.ogg"
+    "miss": "res://themes/forest/audio/miss.ogg",
+    "ui_click": "res://themes/forest/audio/click.ogg",
+    "whoosh": "res://themes/forest/audio/whoosh.ogg",
+    "near_miss": "res://themes/forest/audio/whew.ogg",
+    "jingle": "res://themes/forest/audio/jingle.ogg"
   },
   "credits": []
 }

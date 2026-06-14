@@ -94,6 +94,7 @@ func _apply_lane_move(dir: int) -> void:
 		_lean(dir)
 		_lane_cooldown = _lane_cooldown_time
 		Effects.haptic("light")
+		AudioManager.play_sfx("whoosh")
 
 ## Tick the lane cooldown and release a buffered step when it expires. Called each
 ## frame while running (extracted so headless tests can pump it directly).

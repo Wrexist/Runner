@@ -77,9 +77,14 @@
   ],
   "audio": {
     "music": "res://themes/ocean/audio/music.ogg",
+    "menu_music": "res://themes/ocean/audio/menu.ogg",
     "rescue": "res://themes/ocean/audio/rescue.ogg",
     "gem_pickup": "res://themes/ocean/audio/gem.ogg",
-    "miss": "res://themes/ocean/audio/miss.ogg"
+    "miss": "res://themes/ocean/audio/miss.ogg",
+    "ui_click": "res://themes/ocean/audio/click.ogg",
+    "whoosh": "res://themes/ocean/audio/whoosh.ogg",
+    "near_miss": "res://themes/ocean/audio/whew.ogg",
+    "jingle": "res://themes/ocean/audio/jingle.ogg"
   },
   "credits": []
 }
