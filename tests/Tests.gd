@@ -106,6 +106,8 @@ func _run_all() -> void:
 	_test_lane_markers()
 	_test_powerups()
 	_test_powerup_spawn()
+	_test_powerup_hud()
+	_test_magnet()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1040,6 +1042,43 @@ func _test_powerups() -> void:
 	_check("powerup: a new run clears the build", not Powerups.is_active("double"))
 	Powerups.clear_all()
 	GameCore.go_to_menu()
+
+## The HUD shows a "build" chip per active power-up, and clears them when over.
+func _test_powerup_hud() -> void:
+	var hud = preload("res://ui/HUD.gd").new()
+	add_child(hud)
+	GameCore.start_run()
+	Powerups.clear_all()
+	Powerups.activate("double", 5.0)
+	_check("powerup hud: a chip appears for an active build", hud._powerup_row.get_child_count() >= 1)
+	Powerups.clear_all()
+	_check("powerup hud: chips clear when the build ends", hud._powerup_row.get_child_count() == 0)
+	hud.free()
+	GameCore.go_to_menu()
+
+## The magnet power-up pulls gems toward the player's lane (cages are never pulled).
+func _test_magnet() -> void:
+	ThemeManager.load_theme("forest")
+	SaveManager.settings["reduce_motion"] = true
+	GameCore.start_run()
+	var player = preload("res://scenes/Player.tscn").instantiate()
+	add_child(player)
+	player.position.x = 0.0
+	var gem = preload("res://core/Collectible.gd").new()
+	gem.kind = "gem"
+	add_child(gem)
+	gem.setup("red", 0)
+	gem.position = Vector3(2.0, 0.0, -8.0)
+	Powerups.clear_all()
+	Powerups.activate("magnet", 5.0)
+	var x_before: float = gem.position.x
+	gem._process(0.2)
+	_check("powerup: magnet pulls a gem toward the player's lane", gem.position.x < x_before)
+	Powerups.clear_all()
+	gem.free()
+	player.free()
+	GameCore.go_to_menu()
+	SaveManager.settings["reduce_motion"] = false
 
 ## The Spawner drops a power-up pickup (rotating, valid kind) into the world.
 func _test_powerup_spawn() -> void:

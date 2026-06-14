@@ -1,4 +1,5 @@
 extends Area3D
+class_name Powerup
 ## Powerup.gd — a free, glowing power-up pickup that scrolls toward the player.
 ## On touch it grants ONE gentle build effect (shield/slow/magnet/double) with a
 ## celebratory pop. Never bought, never a paid/loot/random-paid reward — pure

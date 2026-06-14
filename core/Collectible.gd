@@ -107,6 +107,12 @@ func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
 	position.z += GameCore.scroll_speed() * delta
+	# Magnet power-up: gems slide toward the player's lane (easier pickups — these
+	# are critters/gems, NOT coins). Cages are never pulled (the choice stays real).
+	if kind == "gem" and Powerups.is_active("magnet"):
+		var pl := _get_player()
+		if pl and position.z > -14.0:
+			position.x = move_toward(position.x, pl.position.x, delta * 7.0)
 	# Inviting idle motion on the body only (collision stays put). Gems spin
 	# faster than cages; both bob softly. Skipped entirely under Reduce Motion.
 	if not _reduce and _visual:

@@ -8,6 +8,7 @@ var _rescue_label: Label
 var _lives_label: Label
 var _streak_label: Label
 var _difficulty_label: Label
+var _powerup_row: HBoxContainer
 
 func _ready() -> void:
 	var text_color := ThemeManager.color("ui_text", Color.BLACK)
@@ -61,6 +62,16 @@ func _ready() -> void:
 	_difficulty_label.offset_top = -46
 	_root.add_child(_difficulty_label)
 
+	# Your current "build" — a row of colored chips, one per active power-up.
+	_powerup_row = HBoxContainer.new()
+	_powerup_row.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_powerup_row.offset_left = -110
+	_powerup_row.offset_right = 110
+	_powerup_row.offset_top = 120
+	_powerup_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_powerup_row.add_theme_constant_override("separation", 8)
+	_root.add_child(_powerup_row)
+
 	# Big, easy pause target (auto-pause on backgrounding is handled in GameCore).
 	var pause_btn := Button.new()
 	pause_btn.text = "II"
@@ -84,6 +95,8 @@ func _ready() -> void:
 	GameCore.near_miss.connect(func(): _float_text(tr("Whew!")))
 	GameCore.milestone_reached.connect(_on_milestone)
 	GameCore.critter_unlocked.connect(_on_critter_unlocked)
+	Powerups.powerup_changed.connect(_on_powerup_changed)
+	GameCore.shield_used.connect(_on_shield_used)
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -163,6 +176,21 @@ func _world_to_screen(world_pos: Vector3) -> Vector2:
 		return cam.unproject_position(world_pos)
 	var s := get_viewport().get_visible_rect().size
 	return Vector2(s.x * 0.5, s.y * 0.45)
+
+## Refresh the "build" chips whenever a power-up turns on or off.
+func _on_powerup_changed(_kind: String, _active: bool) -> void:
+	for c in _powerup_row.get_children():
+		c.free()
+	for k in Powerups.KINDS:
+		if Powerups.is_active(k):
+			var chip := ColorRect.new()
+			chip.custom_minimum_size = Vector2(24, 24)
+			chip.color = Powerup.color_for(k)
+			_powerup_row.add_child(chip)
+
+## A shield absorbed a stumble — celebrate the save (no life lost).
+func _on_shield_used() -> void:
+	_float_text(tr("Shield!"))
 
 ## A rescue milestone (25/50/100…) — a big happy word and a confetti pop. Pure
 ## celebration; it gates nothing and never nags you to "come back".
