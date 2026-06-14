@@ -12,6 +12,11 @@ signal streak_changed(streak: int)
 signal new_best                              # first time this run beats the old best
 signal paused_changed(is_paused: bool)
 signal returned_to_menu
+# --- Celebration-only feedback signals (carry no penalty, gate no content) ---
+signal critter_unlocked(id: String)          # a NEW critter just crossed its score gate
+signal milestone_reached(kind: String, value: int)  # e.g. ("rescues", 25)
+signal near_miss                             # dodged an unprepared cage by a hair
+signal points_popped(amount: int, world_pos: Vector3)  # for floating "+N" text
 
 enum State { MENU, PLAYING, GAME_OVER }
 
@@ -26,6 +31,7 @@ var stumbles: int = 0
 var streak: int = 0
 var paused: bool = false
 var _announced_best: bool = false
+var _streak_peak: int = 0                    # best streak reached this run (for stats)
 
 ## True only when a run is actively playing (not menu, game-over, or paused).
 ## Every gameplay _process loop gates on this so pause freezes the world while
@@ -38,6 +44,7 @@ func start_run() -> void:
 	elapsed = 0.0
 	stumbles = 0
 	streak = 0
+	_streak_peak = 0
 	paused = false
 	_announced_best = false
 	rescued_this_run = []
@@ -98,18 +105,36 @@ func rescue_critter(id: String) -> void:
 		return
 	rescued_this_run.append(id)
 	streak += 1
+	_streak_peak = maxi(_streak_peak, streak)
 	SaveManager.lifetime_rescued += 1   # persisted on run end
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
 	add_score(10 + mini(streak, 5))
 	# Earn-by-score unlock: unlock EVERY critter whose threshold is now met, not
 	# just the one this rescue happened to surface. This makes the Album's
 	# "Reach N" promise deterministic instead of waiting on the random rescue pick.
+	# Skip already-owned critters and batch a single save so a milestone rescue
+	# doesn't trigger one disk write per critter.
+	var newly_unlocked := false
 	for c in ThemeManager.get_val("rescuable_critters", []):
 		var cid := str(c.get("id", ""))
-		if cid != "" and score >= int(c.get("unlock_score", 0)):
-			SaveManager.unlock_critter(cid)
+		if cid != "" and score >= int(c.get("unlock_score", 0)) and not SaveManager.is_unlocked(cid):
+			SaveManager.unlock_critter(cid, false)
+			newly_unlocked = true
+			emit_signal("critter_unlocked", cid)
+	if newly_unlocked:
+		SaveManager.save_game()
 	emit_signal("critter_rescued", id, rescued_this_run.size())
 	emit_signal("streak_changed", streak)
+	_check_milestones()
+
+## Celebrate hitting a rescue milestone (e.g. 25/50/100 this run). Thresholds are
+## data-driven; this is pure positive feedback — it never gates content or nags.
+func _check_milestones() -> void:
+	var n := rescued_this_run.size()
+	for m in ThemeManager.get_val("milestone_rescues", [25, 50, 100]):
+		if n == int(m):
+			emit_signal("milestone_reached", "rescues", n)
+			return
 
 ## Gentle "three strikes" loss: hitting an unprepared cage costs a life, not an
 ## instant game-over. Kids get to recover; the run only ends after max_stumbles.

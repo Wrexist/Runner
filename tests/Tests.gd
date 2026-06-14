@@ -44,6 +44,7 @@ func _run_all() -> void:
 	_test_hud_reduce_motion()
 	_test_wav_loop_math()
 	_test_player_lean_no_stack()
+	_test_celebration_signals()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -428,3 +429,36 @@ func _test_player_lean_no_stack() -> void:
 		p._lean_tween != null and p._lean_tween.is_valid())
 	p.free()
 	SaveManager.settings["reduce_motion"] = prev
+
+## Celebration signals: a rescue that crosses score gates emits critter_unlocked
+## once per newly-earned critter (not for owned ones), and rescue milestones emit
+## milestone_reached at the data-driven counts.
+func _test_celebration_signals() -> void:
+	ThemeManager.load_theme("forest")   # bunny:0, hedgehog:50, owl:150, deer:300
+	SaveManager.unlocked_critters = []
+	SaveManager.all_unlocked_iap = false
+	var got := {"unlocked": [], "milestone": 0}
+	var ucb := func(id): got["unlocked"].append(id)
+	var mcb := func(kind, value):
+		if kind == "rescues":
+			got["milestone"] = value
+	GameCore.critter_unlocked.connect(ucb)
+	GameCore.milestone_reached.connect(mcb)
+	GameCore.start_run()
+	GameCore.add_score(50)
+	GameCore.rescue_critter("bunny")    # score now >=50: earns bunny + hedgehog
+	_check("signal: critter_unlocked fires for newly-earned critters",
+		"hedgehog" in got["unlocked"] and "bunny" in got["unlocked"])
+	var owned := got["unlocked"].size()
+	GameCore.rescue_critter("bunny")    # already owned → no refire
+	_check("signal: critter_unlocked does not refire for owned critters",
+		got["unlocked"].size() == owned)
+	# Milestone fires at the data-driven rescue counts (default 25/50/100).
+	GameCore.start_run()
+	for i in 25:
+		GameCore.rescue_critter("bunny")
+	_check("signal: milestone_reached at 25 rescues", got["milestone"] == 25)
+	GameCore.critter_unlocked.disconnect(ucb)
+	GameCore.milestone_reached.disconnect(mcb)
+	SaveManager.unlocked_critters = []
+	GameCore.go_to_menu()

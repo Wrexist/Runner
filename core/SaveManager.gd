@@ -17,11 +17,13 @@ var runs_played: int = 0
 func _ready() -> void:
 	load_game()
 
-## Earn-by-play unlock. Idempotent + auto-saves.
-func unlock_critter(id: String) -> void:
+## Earn-by-play unlock. Idempotent. Pass save=false to batch several unlocks into
+## a single disk write (GameCore does this when a rescue crosses several gates).
+func unlock_critter(id: String, save := true) -> void:
 	if id not in unlocked_critters:
 		unlocked_critters.append(id)
-		save_game()
+		if save:
+			save_game()
 
 func is_unlocked(id: String) -> bool:
 	return all_unlocked_iap or id in unlocked_critters
