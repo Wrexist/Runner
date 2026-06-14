@@ -45,10 +45,25 @@ jobs:
   godot-validate:
     name: Godot headless load (no script errors)
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.3.0
+    env:
+      GODOT_VERSION: "4.3-stable"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Godot 4.3 (headless, from official GitHub release)
+        run: |
+          set -euo pipefail
+          # Download the official Linux headless build rather than a third-party
+          # container image (whose tag was unreliable). libfontconfig1 is the one
+          # runtime lib the text server needs under --headless.
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1 unzip
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "$URL"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+          godot --version
 
       - name: Headless import & validate
         run: |
