@@ -8,6 +8,7 @@ extends Node3D
 @export var gem_scene: PackedScene
 @export var cage_scene: PackedScene
 @export var powerup_scene: PackedScene
+@export var obstacle_scene: PackedScene
 
 var spawn_timer: float = 0.0
 var interval: float = 1.4
@@ -20,6 +21,9 @@ var patterns: Array = []        # data-driven spawn sequence (see theme.json)
 var _powerup_timer: float = 0.0
 var _powerup_interval: float = 14.0   # seconds between power-up pickups (themed)
 var _powerup_idx: int = 0             # rotates KINDS so it's variety, not a gacha
+var _obstacle_timer: float = 0.0
+var _obstacle_interval: float = 10.0  # seconds between hurdles/overhangs (themed)
+var _obstacle_alt: bool = true        # alternate hurdle / overhang
 var _last_lane: int = -1
 var _rng := RandomNumberGenerator.new()
 var _free: Dictionary = {"gem": [], "cage": []}   # recycled collectibles by kind
@@ -42,17 +46,21 @@ func _apply_tuning() -> void:
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
 	patterns = ThemeManager.get_val("spawn_patterns", [])
 	_powerup_interval = float(ThemeManager.get_val("powerup_interval", 14.0))
+	_obstacle_interval = float(ThemeManager.get_val("obstacle_interval", 10.0))
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.
 func _clear_field() -> void:
 	spawn_timer = 0.0
 	_powerup_timer = _powerup_interval   # first power-up comes a little into the run
+	_obstacle_timer = _obstacle_interval
 	_last_lane = -1
 	for c in get_tree().get_nodes_in_group("collectible"):
 		release(c)
 	for p in get_tree().get_nodes_in_group("powerup"):
 		p.queue_free()
+	for o in get_tree().get_nodes_in_group("obstacle"):
+		o.queue_free()
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
@@ -68,6 +76,22 @@ func _process(delta: float) -> void:
 	if _powerup_timer <= 0.0 and powerup_scene != null:
 		_spawn_powerup()
 		_powerup_timer = _powerup_interval
+	# Gentle hurdles/overhangs to jump/slide (alternating; one lane = also dodgeable).
+	_obstacle_timer -= delta
+	if _obstacle_timer <= 0.0 and obstacle_scene != null:
+		_spawn_obstacle()
+		_obstacle_timer = _obstacle_interval
+
+func _spawn_obstacle() -> void:
+	var kind := "hurdle" if _obstacle_alt else "overhang"
+	_obstacle_alt = not _obstacle_alt
+	var lane := _rng.randi() % lanes_count
+	var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
+	var ob := obstacle_scene.instantiate()
+	add_child(ob)
+	ob.position = Vector3(x, 0.0, SPAWN_Z)
+	if ob.has_method("setup"):
+		ob.setup(kind, lane)
 
 func _spawn_powerup() -> void:
 	var kind: String = Powerups.KINDS[_powerup_idx % Powerups.KINDS.size()]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://core/Spawner.gd" id="2_spawner"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://core/Ambient.gd" id="10_ambient"]
 [ext_resource type="Script" path="res://core/LaneMarkers.gd" id="11_lane_markers"]
 [ext_resource type="PackedScene" path="res://scenes/Powerup.tscn" id="12_powerup"]
+[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="13_obstacle"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(12, 120)
@@ -43,6 +44,7 @@ script = ExtResource("2_spawner")
 gem_scene = ExtResource("3_gem")
 cage_scene = ExtResource("4_cage")
 powerup_scene = ExtResource("12_powerup")
+obstacle_scene = ExtResource("13_obstacle")
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("9_scenery")

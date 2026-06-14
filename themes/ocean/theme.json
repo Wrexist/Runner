@@ -26,6 +26,7 @@
   "slow_factor": 0.5,
   "powerup_interval": 15.0,
   "powerup_duration": 6.0,
+  "obstacle_interval": 11.0,
   "gem_colors": ["coral", "aqua", "gold"],
   "gem_palette": {
     "coral": "#ff7f6e",

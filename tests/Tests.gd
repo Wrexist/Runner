@@ -35,7 +35,7 @@ const EXTENDED_KEYS: Array[String] = [
 	# Adventure depth: in-run biome journey
 	"biome_interval",
 	# Adventure depth: jump & slide
-	"jump_height", "jump_seconds", "slide_seconds",
+	"jump_height", "jump_seconds", "slide_seconds", "obstacle_interval",
 ]
 
 func _ready() -> void:
@@ -114,6 +114,7 @@ func _run_all() -> void:
 	_test_magnet()
 	_test_biomes()
 	_test_jump_slide()
+	_test_obstacle()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1085,6 +1086,39 @@ func _test_magnet() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## A hurdle in your lane is a gentle stumble unless jumped; a different-lane one is
+## dodged. (Two solutions = fair and kind.)
+func _test_obstacle() -> void:
+	ThemeManager.load_theme("forest")
+	GameCore.start_run()
+	var player = preload("res://scenes/Player.tscn").instantiate()
+	add_child(player)
+	player.current_lane = 1
+	var before := GameCore.stumbles
+	var ob = preload("res://core/Obstacle.gd").new()
+	add_child(ob)
+	ob.setup("hurdle", 1)
+	ob._resolve()
+	_check("obstacle: an un-jumped hurdle in your lane costs a life", GameCore.stumbles == before + 1)
+	player.jump()
+	var ob2 = preload("res://core/Obstacle.gd").new()
+	add_child(ob2)
+	ob2.setup("hurdle", 1)
+	ob2._resolve()
+	_check("obstacle: a jumped hurdle is cleared", GameCore.stumbles == before + 1)
+	player._vstate = "ground"
+	player.current_lane = 0
+	var ob3 = preload("res://core/Obstacle.gd").new()
+	add_child(ob3)
+	ob3.setup("hurdle", 2)
+	ob3._resolve()
+	_check("obstacle: a different-lane obstacle is dodged", GameCore.stumbles == before + 1)
+	ob.free()
+	ob2.free()
+	ob3.free()
+	player.free()
+	GameCore.go_to_menu()
 
 ## Jump and slide are distinct timed states, one at a time, that return to ground.
 func _test_jump_slide() -> void:
