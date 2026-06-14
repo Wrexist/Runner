@@ -98,6 +98,7 @@ func _ready() -> void:
 	Powerups.powerup_changed.connect(_on_powerup_changed)
 	GameCore.shield_used.connect(_on_shield_used)
 	Biomes.biome_changed.connect(func(_n): _float_text(tr("New area!")))
+	Discovery.discovery.connect(_on_discovery)
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -192,6 +193,11 @@ func _on_powerup_changed(_kind: String, _active: bool) -> void:
 ## A shield absorbed a stumble — celebrate the save (no life lost).
 func _on_shield_used() -> void:
 	_float_text(tr("Shield!"))
+
+## A surprise discovery event — a flourish + confetti (the "what will happen?" beat).
+func _on_discovery(_name: String) -> void:
+	_float_text(tr("Surprise!"))
+	ScreenFX.confetti(28)
 
 ## A rescue milestone (25/50/100…) — a big happy word and a confetti pop. Pure
 ## celebration; it gates nothing and never nags you to "come back".

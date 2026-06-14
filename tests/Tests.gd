@@ -32,8 +32,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"lane_marker",
 	# Adventure depth: gentle power-up "builds"
 	"slow_factor", "powerup_interval", "powerup_duration", "audio.powerup",
-	# Adventure depth: in-run biome journey
-	"biome_interval",
+	# Adventure depth: in-run biome journey + discovery
+	"biome_interval", "discovery_interval",
 	# Adventure depth: jump & slide
 	"jump_height", "jump_seconds", "slide_seconds", "obstacle_interval",
 ]
@@ -115,6 +115,7 @@ func _run_all() -> void:
 	_test_biomes()
 	_test_jump_slide()
 	_test_obstacle()
+	_test_discovery()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1086,6 +1087,20 @@ func _test_magnet() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## A discovery event fires a named gentle surprise (a treat or a bonus shower).
+func _test_discovery() -> void:
+	ThemeManager.load_theme("forest")
+	GameCore.start_run()
+	Powerups.clear_all()
+	var got := {"n": ""}
+	var cb := func(n): got["n"] = n
+	Discovery.discovery.connect(cb)
+	Discovery._fire()
+	_check("discovery: fires a named gentle event", got["n"] == "treat" or got["n"] == "shower")
+	Discovery.discovery.disconnect(cb)
+	Powerups.clear_all()
+	GameCore.go_to_menu()
 
 ## A hurdle in your lane is a gentle stumble unless jumped; a different-lane one is
 ## dodged. (Two solutions = fair and kind.)

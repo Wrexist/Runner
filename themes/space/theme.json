@@ -46,6 +46,7 @@
   "max_stumbles": 3,
   "milestone_rescues": [25, 50, 100],
   "biome_interval": 7,
+  "discovery_interval": 32.0,
   "gem_cage_gap": 6.0,
   "forgiveness_z": 0.5,
   "near_miss_z": 0.9,
