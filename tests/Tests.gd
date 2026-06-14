@@ -6,6 +6,7 @@ extends Node
 ## Exits 0 if all pass, 1 on any failure.
 
 var _failures := 0
+var _near_miss_count := 0   # scratch counter for the near-miss test
 
 ## Optional tunables added by the polish overhaul. They have code-side defaults
 ## (so they're NOT in the strict required-key block), but must stay in PARITY:
@@ -16,7 +17,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"swipe_threshold_px", "tap_dead_zone_frac", "lane_change_cooldown",
 	"carry_glow", "carry_badge_scale", "haptic_ms",
 	# W-B difficulty & pacing
-	"warmup_seconds", "spawn_patterns",
+	"warmup_seconds", "spawn_patterns", "forgiveness_z", "near_miss_z",
 ]
 
 func _ready() -> void:
@@ -67,6 +68,7 @@ func _run_all() -> void:
 	_test_settings_autosave()
 	_test_speed_warmup()
 	_test_spawn_patterns()
+	_test_forgiveness_and_near_miss()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -678,6 +680,47 @@ func _test_spawn_patterns() -> void:
 	_check("spawn: rest pattern selectable", sp._next_pattern().get("type", "") == "rest")
 	sp._realize_pattern({"type": "rest"})   # an empty beat must not throw
 	sp.free()
+
+func _count_near_miss() -> void:
+	_near_miss_count += 1
+
+## Rewards are forgiving (a gem in the player's lane within the window is picked
+## up even without a perfect overlap); the hazard stays fair; and dodging an
+## unprepared cage you were lined up to hit emits a near_miss.
+func _test_forgiveness_and_near_miss() -> void:
+	ThemeManager.load_theme("forest")
+	SaveManager.settings["reduce_motion"] = true   # quiet pops/particles in the test
+	GameCore.start_run()
+	var player = preload("res://scenes/Player.tscn").instantiate()
+	add_child(player)        # joins group "player" (from the scene)
+	var gem = preload("res://core/Collectible.gd").new()
+	gem.kind = "gem"
+	add_child(gem)
+	gem.setup("red", player.current_lane)
+	gem.position.z = 0.3     # inside forgiveness_z, player already in the lane
+	gem._check_proximity()
+	_check("forgiveness: in-lane gem within window is picked up", player.carried_color == "red")
+	_near_miss_count = 0
+	GameCore.near_miss.connect(_count_near_miss)
+	var cage = preload("res://core/Collectible.gd").new()
+	cage.kind = "cage"
+	add_child(cage)
+	cage.setup("blue", 1)
+	player.clear_color()         # unprepared for a blue cage
+	player.current_lane = 1      # lined up to hit it
+	cage.position.z = -3.0
+	cage._check_proximity()      # registers the threat
+	player.current_lane = 0      # dodge out of the lane
+	cage.position.z = 0.2        # now passing the player line
+	cage._check_proximity()
+	_check("near-miss: dodging a lined-up unprepared cage emits near_miss", _near_miss_count == 1)
+	# An unprepared cage is NOT resolved by forgiveness (hazard stays fair).
+	_check("forgiveness: unprepared cage not auto-resolved off-lane", not cage._resolved)
+	GameCore.near_miss.disconnect(_count_near_miss)
+	cage.free()
+	player.free()
+	GameCore.go_to_menu()
+	SaveManager.settings["reduce_motion"] = false
 
 ## Walk a Control tree looking for a Button/Label whose text contains `substr`.
 func _find_text_descendant(node: Node, substr: String) -> bool:

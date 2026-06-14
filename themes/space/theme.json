@@ -35,6 +35,8 @@
   "spawn_interval_min": 0.65,
   "max_stumbles": 3,
   "gem_cage_gap": 6.0,
+  "forgiveness_z": 0.5,
+  "near_miss_z": 0.9,
   "spawn_patterns": [
     {"type": "single", "weight": 5},
     {"type": "rest", "weight": 1},
