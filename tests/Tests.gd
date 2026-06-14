@@ -7,6 +7,12 @@ extends Node
 
 var _failures := 0
 
+## Optional tunables added by the polish overhaul. They have code-side defaults
+## (so they're NOT in the strict required-key block), but must stay in PARITY:
+## present in every theme.json or none. Each feature commit appends its key here.
+## Dotted paths (e.g. "audio.menu_music") are supported.
+const EXTENDED_KEYS: Array[String] = []
+
 func _ready() -> void:
 	_run_all()
 	if _failures == 0:
@@ -36,6 +42,7 @@ func _run_all() -> void:
 	_test_localization()
 	_test_loc_coverage()
 	_test_theme_schema()
+	_test_theme_schema_extended()
 	_test_deterministic_unlocks()
 	_test_parental_gate_cooldown()
 	_test_language_picker()
@@ -273,6 +280,35 @@ func _test_theme_schema() -> void:
 		_check("theme %s has a free starter critter (unlock_score 0)" % id, has_starter)
 	# Leave the default theme active for any later tests / a clean exit.
 	ThemeManager.load_theme("forest")
+
+## Parity guard for the optional overhaul tunables (see EXTENDED_KEYS): each key
+## must be present in EVERY theme or NONE, so a reskin never silently misses one.
+func _test_theme_schema_extended() -> void:
+	var ids := DirAccess.get_directories_at("res://themes")
+	for key in EXTENDED_KEYS:
+		var present := 0
+		for id in ids:
+			if _theme_has_path(_load_theme_json(id), key):
+				present += 1
+		_check("extended key '%s' in all themes or none (parity)" % key,
+			present == 0 or present == ids.size())
+
+func _load_theme_json(id: String) -> Dictionary:
+	var f := FileAccess.open("res://themes/%s/theme.json" % id, FileAccess.READ)
+	if f == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	return parsed if parsed is Dictionary else {}
+
+## True if a (possibly dotted) key path exists in the theme dict.
+func _theme_has_path(d: Dictionary, path: String) -> bool:
+	var cur: Variant = d
+	for p in path.split("."):
+		if not (cur is Dictionary) or not (cur as Dictionary).has(p):
+			return false
+		cur = (cur as Dictionary)[p]
+	return true
 
 ## Fix #1: reaching a score threshold unlocks EVERY critter at/under it,
 ## regardless of which critter the rescue randomly surfaced.
