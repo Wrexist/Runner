@@ -25,7 +25,7 @@ var _near_missed: bool = false          # near-miss already celebrated (once)
 var _was_threatening: bool = false      # player sat in this cage's lane unprepared
 var _forgiveness_z: float = 0.6         # reward pickup/rescue tolerance (themed)
 var _near_miss_z: float = 0.8           # dodge-celebration window (themed)
-var _player: Node3D = null
+var _player: Node = null
 var _pooled: bool = false               # returned to the Spawner pool (inert)
 
 ## Called by the Spawner right after instancing (and on every pooled reuse).
@@ -130,9 +130,9 @@ func _despawn() -> void:
 	else:
 		queue_free()
 
-func _get_player() -> Node3D:
+func _get_player() -> Node:
 	if _player == null or not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group("player") as Node3D
+		_player = get_tree().get_first_node_in_group("player")
 	return _player
 
 ## Forgiveness + near-miss, evaluated as the item nears the player line (z~0):
@@ -173,7 +173,7 @@ func _on_area_entered(area: Area3D) -> void:
 
 ## The single resolution path (latched so proximity-forgiveness and the Area3D
 ## overlap can't both fire). Rewards on a match; a gentle stumble on a mismatch.
-func _resolve(player: Node3D) -> void:
+func _resolve(player: Node) -> void:
 	if _resolved or _pooled:
 		return
 	_resolved = true
