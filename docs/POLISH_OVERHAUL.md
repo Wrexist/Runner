@@ -27,6 +27,32 @@ editor/external-only); everything here is GDScript, `theme.json` data, and tests
 - **Persistence** — settings autosave funnel, locale persistence, and local-only
   per-run best stats.
 
+## Procedural scenery & characters (a later visual pass)
+
+A second pass made the world look *complete* — still 100% procedural (no imported
+art, no shaders), data-driven, and gentle:
+
+- **Characters** — rescued critters are feature-assembled (body + head + eyes plus
+  a deterministic set of ears/tail/fin/antennae/snout from the id hash, so each
+  friend is distinct), and the **player** is a themed procedural silhouette
+  (forest critter / space rocket / ocean sub) instead of a bare box — swapped in
+  through the existing `.glb` seam so collision, bob/lean, and the carry badge are
+  untouched.
+- **Side scenery** (`core/Scenery.gd`) — pooled, scrolling trees / asteroids /
+  coral down both sides; a **code invariant** clamps every prop to `|x| ≥ play_half`
+  so it can never enter a travel lane.
+- **Ambient particles** (`core/Ambient.gd`) — one cheap drifting field that follows
+  the player: fireflies / stars / bubbles.
+- **Atmosphere** — optional distance **fog** for depth + themed ambient/light
+  tuning (`SkyRig`).
+- **Lane markers** (`core/LaneMarkers.gd`) — dashed dividers on the lane
+  boundaries, scrolling like racing stripes.
+
+Guarantees these uphold (all test-asserted): (a) **reduce_motion** freezes/suppresses
+every new motion & particle path while the static dressing and lane markers stay
+drawn; (b) lane-exclusion + lane-clarity are **code invariants**; (c) **no art,
+no shaders**; (d) **headless-safe** (no emission/render assumptions under `headless`).
+
 ## Compliance — still all green
 
 These were design constraints on every change above, asserted by tests:

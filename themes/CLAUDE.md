@@ -68,10 +68,25 @@ all three themes and to `EXTENDED_KEYS` in the same change.
 | `camera_follow` / `camera_smooth` | CameraRig | 0.4 / 5.0 | lane-follow amount / lerp speed |
 | `camera_zoom_amount` | CameraRig | 0.0 | extra FOV° at max speed (0 = off; subtle, bounded) |
 | `audio.{menu_music,ui_click,whoosh,near_miss,jingle}` | AudioManager | (fail-soft) | extra SFX/music keys; silent until sourced |
+| `critter_detail` | ThemeModels | "full" | "full" feature-built creatures vs "simple" two-blob |
+| `player_shape` | Player/ThemeModels | "critter" | procedural player silhouette: critter / rocket / sub |
+| `scenery` | Scenery | `{style,…}` | side props `{style,density,max_props,min_x_margin,side_band,scale_min,scale_max}` |
+| `ambient` | Ambient | `{style,…}` | drifting field `{style,amount,color,box,speed}` |
+| `fog_enabled` / `fog_density` | SkyRig | false / 0 | optional gentle distance fog for depth |
+| `ambient_energy` | SkyRig | 0.7 | ambient light energy |
+| `light_energy` / `light_color` | SkyRig | 1.0 / — | DirectionalLight tuning (fail-soft if absent) |
+| `lane_marker` | LaneMarkers | `{enabled,…}` | dashed lane dividers `{enabled,color,dash_len,dash_gap}` |
+
+Nested-object keys (`scenery`, `ambient`, `lane_marker`, `haptic_ms`) are
+parity-checked at the TOP level; their fields are code-defaulted, so a theme only
+needs the key present.
 
 COMPLIANCE: `spawn_patterns` can never wall the track — the Spawner enforces "≥1
-lane always clear" in code regardless of data. Forgiveness only helps rewards
-(the hazard stays fair). Streaks/milestones/near-miss are celebration-only.
+lane always clear" in code regardless of data, and `scenery` props are clamped to
+`|x| ≥ play_half` so they never enter a travel lane. Forgiveness only helps
+rewards (the hazard stays fair). Streaks/milestones/near-miss are celebration-only.
+Every new visual freezes/suppresses under `reduce_motion`; ambient particles are
+also off under the headless renderer. All procedural — no imported art, no shaders.
 
 ## Compliance note
 
