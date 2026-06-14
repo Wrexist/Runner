@@ -7,6 +7,7 @@ var _score_label: Label
 var _rescue_label: Label
 var _lives_label: Label
 var _streak_label: Label
+var _difficulty_label: Label
 
 func _ready() -> void:
 	var text_color := ThemeManager.color("ui_text", Color.BLACK)
@@ -52,6 +53,13 @@ func _ready() -> void:
 	_streak_label.pivot_offset = Vector2(120, 18)
 	_streak_label.visible = false
 	_root.add_child(_streak_label)
+
+	# A small badge so the player can see which difficulty they're playing.
+	_difficulty_label = _make_label(20, text_color)
+	_difficulty_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_difficulty_label.offset_left = 20
+	_difficulty_label.offset_top = -46
+	_root.add_child(_difficulty_label)
 
 	# Big, easy pause target (auto-pause on backgrounding is handled in GameCore).
 	var pause_btn := Button.new()
@@ -195,6 +203,7 @@ func _on_run_started() -> void:
 	_root.visible = true
 	_refresh_rescues(0)
 	_refresh_lives()
+	_difficulty_label.text = tr("Easy") if ThemeManager.difficulty() == "easy" else tr("Normal")
 
 func _refresh_lives() -> void:
 	var max_stumbles := int(ThemeManager.get_val("max_stumbles", 3))

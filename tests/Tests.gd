@@ -83,6 +83,7 @@ func _run_all() -> void:
 	_test_audio_handlers()
 	_test_button_roles()
 	_test_settings_toggle_switch()
+	_test_game_over_stats()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -861,6 +862,18 @@ func _test_settings_toggle_switch() -> void:
 			bool(SaveManager.settings.get("music", true)) == (not prev))
 		SaveManager.set_setting("music", prev)
 	s.free()
+
+## Game Over shows personal-best stats AND — crucially for compliance — never a
+## purchase/Shop button at the loss moment.
+func _test_game_over_stats() -> void:
+	SaveManager.best_streak = 7
+	var go := UIScreens.make_game_over(120, true, 9)
+	add_child(go)
+	_check("gameover: shows best streak", _find_text_descendant(go, "7"))
+	_check("gameover: NO purchase/Shop at the loss moment",
+		not _find_text_descendant(go, tr("Unlock All Critters"))
+		and not _find_text_descendant(go, tr("Critter Shop")))
+	go.free()
 
 func _find_checkbutton(node: Node, label: String) -> CheckButton:
 	if node is CheckButton and label in (node as CheckButton).text:

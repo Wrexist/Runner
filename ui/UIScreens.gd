@@ -108,6 +108,9 @@ class GameOver extends Control:
 			col.add_child(UIScreens._label(tr("New Best!"), 34))
 		col.add_child(UIScreens._label(tr("Score: %d") % _score, 36))
 		col.add_child(UIScreens._label(tr("Critters rescued: %d") % _rescued, 28))
+		# Gentle personal-best lines (celebration-only — never a quota/FOMO).
+		col.add_child(UIScreens._label(tr("Best streak: %d") % SaveManager.best_streak, 22))
+		col.add_child(UIScreens._label(tr("Longest run: %ds") % int(SaveManager.longest_run_seconds), 22))
 		# Lead with the positive next action. Monetization is NOT placed at the
 		# loss moment — the Shop lives behind the calm "My Critters" album.
 		var again := UIScreens._button(tr("Play Again"), "primary")
