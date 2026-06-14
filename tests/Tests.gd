@@ -36,6 +36,8 @@ const EXTENDED_KEYS: Array[String] = [
 	"biome_interval", "discovery_interval",
 	# Adventure depth: jump & slide
 	"jump_height", "jump_seconds", "slide_seconds", "obstacle_interval",
+	# Adventure depth: branching choice gates
+	"choice_interval",
 ]
 
 func _ready() -> void:
@@ -115,6 +117,7 @@ func _run_all() -> void:
 	_test_biomes()
 	_test_jump_slide()
 	_test_obstacle()
+	_test_choice_gate()
 	_test_discovery()
 	_test_state_restored()
 
@@ -1087,6 +1090,31 @@ func _test_magnet() -> void:
 	player.free()
 	GameCore.go_to_menu()
 	SaveManager.settings["reduce_motion"] = false
+
+## A choice gate offers a reward per lane; the lane you're in claims that reward
+## (the others are simply not taken — no penalty).
+func _test_choice_gate() -> void:
+	ThemeManager.load_theme("forest")
+	GameCore.start_run()
+	Powerups.clear_all()
+	var player = preload("res://scenes/Player.tscn").instantiate()
+	add_child(player)
+	player.current_lane = 1
+	var cg = preload("res://core/ChoiceGate.gd").new()
+	add_child(cg)
+	cg.setup(3, 2.0)
+	_check("choice: one reward per lane", cg.rewards.size() == 3)
+	var score_before := GameCore.score
+	cg._resolve()
+	var took := GameCore.score > score_before
+	for k in Powerups.KINDS:
+		if Powerups.is_active(k):
+			took = true
+	_check("choice: steering into a lane claims that reward", took)
+	Powerups.clear_all()
+	cg.free()
+	player.free()
+	GameCore.go_to_menu()
 
 ## A discovery event fires a named gentle surprise (a treat or a bonus shower).
 func _test_discovery() -> void:
