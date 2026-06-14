@@ -19,7 +19,7 @@ const EXTENDED_KEYS: Array[String] = [
 	# W-B difficulty & pacing
 	"warmup_seconds", "spawn_patterns", "forgiveness_z", "near_miss_z",
 	# W-C feedback & juice
-	"stumble_flash_alpha", "stumble_flash_time",
+	"stumble_flash_alpha", "stumble_flash_time", "milestone_rescues",
 ]
 
 func _ready() -> void:
@@ -76,6 +76,7 @@ func _run_all() -> void:
 	_test_points_popped()
 	_test_streak_counter()
 	_test_stumble_feedback_gentle()
+	_test_celebration_feedback()
 
 func _test_theme() -> void:
 	_check("theme loaded (lanes present)", ThemeManager.get_val("lanes", -1) != -1)
@@ -743,6 +744,17 @@ func _test_stumble_feedback_gentle() -> void:
 	GameCore.near_miss.emit()
 	_check("near-miss: a floater appears", hud._root.get_child_count() == before + 1)
 	_check("near-miss: score is unchanged", GameCore.score == before_score)
+	hud.free()
+
+## Milestone + unlock celebrations each mount a floater (confetti is separate).
+func _test_celebration_feedback() -> void:
+	var hud = preload("res://ui/HUD.gd").new()
+	add_child(hud)
+	var before := hud._root.get_child_count()
+	hud._on_milestone("rescues", 25)
+	_check("milestone: celebration floater shown", hud._root.get_child_count() == before + 1)
+	hud._on_critter_unlocked("bunny")
+	_check("unlock: celebration floater shown", hud._root.get_child_count() == before + 2)
 	hud.free()
 
 ## The collectible pool reuses freed nodes (no unbounded growth) and a recycled

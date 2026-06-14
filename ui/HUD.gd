@@ -74,6 +74,8 @@ func _ready() -> void:
 	GameCore.points_popped.connect(_on_points_popped)
 	GameCore.streak_changed.connect(_on_streak_changed)
 	GameCore.near_miss.connect(func(): _float_text(tr("Whew!")))
+	GameCore.milestone_reached.connect(_on_milestone)
+	GameCore.critter_unlocked.connect(_on_critter_unlocked)
 
 	_root.visible = false   # hidden until a run starts (we open on the Start menu)
 	_on_score_changed(GameCore.score)
@@ -153,6 +155,17 @@ func _world_to_screen(world_pos: Vector3) -> Vector2:
 		return cam.unproject_position(world_pos)
 	var s := get_viewport().get_visible_rect().size
 	return Vector2(s.x * 0.5, s.y * 0.45)
+
+## A rescue milestone (25/50/100…) — a big happy word and a confetti pop. Pure
+## celebration; it gates nothing and never nags you to "come back".
+func _on_milestone(_kind: String, _value: int) -> void:
+	_float_text(tr("Milestone!"))
+	ScreenFX.confetti(30)
+
+## Earning a new critter mid-run feels like an event (not a silent Album change).
+func _on_critter_unlocked(_id: String) -> void:
+	_float_text(tr("New friend!"))
+	ScreenFX.confetti(20)
 
 ## Show/hide the streak badge. Resets silently to hidden on a stumble (streak 0)
 ## or a fresh run — no "you lost your streak!" shaming.
