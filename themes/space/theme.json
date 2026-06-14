@@ -68,6 +68,7 @@
   },
   "glow_intensity": 0.6,
   "ground_uv_speed": 0.05,
+  "scenery": {"style": "asteroids", "density": 0.9, "max_props": 16, "min_x_margin": 1.0, "side_band": 5.0, "scale_min": 0.6, "scale_max": 1.6},
   "camera_follow": 0.45,
   "camera_smooth": 5.5,
   "camera_zoom_amount": 4.0,

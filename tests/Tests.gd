@@ -27,7 +27,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"gem_emission", "glow_intensity", "ground_uv_speed",
 	"camera_follow", "camera_smooth", "camera_zoom_amount",
 	# W-G procedural scenery & characters
-	"critter_detail", "player_shape",
+	"critter_detail", "player_shape", "scenery",
 ]
 
 func _ready() -> void:
@@ -95,6 +95,7 @@ func _run_all() -> void:
 	_test_ground_scroll()
 	_test_critter_variety()
 	_test_player_visual()
+	_test_scenery()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -957,6 +958,43 @@ func _test_critter_variety() -> void:
 	b.free()
 	s.free()
 	v.free()
+
+## Side scenery never enters the play lanes, reuses its pool, and freezes the
+## scroll under reduce_motion (static dressing stays).
+func _test_scenery() -> void:
+	ThemeManager.load_theme("forest")
+	var sc = preload("res://core/Scenery.gd").new()
+	add_child(sc)               # _ready populates a static spread
+	var outside := true
+	for p in sc._live:
+		if absf(p.position.x) < sc._play_half:
+			outside = false
+	_check("scenery: every prop is outside the play lanes", outside and sc._live.size() > 0)
+	var count1 := sc.get_child_count()
+	sc._repopulate()
+	_check("scenery: repopulate reuses the pool (no node growth)", sc.get_child_count() == count1)
+	_check("scenery: respects the max_props cap", sc._live.size() <= sc._max_props)
+	GameCore.start_run()
+	# Reduce-motion freezes the scroll.
+	SaveManager.settings["reduce_motion"] = true
+	var frozen = sc._live[0]
+	var zf := frozen.position.z
+	sc._process(0.3)
+	_check("scenery: frozen under reduce_motion", frozen.position.z == zf)
+	# Motion on: a prop well before recycle advances forward.
+	SaveManager.settings["reduce_motion"] = false
+	var mover = null
+	for p in sc._live:
+		if p.position.z < 0.0:
+			mover = p
+			break
+	if mover != null:
+		var zb := mover.position.z
+		sc._process(0.1)
+		_check("scenery: scrolls forward during play", mover.position.z > zb)
+	GameCore.go_to_menu()
+	sc.free()
+	SaveManager.settings["reduce_motion"] = false
 
 ## The procedural player builds for every shape and swaps in WITHOUT disturbing
 ## collision, the hidden box, _body(), or the carry badge.

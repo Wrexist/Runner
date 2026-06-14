@@ -68,6 +68,7 @@
   },
   "glow_intensity": 0.4,
   "ground_uv_speed": 0.04,
+  "scenery": {"style": "trees", "density": 1.0, "max_props": 14, "min_x_margin": 0.8, "side_band": 4.0, "scale_min": 0.8, "scale_max": 1.4},
   "camera_follow": 0.4,
   "camera_smooth": 5.0,
   "camera_zoom_amount": 0.0,
