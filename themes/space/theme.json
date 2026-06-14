@@ -21,6 +21,8 @@
   "speed_ramp_per_second": 0.18,
   "warmup_seconds": 2.0,
   "slow_factor": 0.6,
+  "powerup_interval": 12.0,
+  "powerup_duration": 6.0,
   "gem_colors": ["blue", "purple", "orange"],
   "gem_palette": {
     "blue": "#5ad1ff",
@@ -101,7 +103,8 @@
     "ui_click": "res://themes/space/audio/click.ogg",
     "whoosh": "res://themes/space/audio/whoosh.ogg",
     "near_miss": "res://themes/space/audio/whew.ogg",
-    "jingle": "res://themes/space/audio/jingle.ogg"
+    "jingle": "res://themes/space/audio/jingle.ogg",
+    "powerup": "res://themes/space/audio/powerup.ogg"
   },
   "credits": []
 }

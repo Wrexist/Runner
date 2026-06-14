@@ -7,6 +7,7 @@ extends Node3D
 
 @export var gem_scene: PackedScene
 @export var cage_scene: PackedScene
+@export var powerup_scene: PackedScene
 
 var spawn_timer: float = 0.0
 var interval: float = 1.4
@@ -16,6 +17,9 @@ var lanes_count: int = 3
 var lane_width: float = 2.0
 var gem_cage_gap: float = 6.0   # reaction-time window (theme/difficulty lever)
 var patterns: Array = []        # data-driven spawn sequence (see theme.json)
+var _powerup_timer: float = 0.0
+var _powerup_interval: float = 14.0   # seconds between power-up pickups (themed)
+var _powerup_idx: int = 0             # rotates KINDS so it's variety, not a gacha
 var _last_lane: int = -1
 var _rng := RandomNumberGenerator.new()
 var _free: Dictionary = {"gem": [], "cage": []}   # recycled collectibles by kind
@@ -37,14 +41,18 @@ func _apply_tuning() -> void:
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
 	patterns = ThemeManager.get_val("spawn_patterns", [])
+	_powerup_interval = float(ThemeManager.get_val("powerup_interval", 14.0))
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.
 func _clear_field() -> void:
 	spawn_timer = 0.0
+	_powerup_timer = _powerup_interval   # first power-up comes a little into the run
 	_last_lane = -1
 	for c in get_tree().get_nodes_in_group("collectible"):
 		release(c)
+	for p in get_tree().get_nodes_in_group("powerup"):
+		p.queue_free()
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
@@ -55,6 +63,22 @@ func _process(delta: float) -> void:
 		# Tighten spacing as the run speeds up, but never below the floor.
 		var t: float = clamp(GameCore.elapsed / 60.0, 0.0, 1.0)
 		spawn_timer = lerp(interval, interval_min, t)
+	# Power-up pickups appear on a steady cadence (predictable variety, not a gacha).
+	_powerup_timer -= delta
+	if _powerup_timer <= 0.0 and powerup_scene != null:
+		_spawn_powerup()
+		_powerup_timer = _powerup_interval
+
+func _spawn_powerup() -> void:
+	var kind: String = Powerups.KINDS[_powerup_idx % Powerups.KINDS.size()]
+	_powerup_idx += 1
+	var lane := _rng.randi() % lanes_count
+	var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
+	var pu := powerup_scene.instantiate()
+	add_child(pu)
+	pu.position = Vector3(x, 1.0, SPAWN_Z)
+	if pu.has_method("setup"):
+		pu.setup(kind)
 
 func _spawn_beat() -> void:
 	_realize_pattern(_next_pattern())

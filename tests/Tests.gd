@@ -31,7 +31,7 @@ const EXTENDED_KEYS: Array[String] = [
 	"fog_enabled", "fog_density", "ambient_energy", "light_energy", "light_color",
 	"lane_marker",
 	# Adventure depth: gentle power-up "builds"
-	"slow_factor",
+	"slow_factor", "powerup_interval", "powerup_duration", "audio.powerup",
 ]
 
 func _ready() -> void:
@@ -105,6 +105,7 @@ func _run_all() -> void:
 	_test_atmosphere()
 	_test_lane_markers()
 	_test_powerups()
+	_test_powerup_spawn()
 	_test_state_restored()
 
 func _test_theme() -> void:
@@ -1039,6 +1040,22 @@ func _test_powerups() -> void:
 	_check("powerup: a new run clears the build", not Powerups.is_active("double"))
 	Powerups.clear_all()
 	GameCore.go_to_menu()
+
+## The Spawner drops a power-up pickup (rotating, valid kind) into the world.
+func _test_powerup_spawn() -> void:
+	ThemeManager.load_theme("forest")
+	var sp = preload("res://core/Spawner.gd").new()
+	sp.powerup_scene = preload("res://scenes/Powerup.tscn")
+	add_child(sp)
+	GameCore.start_run()
+	sp._spawn_powerup()
+	var pus := sp.get_tree().get_nodes_in_group("powerup")
+	_check("powerup: a pickup spawns with a valid kind",
+		pus.size() >= 1 and str(pus[pus.size() - 1]._kind) in Powerups.KINDS)
+	for p in pus:
+		p.queue_free()
+	GameCore.go_to_menu()
+	sp.free()
 
 ## Lane markers sit on the computed lane boundaries, freeze the scroll (but stay
 ## drawn) under reduce_motion, and scroll when motion is on.
