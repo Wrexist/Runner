@@ -31,11 +31,28 @@ Normal,Normal,Normal
 Music,Música,Musik
 Sounds,Sonidos,Ljud
 Reduce motion,Reducir movimiento,Minska rörelser
+Haptics,Vibración,Vibration
 On,Sí,På
 Off,No,Av
 Unlock All Critters,Desbloquear todas,Lås upp alla djur
 Reach %d,Llega a %d,Nå %d
 Rescued!,¡Rescatado!,Räddad!
+Streak %d,Racha %d,Svit %d
+Whew!,¡Uf!,Pust!
+Oops!,¡Uy!,Hoppsan!
+Milestone!,¡Hito!,Milstolpe!
+New friend!,¡Nuevo amigo!,Ny vän!
+Shield!,¡Escudo!,Sköld!
+New area!,¡Nueva zona!,Nytt område!
+Surprise!,¡Sorpresa!,Överraskning!
+A giant friend!,¡Un amigo gigante!,En jättevän!
+Discoveries: %d / %d,Descubrimientos: %d / %d,Upptäckter: %d / %d
+Best streak: %d,Mejor racha: %d,Bästa svit: %d
+Longest run: %ds,Carrera más larga: %ds,Längsta runda: %ds
+Volume:  %s,Volumen:  %s,Volym:  %s
+Low,Bajo,Låg
+Med,Medio,Mellan
+High,Alto,Hög
 How to play,Cómo jugar,Så här spelar du
 "Grab the gem, reach the matching cage!","¡Agarra la gema y llega a la jaula del mismo color!",Fånga ädelstenen och nå buren med samma färg!
 Let's go!,¡Vamos!,Nu kör vi!

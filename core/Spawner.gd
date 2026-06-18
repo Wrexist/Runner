@@ -7,6 +7,10 @@ extends Node3D
 
 @export var gem_scene: PackedScene
 @export var cage_scene: PackedScene
+@export var powerup_scene: PackedScene
+@export var obstacle_scene: PackedScene
+@export var choice_scene: PackedScene
+@export var giant_scene: PackedScene
 
 var spawn_timer: float = 0.0
 var interval: float = 1.4
@@ -15,10 +19,24 @@ var colors: Array = ["red", "blue", "yellow"]
 var lanes_count: int = 3
 var lane_width: float = 2.0
 var gem_cage_gap: float = 6.0   # reaction-time window (theme/difficulty lever)
+var patterns: Array = []        # data-driven spawn sequence (see theme.json)
+var _powerup_timer: float = 0.0
+var _powerup_interval: float = 14.0   # seconds between power-up pickups (themed)
+var _powerup_idx: int = 0             # rotates KINDS so it's variety, not a gacha
+var _obstacle_timer: float = 0.0
+var _obstacle_interval: float = 10.0  # seconds between hurdles/overhangs (themed)
+var _obstacle_alt: bool = true        # alternate hurdle / overhang
+var _choice_timer: float = 0.0
+var _choice_interval: float = 25.0    # seconds between branching choice gates (themed)
+var _giant_timer: float = 0.0
+var _giant_interval: float = 55.0     # seconds between rare giant-friend encounters
 var _last_lane: int = -1
+var _rng := RandomNumberGenerator.new()
+var _free: Dictionary = {"gem": [], "cage": []}   # recycled collectibles by kind
 const SPAWN_Z := -40.0          # spawn ahead, scroll toward player at z=0
 
 func _ready() -> void:
+	_rng.randomize()
 	_apply_tuning()
 	# Re-read tuning each run so a difficulty change in Settings takes effect.
 	GameCore.run_started.connect(_apply_tuning)
@@ -32,43 +50,199 @@ func _apply_tuning() -> void:
 	colors = ThemeManager.get_val("gem_colors", ["red", "blue", "yellow"])
 	lanes_count = int(ThemeManager.get_val("lanes", 3))
 	lane_width = float(ThemeManager.get_val("lane_width", 2.0))
+	patterns = ThemeManager.get_val("spawn_patterns", [])
+	_powerup_interval = float(ThemeManager.get_val("powerup_interval", 14.0))
+	_obstacle_interval = float(ThemeManager.get_val("obstacle_interval", 10.0))
+	_choice_interval = float(ThemeManager.get_val("choice_interval", 25.0))
+	_giant_interval = float(ThemeManager.get_val("giant_interval", 55.0))
 
 ## Remove any leftover gems/cages from a previous/abandoned run so a fresh run
 ## always starts with a clean track.
 func _clear_field() -> void:
 	spawn_timer = 0.0
+	_powerup_timer = _powerup_interval   # first power-up comes a little into the run
+	_obstacle_timer = _obstacle_interval
+	_choice_timer = _choice_interval
+	_giant_timer = _giant_interval
 	_last_lane = -1
 	for c in get_tree().get_nodes_in_group("collectible"):
-		c.queue_free()
+		release(c)
+	for p in get_tree().get_nodes_in_group("powerup"):
+		p.queue_free()
+	for o in get_tree().get_nodes_in_group("obstacle"):
+		o.queue_free()
+	for g in get_tree().get_nodes_in_group("choicegate"):
+		g.queue_free()
+	for g in get_tree().get_nodes_in_group("giant"):
+		g.queue_free()
 
 func _process(delta: float) -> void:
 	if not GameCore.is_running():
 		return
 	spawn_timer -= delta
 	if spawn_timer <= 0.0:
-		_spawn_pair()
+		_spawn_beat()
 		# Tighten spacing as the run speeds up, but never below the floor.
 		var t: float = clamp(GameCore.elapsed / 60.0, 0.0, 1.0)
 		spawn_timer = lerp(interval, interval_min, t)
+	# Power-up pickups appear on a steady cadence (predictable variety, not a gacha).
+	_powerup_timer -= delta
+	if _powerup_timer <= 0.0 and powerup_scene != null:
+		_spawn_powerup()
+		_powerup_timer = _powerup_interval
+	# Gentle hurdles/overhangs to jump/slide (alternating; one lane = also dodgeable).
+	_obstacle_timer -= delta
+	if _obstacle_timer <= 0.0 and obstacle_scene != null:
+		_spawn_obstacle()
+		_obstacle_timer = _obstacle_interval
+	# A branching choice gate: each lane offers a different reward — steer to pick.
+	_choice_timer -= delta
+	if _choice_timer <= 0.0 and choice_scene != null:
+		_spawn_choice()
+		_choice_timer = _choice_interval
+	# A rare, gentle giant-friend spectacle (a "world event").
+	_giant_timer -= delta
+	if _giant_timer <= 0.0 and giant_scene != null:
+		_spawn_giant()
+		_giant_timer = _giant_interval
 
-func _spawn_pair() -> void:
-	# Avoid repeating the same lane twice in a row so there's always an easy,
-	# obvious safe lane — keeps it fair and gentle for the youngest players.
-	var lane := randi() % lanes_count
-	if lane == _last_lane and lanes_count > 1:
-		lane = (lane + 1 + (randi() % (lanes_count - 1))) % lanes_count
-	_last_lane = lane
-	var color: String = colors[randi() % colors.size()]
-	var x := (lane - (lanes_count - 1) / 2.0) * lane_width
-	# Gem first (closer), cage behind it (further), same lane + color.
-	_spawn_one(gem_scene, x, SPAWN_Z, color, lane)
-	_spawn_one(cage_scene, x, SPAWN_Z - gem_cage_gap, color, lane)
+func _spawn_giant() -> void:
+	var g := giant_scene.instantiate()
+	add_child(g)
+	g.position = Vector3(0.0, 1.0, SPAWN_Z)   # centred, elevated spectacle
+	if g.has_method("setup"):
+		g.setup()
 
-func _spawn_one(scene: PackedScene, x: float, z: float, color: String, lane: int) -> void:
-	if scene == null:
+func _spawn_choice() -> void:
+	var cg := choice_scene.instantiate()
+	add_child(cg)
+	cg.position = Vector3(0.0, 0.0, SPAWN_Z)
+	if cg.has_method("setup"):
+		cg.setup(lanes_count, lane_width)
+
+func _spawn_obstacle() -> void:
+	var kind := "hurdle" if _obstacle_alt else "overhang"
+	_obstacle_alt = not _obstacle_alt
+	var lane := _rng.randi() % lanes_count
+	var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
+	var ob := obstacle_scene.instantiate()
+	add_child(ob)
+	ob.position = Vector3(x, 0.0, SPAWN_Z)
+	if ob.has_method("setup"):
+		ob.setup(kind, lane)
+
+func _spawn_powerup() -> void:
+	var kind: String = Powerups.KINDS[_powerup_idx % Powerups.KINDS.size()]
+	_powerup_idx += 1
+	var lane := _rng.randi() % lanes_count
+	var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
+	var pu := powerup_scene.instantiate()
+	add_child(pu)
+	pu.position = Vector3(x, 1.0, SPAWN_Z)
+	if pu.has_method("setup"):
+		pu.setup(kind)
+
+func _spawn_beat() -> void:
+	_realize_pattern(_next_pattern())
+
+## Pick the next pattern by weight from theme data; fall back to a single pair so
+## a theme with no `spawn_patterns` behaves exactly as before.
+func _next_pattern() -> Dictionary:
+	if patterns.is_empty():
+		return {"type": "single"}
+	var total := 0.0
+	for p in patterns:
+		total += maxf(float(p.get("weight", 1.0)), 0.0)
+	if total <= 0.0:
+		return patterns[0]
+	var r := _rng.randf() * total
+	for p in patterns:
+		r -= maxf(float(p.get("weight", 1.0)), 0.0)
+		if r <= 0.0:
+			return p
+	return patterns[patterns.size() - 1]
+
+func _realize_pattern(pat: Dictionary) -> void:
+	match str(pat.get("type", "single")):
+		"rest":
+			pass                       # a guaranteed empty beat (breathing room)
+		"double":
+			_spawn_multi(2)            # a bounded "danger zone"
+		_:
+			_spawn_multi(1)
+
+## Spawn `count` gem+cage pairs in distinct lanes. SAFETY FLOOR (independent of
+## theme data): never occupy more than lanes_count-1 lanes, so at least one lane
+## is ALWAYS clear to dodge into — the gentle-by-design invariant, in code.
+func _spawn_multi(count: int) -> void:
+	var lanes := _choose_lanes(count)
+	for lane in lanes:
+		var color: String = colors[_rng.randi() % colors.size()]
+		var x := (float(lane) - (lanes_count - 1) / 2.0) * lane_width
+		# Gem first (closer), cage behind it (further), same lane + color.
+		_spawn_one("gem", x, SPAWN_Z, color, lane)
+		_spawn_one("cage", x, SPAWN_Z - gem_cage_gap, color, lane)
+	# Track the previous lane only for single beats (keeps an obvious safe lane
+	# between consecutive singles); multi beats already leave a clear lane.
+	_last_lane = int(lanes[0]) if lanes.size() == 1 else -1
+
+func _choose_lanes(count: int) -> Array:
+	var n := clampi(count, 1, maxi(lanes_count - 1, 1))
+	var pool: Array = []
+	for i in lanes_count:
+		pool.append(i)
+	# For a single spawn, avoid repeating the immediately-previous lane.
+	if n == 1 and _last_lane != -1 and lanes_count > 1:
+		pool.erase(_last_lane)
+	# Fisher–Yates with the seedable rng, then take the first n.
+	for i in range(pool.size() - 1, 0, -1):
+		var j := _rng.randi_range(0, i)
+		var tmp: int = pool[i]
+		pool[i] = pool[j]
+		pool[j] = tmp
+	return pool.slice(0, n)
+
+func _spawn_one(kind: String, x: float, z: float, color: String, lane: int) -> void:
+	var inst := _acquire(kind)
+	if inst == null:
 		return
-	var inst := scene.instantiate()
-	add_child(inst)
 	inst.position = Vector3(x, 0, z)
 	if inst.has_method("setup"):
 		inst.setup(color, lane)
+
+## Pull a collectible of `kind` from the pool, or instantiate one (growing the
+## pool) if none are free — so a pacing change can never starve spawns.
+func _acquire(kind: String) -> Node3D:
+	var pool: Array = _free.get(kind, [])
+	var inst: Node3D = null
+	while inst == null and not pool.is_empty():
+		inst = pool.pop_back() as Node3D
+		if not is_instance_valid(inst):
+			inst = null
+	if inst == null:
+		var scene: PackedScene = gem_scene if kind == "gem" else cage_scene
+		if scene == null:
+			return null
+		inst = scene.instantiate() as Node3D
+		add_child(inst)
+	inst.visible = true
+	inst.set_process(true)
+	if not inst.is_in_group("collectible"):
+		inst.add_to_group("collectible")
+	return inst
+
+## Return a finished collectible to its pool: hidden + inert, reused next spawn.
+## Idempotent (group membership is the guard), so a despawn and a clear-field
+## release can't double-pool the same node.
+func release(node: Node3D) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	if not node.is_in_group("collectible"):
+		return
+	node.remove_from_group("collectible")
+	node.visible = false
+	node.set_process(false)
+	var kind := str(node.get("kind"))
+	if not _free.has(kind):
+		_free[kind] = []
+	_free[kind].append(node)

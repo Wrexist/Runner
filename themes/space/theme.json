@@ -10,9 +10,26 @@
   "lanes": 3,
   "lane_width": 2.2,
   "move_speed": 13.0,
+  "swipe_threshold_px": 38,
+  "tap_dead_zone_frac": 0.10,
+  "lane_change_cooldown": 0.05,
+  "carry_glow": 1.7,
+  "carry_badge_scale": 1.1,
+  "haptic_ms": {"light": 14, "rescue": 28},
+  "jump_height": 1.8,
+  "jump_seconds": 0.5,
+  "slide_seconds": 0.5,
   "scroll_speed_start": 9.0,
   "scroll_speed_max": 20.0,
   "speed_ramp_per_second": 0.18,
+  "warmup_seconds": 2.0,
+  "slow_factor": 0.6,
+  "dash_factor": 1.7,
+  "powerup_interval": 12.0,
+  "powerup_duration": 6.0,
+  "obstacle_interval": 9.0,
+  "choice_interval": 22.0,
+  "giant_interval": 50.0,
   "gem_colors": ["blue", "purple", "orange"],
   "gem_palette": {
     "blue": "#5ad1ff",
@@ -24,10 +41,25 @@
     "purple": "torus",
     "orange": "capsule"
   },
+  "gem_emission": 1.3,
+  "critter_detail": "full",
+  "player_shape": "rocket",
   "spawn_interval_start": 1.3,
   "spawn_interval_min": 0.65,
   "max_stumbles": 3,
+  "milestone_rescues": [25, 50, 100],
+  "biome_interval": 7,
+  "discovery_interval": 32.0,
   "gem_cage_gap": 6.0,
+  "forgiveness_z": 0.5,
+  "near_miss_z": 0.9,
+  "stumble_flash_alpha": 0.20,
+  "stumble_flash_time": 0.22,
+  "spawn_patterns": [
+    {"type": "single", "weight": 5},
+    {"type": "rest", "weight": 1},
+    {"type": "double", "weight": 2}
+  ],
   "difficulty": {
     "easy": {
       "scroll_speed_start": 7.0,
@@ -46,6 +78,22 @@
       "gem_cage_gap": 6.0
     }
   },
+  "glow_intensity": 0.6,
+  "tonemap_exposure": 1.05,
+  "grade_contrast": 1.1,
+  "grade_saturation": 1.18,
+  "ground_uv_speed": 0.05,
+  "scenery": {"style": "asteroids", "density": 0.9, "max_props": 16, "min_x_margin": 1.0, "side_band": 5.0, "scale_min": 0.6, "scale_max": 1.6},
+  "ambient": {"style": "stars", "amount": 40, "color": "#dff3ff", "box": [7, 4, 24], "speed": 0.3},
+  "fog_enabled": true,
+  "fog_density": 0.012,
+  "ambient_energy": 0.6,
+  "light_energy": 0.9,
+  "light_color": "#cfe0ff",
+  "lane_marker": {"enabled": true, "color": "#7ee8fa", "dash_len": 1.0, "dash_gap": 1.6},
+  "camera_follow": 0.45,
+  "camera_smooth": 5.5,
+  "camera_zoom_amount": 4.0,
   "assets": {
     "player_model": "res://themes/space/models/rocket.glb",
     "ground_texture": "res://themes/space/textures/starfield.png",
@@ -60,9 +108,15 @@
   ],
   "audio": {
     "music": "res://themes/space/audio/music.ogg",
+    "menu_music": "res://themes/space/audio/menu.ogg",
     "rescue": "res://themes/space/audio/rescue.ogg",
     "gem_pickup": "res://themes/space/audio/gem.ogg",
-    "miss": "res://themes/space/audio/miss.ogg"
+    "miss": "res://themes/space/audio/miss.ogg",
+    "ui_click": "res://themes/space/audio/click.ogg",
+    "whoosh": "res://themes/space/audio/whoosh.ogg",
+    "near_miss": "res://themes/space/audio/whew.ogg",
+    "jingle": "res://themes/space/audio/jingle.ogg",
+    "powerup": "res://themes/space/audio/powerup.ogg"
   },
   "credits": []
 }

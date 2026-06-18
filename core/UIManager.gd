@@ -36,6 +36,11 @@ func _show(screen: Control) -> void:
 	_current = screen
 	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_layer.add_child(screen)
+	# A gentle fade-in so screens don't pop in jarringly (instant under reduce_motion).
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
+	screen.modulate.a = 0.0
+	screen.create_tween().tween_property(screen, "modulate:a", 1.0, 0.18)
 
 func _clear() -> void:
 	if _current and is_instance_valid(_current):

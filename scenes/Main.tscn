@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://core/Spawner.gd" id="2_spawner"]
@@ -8,6 +8,13 @@
 [ext_resource type="Script" path="res://core/CameraRig.gd" id="6_camera"]
 [ext_resource type="Script" path="res://core/SkyRig.gd" id="7_sky"]
 [ext_resource type="Script" path="res://core/Trail.gd" id="8_trail"]
+[ext_resource type="Script" path="res://core/Scenery.gd" id="9_scenery"]
+[ext_resource type="Script" path="res://core/Ambient.gd" id="10_ambient"]
+[ext_resource type="Script" path="res://core/LaneMarkers.gd" id="11_lane_markers"]
+[ext_resource type="PackedScene" path="res://scenes/Powerup.tscn" id="12_powerup"]
+[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="13_obstacle"]
+[ext_resource type="PackedScene" path="res://scenes/ChoiceGate.tscn" id="14_choice"]
+[ext_resource type="PackedScene" path="res://scenes/Giant.tscn" id="15_giant"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(12, 120)
@@ -38,5 +45,18 @@ script = ExtResource("8_trail")
 script = ExtResource("2_spawner")
 gem_scene = ExtResource("3_gem")
 cage_scene = ExtResource("4_cage")
+powerup_scene = ExtResource("12_powerup")
+obstacle_scene = ExtResource("13_obstacle")
+choice_scene = ExtResource("14_choice")
+giant_scene = ExtResource("15_giant")
+
+[node name="Scenery" type="Node3D" parent="."]
+script = ExtResource("9_scenery")
+
+[node name="Ambient" type="Node3D" parent="."]
+script = ExtResource("10_ambient")
+
+[node name="LaneMarkers" type="Node3D" parent="."]
+script = ExtResource("11_lane_markers")
 
 [node name="HUD" parent="." instance=ExtResource("5_hud")]

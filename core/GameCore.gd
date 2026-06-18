@@ -12,6 +12,13 @@ signal streak_changed(streak: int)
 signal new_best                              # first time this run beats the old best
 signal paused_changed(is_paused: bool)
 signal returned_to_menu
+# --- Celebration-only feedback signals (carry no penalty, gate no content) ---
+signal critter_unlocked(id: String)          # a NEW critter just crossed its score gate
+signal milestone_reached(kind: String, value: int)  # e.g. ("rescues", 25)
+signal near_miss                             # dodged an unprepared cage by a hair
+signal points_popped(amount: int, world_pos: Vector3)  # for floating "+N" text
+signal shield_used                           # a shield power-up absorbed a stumble
+signal giant_met                             # a gentle giant-friend spectacle reached
 
 enum State { MENU, PLAYING, GAME_OVER }
 
@@ -26,6 +33,7 @@ var stumbles: int = 0
 var streak: int = 0
 var paused: bool = false
 var _announced_best: bool = false
+var _streak_peak: int = 0                    # best streak reached this run (for stats)
 
 ## True only when a run is actively playing (not menu, game-over, or paused).
 ## Every gameplay _process loop gates on this so pause freezes the world while
@@ -33,11 +41,17 @@ var _announced_best: bool = false
 func is_running() -> bool:
 	return state == State.PLAYING and not paused
 
+## The speed the WORLD scrolls at — the difficulty ramp (current_speed) softened
+## by an active "slow" power-up. Scrolling systems read this (not current_speed).
+func scroll_speed() -> float:
+	return current_speed * Powerups.speed_multiplier()
+
 func start_run() -> void:
 	score = 0
 	elapsed = 0.0
 	stumbles = 0
 	streak = 0
+	_streak_peak = 0
 	paused = false
 	_announced_best = false
 	rescued_this_run = []
@@ -77,10 +91,15 @@ func _process(delta: float) -> void:
 	if not is_running():
 		return
 	elapsed += delta
-	# Gentle, predictable speed ramp — never punishing spikes. On "easy" the
-	# ramp is 0, so speed stays flat for the youngest players.
-	var ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 0.15))
+	# Gentle, predictable pacing — never punishing spikes. Every run opens with a
+	# warm-up grace period (speed held at the starting value, room to settle in),
+	# then a smooth ramp toward the cap. On "easy" the ramp is 0, so speed stays
+	# flat for the youngest players.
 	var smax := float(ThemeManager.diff_val("scroll_speed_max", 18.0))
+	if elapsed <= float(ThemeManager.diff_val("warmup_seconds", 2.5)):
+		current_speed = float(ThemeManager.diff_val("scroll_speed_start", 8.0))
+		return
+	var ramp := float(ThemeManager.diff_val("speed_ramp_per_second", 0.15))
 	current_speed = min(current_speed + ramp * delta, smax)
 
 func add_score(amount: int) -> void:
@@ -98,24 +117,49 @@ func rescue_critter(id: String) -> void:
 		return
 	rescued_this_run.append(id)
 	streak += 1
+	_streak_peak = maxi(_streak_peak, streak)
 	SaveManager.lifetime_rescued += 1   # persisted on run end
 	# A gentle, generous bonus for a hot streak — caps so it never snowballs.
-	add_score(10 + mini(streak, 5))
+	# Doubled while a "double" power-up is active (celebration only).
+	add_score((10 + mini(streak, 5)) * Powerups.rescue_multiplier())
 	# Earn-by-score unlock: unlock EVERY critter whose threshold is now met, not
 	# just the one this rescue happened to surface. This makes the Album's
 	# "Reach N" promise deterministic instead of waiting on the random rescue pick.
+	# Skip already-owned critters and batch a single save so a milestone rescue
+	# doesn't trigger one disk write per critter.
+	var newly_unlocked := false
 	for c in ThemeManager.get_val("rescuable_critters", []):
 		var cid := str(c.get("id", ""))
-		if cid != "" and score >= int(c.get("unlock_score", 0)):
-			SaveManager.unlock_critter(cid)
+		if cid != "" and score >= int(c.get("unlock_score", 0)) and not SaveManager.is_unlocked(cid):
+			SaveManager.unlock_critter(cid, false)
+			newly_unlocked = true
+			emit_signal("critter_unlocked", cid)
+	if newly_unlocked:
+		SaveManager.save_game()
 	emit_signal("critter_rescued", id, rescued_this_run.size())
 	emit_signal("streak_changed", streak)
+	_check_milestones()
+
+## Celebrate hitting a rescue milestone (e.g. 25/50/100 this run). Thresholds are
+## data-driven; this is pure positive feedback — it never gates content or nags.
+func _check_milestones() -> void:
+	var n := rescued_this_run.size()
+	for m in ThemeManager.get_val("milestone_rescues", [25, 50, 100]):
+		if n == int(m):
+			emit_signal("milestone_reached", "rescues", n)
+			return
 
 ## Gentle "three strikes" loss: hitting an unprepared cage costs a life, not an
 ## instant game-over. Kids get to recover; the run only ends after max_stumbles.
 func stumble() -> void:
 	if state != State.PLAYING:
 		return
+	# A shield power-up absorbs the hit entirely — forgiving, never a punishment.
+	if Powerups.consume_shield():
+		emit_signal("shield_used")
+		return
+	if Powerups.is_active("dash"):
+		return                       # the dash zoom is invincible — plow through
 	stumbles += 1
 	streak = 0
 	var max_stumbles := int(ThemeManager.get_val("max_stumbles", 3))
@@ -132,5 +176,6 @@ func end_run() -> void:
 	if is_high:
 		SaveManager.high_score = score
 	SaveManager.runs_played += 1
-	SaveManager.save_game()   # persist high score + lifetime stats together
+	# Record this run's personal bests + persist everything in one save.
+	SaveManager.record_run_stats(_streak_peak, rescued_this_run.size(), elapsed)
 	emit_signal("run_ended", score, is_high)

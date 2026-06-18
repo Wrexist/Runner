@@ -13,9 +13,25 @@ const THEMES_DIR := "res://themes/"
 var active_theme: String = "forest"
 
 var _data: Dictionary = {}
+## Optional in-run visual overrides (set by the Biomes system as the world shifts
+## through times-of-day). Currently a `{"palette": {name: Color/hex}}` map; checked
+## by color() so the sky/ground/scenery re-skin without touching gameplay tuning.
+var _overrides: Dictionary = {}
 
 func _ready() -> void:
 	load_theme(active_theme)
+
+## Apply a transient visual override and re-skin (emits theme_loaded so SkyRig /
+## Scenery / Ambient / LaneMarkers re-apply). Gameplay keys are untouched.
+func set_overrides(ov: Dictionary) -> void:
+	_overrides = ov
+	emit_signal("theme_loaded", active_theme)
+
+func clear_overrides() -> void:
+	if _overrides.is_empty():
+		return
+	_overrides = {}
+	emit_signal("theme_loaded", active_theme)
 
 ## Load a theme by folder id (e.g. "forest", "space"). Returns success.
 func load_theme(theme_id: String) -> bool:
@@ -34,6 +50,7 @@ func load_theme(theme_id: String) -> bool:
 		push_error("ThemeManager: invalid JSON in %s" % path)
 		return false
 	_data = parsed
+	_overrides = {}                 # a fresh theme clears any biome override
 	active_theme = theme_id
 	emit_signal("theme_loaded", theme_id)
 	return true
@@ -62,6 +79,11 @@ func diff_val(key: String, default_value: Variant = null) -> Variant:
 
 ## Convenience accessors with safe fallbacks so a missing key never crashes.
 func color(name: String, fallback: Color = Color.WHITE) -> Color:
+	# A live biome override wins, then the theme palette, then the fallback.
+	var pal_ov: Dictionary = _overrides.get("palette", {})
+	if pal_ov.has(name):
+		var v: Variant = pal_ov[name]
+		return v if v is Color else Color(str(v))
 	var pal: Dictionary = _data.get("palette", {})
 	if pal.has(name):
 		return Color(pal[name])

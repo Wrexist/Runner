@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/Obstacle.gd" id="1_obstacle"]
+
+[node name="Obstacle" type="Node3D" groups=["obstacle"]]
+script = ExtResource("1_obstacle")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]

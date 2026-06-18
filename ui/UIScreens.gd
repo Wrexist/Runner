@@ -26,12 +26,33 @@ static func _label(text: String, size: int) -> Label:
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
 
-static func _button(text: String) -> Button:
+## Roles drive size/emphasis: "primary" (lead action), "secondary" (default),
+## "back" (smaller, muted). Every button gets a soft click + press-pop.
+static func _button(text: String, role: String = "secondary") -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(280, 76)
-	b.add_theme_font_size_override("font_size", 28)
+	match role:
+		"primary":
+			b.custom_minimum_size = Vector2(300, 86)
+			b.add_theme_font_size_override("font_size", 32)
+		"back":
+			b.custom_minimum_size = Vector2(200, 62)
+			b.add_theme_font_size_override("font_size", 24)
+		_:
+			b.custom_minimum_size = Vector2(280, 76)
+			b.add_theme_font_size_override("font_size", 28)
+	b.pressed.connect(_on_button_pressed.bind(b))
 	return b
+
+## Soft click + a quick press-pop. Motion-safe; sound is fail-soft.
+static func _on_button_pressed(b: Button) -> void:
+	AudioManager.play_sfx("ui_click")
+	if bool(SaveManager.settings.get("reduce_motion", false)):
+		return
+	b.pivot_offset = b.size * 0.5
+	var t := b.create_tween()
+	t.tween_property(b, "scale", Vector2(0.95, 0.95), 0.06)
+	t.tween_property(b, "scale", Vector2.ONE, 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 static func _column() -> VBoxContainer:
 	var v := VBoxContainer.new()
@@ -53,7 +74,7 @@ class StartScreen extends Control:
 		col.add_child(UIScreens._label(tr("Best: %d") % SaveManager.high_score, 28))
 		if SaveManager.lifetime_rescued > 0:
 			col.add_child(UIScreens._label(tr("Friends rescued: %d") % SaveManager.lifetime_rescued, 22))
-		var play := UIScreens._button(tr("Play"))
+		var play := UIScreens._button(tr("Play"), "primary")
 		play.pressed.connect(func(): play_pressed.emit())
 		col.add_child(play)
 		var album := UIScreens._button(tr("My Critters"))
@@ -87,9 +108,12 @@ class GameOver extends Control:
 			col.add_child(UIScreens._label(tr("New Best!"), 34))
 		col.add_child(UIScreens._label(tr("Score: %d") % _score, 36))
 		col.add_child(UIScreens._label(tr("Critters rescued: %d") % _rescued, 28))
+		# Gentle personal-best lines (celebration-only — never a quota/FOMO).
+		col.add_child(UIScreens._label(tr("Best streak: %d") % SaveManager.best_streak, 22))
+		col.add_child(UIScreens._label(tr("Longest run: %ds") % int(SaveManager.longest_run_seconds), 22))
 		# Lead with the positive next action. Monetization is NOT placed at the
 		# loss moment — the Shop lives behind the calm "My Critters" album.
-		var again := UIScreens._button(tr("Play Again"))
+		var again := UIScreens._button(tr("Play Again"), "primary")
 		again.pressed.connect(func(): play_again_pressed.emit())
 		col.add_child(again)
 		var album := UIScreens._button(tr("My Critters"))
@@ -136,7 +160,7 @@ class ParentalGate extends Control:
 		col.add_child(row)
 		_feedback = UIScreens._label("", 24)
 		col.add_child(_feedback)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): cancelled.emit())
 		col.add_child(back)
 		add_child(col)
@@ -198,7 +222,7 @@ class Shop extends Control:
 		var restore := UIScreens._button(tr("Restore Purchases"))
 		restore.pressed.connect(func(): IAP.restore())
 		col.add_child(restore)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -223,7 +247,13 @@ class Pause extends Control:
 	signal settings_pressed
 	signal home_pressed
 	func _build() -> void:
-		add_child(UIScreens._bg())
+		# A translucent dim over the frozen world (friendlier than an opaque panel
+		# — the player still sees the paused game behind it).
+		var dim := ColorRect.new()
+		dim.color = Color(0, 0, 0, 0.55)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(dim)
 		var col := UIScreens._column()
 		col.add_child(UIScreens._label(tr("Paused"), 52))
 		var resume := UIScreens._button(tr("Resume"))
@@ -254,8 +284,10 @@ class Settings extends Control:
 		col.add_child(UIScreens._label(tr("Settings"), 48))
 		col.add_child(_toggle("Music", "music"))
 		col.add_child(_toggle("Sounds", "sfx"))
+		col.add_child(_toggle("Haptics", "haptics"))
 		col.add_child(_toggle("Reduce motion", "reduce_motion"))
 		col.add_child(_difficulty_button())
+		col.add_child(_volume_button())
 		# Language picker only appears once a second locale has been imported
 		# (see docs/LOCALIZATION.md) — no dead UI in the English-only build.
 		var langs := _available_locales()
@@ -264,7 +296,7 @@ class Settings extends Control:
 		var reset := UIScreens._button(tr("Reset Progress"))
 		reset.pressed.connect(func(): reset_requested.emit())
 		col.add_child(reset)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
@@ -273,13 +305,26 @@ class Settings extends Control:
 		_refresh_difficulty(b)
 		b.pressed.connect(func():
 			var now := str(SaveManager.settings.get("difficulty", "easy"))
-			SaveManager.settings["difficulty"] = "normal" if now == "easy" else "easy"
-			SaveManager.save_game()
+			SaveManager.set_setting("difficulty", "normal" if now == "easy" else "easy")
 			_refresh_difficulty(b))
 		return b
 	func _refresh_difficulty(b: Button) -> void:
 		var d := str(SaveManager.settings.get("difficulty", "easy"))
 		b.text = tr("Difficulty:  %s") % (tr("Easy") if d == "easy" else tr("Normal"))
+	## A simple Low / Med / High global volume (font-safe cycle, no slider).
+	func _volume_button() -> Button:
+		var b := UIScreens._button("")
+		_refresh_volume(b)
+		b.pressed.connect(func():
+			var v := float(SaveManager.settings.get("master_volume", 1.0))
+			var nv := 0.66 if v > 0.83 else (0.33 if v > 0.5 else 1.0)
+			AudioManager.set_master_volume(nv)
+			_refresh_volume(b))
+		return b
+	func _refresh_volume(b: Button) -> void:
+		var v := float(SaveManager.settings.get("master_volume", 1.0))
+		var lvl := tr("High") if v > 0.83 else (tr("Med") if v > 0.5 else tr("Low"))
+		b.text = tr("Volume:  %s") % lvl
 	## English source ("en") plus any imported locales the engine has loaded.
 	func _available_locales() -> Array:
 		var out: Array = ["en"]
@@ -301,8 +346,7 @@ class Settings extends Control:
 						break
 			var next: String = str(langs[(idx + 1) % langs.size()])
 			TranslationServer.set_locale(next)
-			SaveManager.settings["locale"] = next
-			SaveManager.save_game()
+			SaveManager.set_setting("locale", next)
 			_relayout())                                   # re-translate every label
 		return b
 	func _refresh_language(b: Button) -> void:
@@ -314,23 +358,25 @@ class Settings extends Control:
 			remove_child(c)
 			c.free()
 		_build()
-	func _toggle(label: String, key: String) -> Button:
-		var b := UIScreens._button("")
-		_refresh(b, label, key)
-		b.pressed.connect(_on_toggle.bind(b, label, key))
-		return b
-	func _on_toggle(b: Button, label: String, key: String) -> void:
-		SaveManager.settings[key] = not bool(SaveManager.settings.get(key, true))
-		SaveManager.save_game()
-		_refresh(b, label, key)
-		if key == "music":
-			if bool(SaveManager.settings["music"]):
-				AudioManager.play_music()
-			else:
-				AudioManager.stop_music()
-	func _refresh(b: Button, label: String, key: String) -> void:
-		var on := bool(SaveManager.settings.get(key, true))
-		b.text = "%s:  %s" % [tr(label), tr("On") if on else tr("Off")]
+	## A real switch (CheckButton) — clearer than text "On/Off" and accessible.
+	func _toggle(label: String, key: String) -> CheckButton:
+		var cb := CheckButton.new()
+		cb.text = tr(label)
+		cb.custom_minimum_size = Vector2(280, 64)
+		cb.add_theme_font_size_override("font_size", 26)
+		cb.add_theme_color_override("font_color", ThemeManager.color("ui_text", Color.BLACK))
+		cb.button_pressed = bool(SaveManager.settings.get(key, true))
+		cb.toggled.connect(func(on):
+			SaveManager.set_setting(key, on)
+			AudioManager.play_sfx("ui_click")
+			if key == "music":
+				if not on:
+					AudioManager.stop_music()
+				elif GameCore.is_running():
+					AudioManager.play_music()
+				else:
+					AudioManager.play_menu_music())
+		return cb
 
 static func make_settings() -> Settings:
 	var s := Settings.new()
@@ -356,15 +402,45 @@ class Album extends Control:
 		for c in ThemeManager.get_val("rescuable_critters", []):
 			grid.add_child(_cell(c))
 		col.add_child(grid)
+		col.add_child(_discoveries_row())
 		# Calm, contextual place to offer the single unlock-all purchase (gated).
 		if not SaveManager.all_unlocked_iap:
 			var unlock := UIScreens._button(tr("Unlock All Critters"))
 			unlock.pressed.connect(func(): unlock_pressed.emit())
 			col.add_child(unlock)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)
+	## A gentle "collect them all" row: a chip per power-up and biome, lit once
+	## discovered (the persistent meta payoff — celebration-only, no FOMO).
+	func _discoveries_row() -> Control:
+		var box := VBoxContainer.new()
+		box.alignment = BoxContainer.ALIGNMENT_CENTER
+		var tags: Array = []
+		for k in Powerups.KINDS:
+			tags.append("powerup:" + str(k))
+		for b in Biomes.NAMES:
+			tags.append("biome:" + str(b))
+		var found := 0
+		for t in tags:
+			if SaveManager.has_discovered(str(t)):
+				found += 1
+		box.add_child(UIScreens._label(tr("Discoveries: %d / %d") % [found, tags.size()], 24))
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 8)
+		for t in tags:
+			var chip := ColorRect.new()
+			chip.custom_minimum_size = Vector2(22, 22)
+			chip.color = _chip_color(str(t)) if SaveManager.has_discovered(str(t)) else Color(0.35, 0.35, 0.4)
+			row.add_child(chip)
+		box.add_child(row)
+		return box
+	func _chip_color(tag: String) -> Color:
+		if tag.begins_with("powerup:"):
+			return Powerup.color_for(tag.trim_prefix("powerup:"))
+		return Color(0.6, 0.7, 1.0)
 	func _cell(c: Dictionary) -> Control:
 		var id := str(c.get("id", "?"))
 		var unlocked := SaveManager.is_unlocked(id)
@@ -488,7 +564,7 @@ class About extends Control:
 				list.add_child(UIScreens._label(UIScreens._credit_line(entry), 18))
 			scroll.add_child(list)
 			col.add_child(scroll)
-		var back := UIScreens._button(tr("Back"))
+		var back := UIScreens._button(tr("Back"), "back")
 		back.pressed.connect(func(): closed.emit())
 		col.add_child(back)
 		add_child(col)

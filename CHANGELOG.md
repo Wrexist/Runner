@@ -6,6 +6,54 @@ All notable changes to Critter Dash. This project follows
 ## [Unreleased]
 
 ### Added
+- **"Adventure depth" — every run is a journey, not a score attempt** (the
+  compliant core of a Runverse-style vision; no MMO/currency/combat/extraction/
+  retention-AI — those break Kids Category). Four new systems, all data-driven,
+  reduce-motion-aware, and verified against real Godot 4.3:
+  - **Gentle power-up "builds"** (`Powerups`): free, run-scoped pickups —
+    🛡 shield (absorbs a stumble), 🐌 slow (calms the world), 🧲 magnet (gems drift
+    in — not coins), ✨ double (rescues score ×2). They stack into a build shown as
+    HUD chips. Predictable rotating cadence (variety, not a gacha). No currency,
+    no loss, no FOMO.
+  - **In-run biome journey** (`Biomes`): the world transforms within a run through
+    a day → dusk → night → dawn cycle (sky/ground/scenery re-skin via a transient
+    palette override) with a "New area!" discovery beat. Gameplay tuning is never
+    touched.
+  - **Jump & slide** (up/down swipe) plus gentle **hurdles/overhangs** to clear —
+    new verbs with purpose; a missed clear is a gentle, recoverable stumble and you
+    can also just dodge to another lane (two solutions = fair).
+  - **Discovery events** (`Discovery`): occasional gentle surprises — a free treat
+    or a bonus shower with a "Surprise!" flourish — so "what will happen this run?"
+    stays alive.
+- **Top-tier "feel & juice" overhaul.** Warm-up grace before the speed ramp;
+  data-driven spawn patterns (single/rest/double) with guaranteed breathing room
+  and a code-enforced "≥1 lane always clear" rule; input buffering + optional lane
+  cooldown; reward-only forgiveness windows + celebration-only near-miss; object
+  pooling for gems/cages. Juice: a `ScreenFX` autoload (gentle flash/vignette/
+  confetti), floating "+N" popups, a visible streak badge, milestone + critter-
+  unlock celebrations, a glowing carried-color indicator. UI: screen fade-ins,
+  button roles + press-pop + click sound, real toggle switches, a dimmed pause,
+  an in-run difficulty badge, and personal-best stats on Game Over. Audio: menu
+  music, lane whoosh, near-miss/jingle SFX, pause fade, master volume. Optional
+  gentle haptics. Per-run best stats (local-only, celebration-only).
+- **Procedural "complete game" visuals (no imported art).** Feature-assembled
+  critters (deterministic ears/tail/fin/antennae/eyes per id) and a themed
+  procedural player (forest critter / space rocket / ocean sub); pooled scrolling
+  side scenery (`Scenery.gd` — trees/asteroids/coral, clamped outside the lanes);
+  a drifting ambient particle field (`Ambient.gd` — fireflies/stars/bubbles);
+  a gradient sky + scrolling ground; optional distance fog + themed light; and
+  dashed lane markers (`LaneMarkers.gd`). Every new motion/particle path is
+  reduce-motion-aware; all are data-driven theme keys kept in 3-theme parity.
+
+### Fixed
+- **Project now loads & all tests pass on real Godot (CI green).** Headless
+  Godot 4.3 in CI caught GDScript parse errors that regex checks missed and that
+  broke project load: `var x := …` type-inference on Variant loop/array values
+  (`Spawner.gd`) and on untyped-node properties (`Tests.gd`). Cast/typed
+  explicitly; fixed a lean test for Godot 4.3's `kill()`/`is_running()` semantics.
+- **es/sv translations recompiled** to include the strings added this cycle.
+
+### Added (earlier)
 - **More alive-feeling juice (motion-safe).** Gems gently spin + bob and pop in as
   they spawn; cages bob softly; the player has a subtle idle bob; the rescue conga
   line undulates out-of-phase behind you. All of it is skipped under the

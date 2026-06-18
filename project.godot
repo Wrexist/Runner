@@ -20,8 +20,12 @@ boot_splash/show_image=false
 SaveManager="*res://core/SaveManager.gd"
 ThemeManager="*res://core/ThemeManager.gd"
 GameCore="*res://core/GameCore.gd"
+Powerups="*res://core/Powerups.gd"
+Biomes="*res://core/Biomes.gd"
+Discovery="*res://core/Discovery.gd"
 AudioManager="*res://core/AudioManager.gd"
 Effects="*res://core/Effects.gd"
+ScreenFX="*res://core/ScreenFX.gd"
 IAP="*res://core/IAP.gd"
 UIManager="*res://core/UIManager.gd"
 
